@@ -74,6 +74,7 @@ static void drm_info(int devnr)
 {
     drmModeConnector *conn;
     drmModeEncoder *enc;
+    drmModeCrtc *crtc;
     drmModeRes *res;
     char dev[64];
     int fd, i, m, c, e;
@@ -109,11 +110,20 @@ static void drm_info(int devnr)
                 enc = drmModeGetEncoder(fd, conn->encoders[e]);
                 if (!enc)
                     continue;
-                fprintf(stdout, "        id %d: %s%s\n",
+                fprintf(stdout, "        id %d: %s",
                         enc->encoder_id,
-                        encoder_type_name(enc->encoder_type),
-                        (enc->encoder_id == conn->encoder_id)
-                        ? " (active)" : "");
+                        encoder_type_name(enc->encoder_type));
+                if (enc->encoder_id == conn->encoder_id)
+                    fprintf(stdout, ", active");
+                if (enc->crtc_id) {
+                    crtc = drmModeGetCrtc(fd, enc->crtc_id);
+                    if (crtc) {
+                        fprintf(stdout, ", crtc %d (%dx%d)",
+                                crtc->crtc_id,
+                                crtc->width, crtc->height);
+                    }
+                }
+                fprintf(stdout, "\n");
                 drmModeFreeEncoder(enc);
             }
         }

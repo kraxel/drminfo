@@ -2,7 +2,7 @@ CC	?= gcc
 CFLAGS	?= -Os -g -std=c99
 CFLAGS	+= -Wall
 
-TARGETS	:= drminfo
+TARGETS	:= drminfo drmtest
 
 CFLAGS += $(shell pkg-config --cflags libdrm)
 LDLIBS += $(shell pkg-config --libs libdrm)
@@ -14,3 +14,4 @@ clean:
 	rm -f *~
 
 drminfo: drminfo.o
+drmtest: drmtest.o
