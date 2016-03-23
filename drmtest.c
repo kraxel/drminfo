@@ -33,9 +33,12 @@ static struct drm_mode_create_dumb creq;
 static uint8_t *fbmem;
 
 /* opengl fb */
-static struct gbm_device *gbm;
+static struct gbm_device *gbm_dev;
+static struct gbm_surface *gbm_surface;
 static EGLDisplay dpy;
 static EGLConfig cfg;
+static EGLContext ctx;
+static EGLSurface surface;
 
 /* ------------------------------------------------------------------ */
 
@@ -181,30 +184,39 @@ static void drm_draw_dumb_fb(void)
 
 static void drm_init_egl(void)
 {
-    static const char *exts[] = {
-        "EGL_KHR_surfaceless_context",
-        "EGL_KHR_surfaceless_opengl",
-    };
     static const EGLint conf_att[] = {
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
         EGL_RED_SIZE,   5,
         EGL_GREEN_SIZE, 5,
         EGL_BLUE_SIZE,  5,
         EGL_ALPHA_SIZE, 0,
         EGL_NONE,
     };
+    static const EGLint ctx_att[] = {
+        EGL_CONTEXT_CLIENT_VERSION, 2,
+        EGL_NONE
+    };
     EGLint major, minor;
     EGLBoolean b;
-    EGLint i, n;
+    EGLint n;
 
-    gbm = gbm_create_device(fd);
-    if (!gbm) {
+    gbm_dev = gbm_create_device(fd);
+    if (!gbm_dev) {
         fprintf(stderr, "egl: gbm_create_device failed\n");
         exit(1);
     }
 
-    dpy = eglGetDisplay(gbm);
+    gbm_surface = gbm_surface_create(gbm_dev,
+                                     mode->hdisplay, mode->vdisplay,
+                                     GBM_FORMAT_XRGB8888,
+                                     GBM_BO_USE_RENDERING);
+    if (!gbm_surface) {
+        fprintf(stderr, "egl: gbm_create_surface failed\n");
+        exit(1);
+    }
+
+    dpy = eglGetDisplay(gbm_dev);
     if (dpy == EGL_NO_DISPLAY) {
         fprintf(stderr, "egl: eglGetDisplay failed\n");
         exit(1);
@@ -228,55 +240,62 @@ static void drm_init_egl(void)
         exit(1);
     }
 
-    for (i = 0; i < sizeof(exts)/sizeof(exts[0]); i++) {
-        if (epoxy_has_egl_extension(dpy, exts[i]))
-            continue;
-        fprintf(stderr, "egl: %s not supported\n", exts[i]);
+    ctx = eglCreateContext(dpy, cfg, EGL_NO_CONTEXT, ctx_att);
+    if (ctx == EGL_NO_CONTEXT) {
+        fprintf(stderr, "egl: eglCreateContext failed\n");
+        exit(1);
+    }
+
+    b = eglMakeCurrent(dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, ctx);
+    if (b == EGL_FALSE) {
+        fprintf(stderr, "egl: eglMakeCurrent(EGL_NO_SURFACE) failed\n");
+        exit(1);
+    }
+
+    surface = eglCreateWindowSurface (dpy, cfg,
+                                      (EGLNativeWindowType)gbm_surface,
+                                      NULL);
+    if (!surface) {
+        fprintf(stderr, "egl: eglCreateWindowSurface failed\n");
+        exit(1);
+    }
+
+    b = eglMakeCurrent(dpy, surface, surface, ctx);
+    if (b == EGL_FALSE) {
+        fprintf(stderr, "egl: eglMakeCurrent(surface) failed\n");
         exit(1);
     }
 }
 
-static void drm_init_egl_fb(void)
-{
-    EGLImageKHR image;
-    struct gbm_bo *bo;
-    GLuint color_rb, depth_rb;
-
-    bo = gbm_bo_create(gbm, mode->hdisplay, mode->vdisplay,
-                       GBM_BO_FORMAT_XRGB8888,
-                       GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
-    image = eglCreateImageKHR(dpy, NULL, EGL_NATIVE_PIXMAP_KHR, bo, NULL);
-
-    glGenFramebuffers(1, &fb_id);
-    glBindFramebuffer(GL_FRAMEBUFFER_EXT, fb_id);
-
-    /* Set up render buffer... */
-    glGenRenderbuffers(1, &color_rb);
-    glBindRenderbuffer(GL_RENDERBUFFER_EXT, color_rb);
-    glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER, image);
-    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-                                 GL_RENDERBUFFER_EXT, color_rb);
-
-    /* and depth buffer */
-    glGenRenderbuffers(1, &depth_rb);
-    glBindRenderbuffer(GL_RENDERBUFFER_EXT, depth_rb);
-    glRenderbufferStorage(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT,
-                          mode->hdisplay, mode->vdisplay);
-    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-                                 GL_RENDERBUFFER_EXT, depth_rb);
-
-    if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE) {
-        fprintf(stderr, "opengl framebuffer setup failed\n");
-        exit(1);
-    }
-}
-
-static void drm_draw_egl_fb(void)
+static void drm_draw_egl(void)
 {
     glViewport(0, 0, mode->hdisplay, mode->vdisplay);
-    glClearColor(0.7, 0, 0, 0); /* red */
+    glClearColor(0.5, 0, 0, 0); /* red */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glFinish();
+}
+
+static void drm_make_egl_fb(void)
+{
+    struct gbm_bo *bo;
+    EGLBoolean b;
+    uint32_t handle, stride;
+
+    b = eglSwapBuffers(dpy, surface);
+    if (!b) {
+        fprintf(stderr, "egl: eglSwapBuffers failed");
+        exit(1);
+    }
+
+    bo = gbm_surface_lock_front_buffer(gbm_surface);
+    if (!bo) {
+        fprintf(stderr, "egl: gbm_surface_lock_front_buffer failed");
+        exit(1);
+    }
+    handle = gbm_bo_get_handle(bo).u32;
+    stride = gbm_bo_get_stride(bo);
+
+    drmModeAddFB(fd, mode->hdisplay, mode->vdisplay, 24, 32,
+                 stride, handle, &fb_id);
 }
 
 /* ------------------------------------------------------------------ */
@@ -290,6 +309,10 @@ static void usage(FILE *fp)
             "options:\n"
             "  -h         print this\n"
             "  -c <nr>    pick card\n"
+            "  -g         openngl mode\n"
+#if 0
+            "  -d         debug mode (opengl)\n"
+#endif
             "\n");
 }
 
@@ -300,7 +323,7 @@ int main(int argc, char **argv)
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "hgc:");
+        c = getopt(argc, argv, "hgdc:");
         if (c == -1)
             break;
         switch (c) {
@@ -310,6 +333,12 @@ int main(int argc, char **argv)
         case 'g':
             gl = true;
             break;
+#if 0
+        case 'd':
+            setenv("EGL_LOG_LEVEL", "debug", true);
+            setenv("LIBGL_DEBUG", "verbose", true);
+            break;
+#endif
         case 'h':
             usage(stdout);
             exit(0);
@@ -322,8 +351,8 @@ int main(int argc, char **argv)
     if (gl) {
         drm_init_dev(card, true, true);
         drm_init_egl();
-        drm_init_egl_fb();
-        drm_draw_egl_fb();
+        drm_draw_egl();
+        drm_make_egl_fb();
     } else {
         drm_init_dev(card, false, true);
         drm_init_dumb_fb();
