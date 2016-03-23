@@ -27,6 +27,8 @@ static struct drm_mode_create_dumb creq;
 static uint32_t fb_id;
 static uint8_t *fbmem;
 
+/* ------------------------------------------------------------------ */
+
 static void drm_init_dev(int devnr, bool need_dumb, bool need_master)
 {
     drmModeRes *res;
@@ -94,6 +96,8 @@ static void drm_fini_dev(void)
                        &conn->connector_id, 1, &scrtc->mode);
     }
 }
+
+/* ------------------------------------------------------------------ */
 
 static void drm_init_dumb_fb(void)
 {
@@ -164,6 +168,10 @@ static void drm_show_dumb_fb(void)
 
 /* ------------------------------------------------------------------ */
 
+
+
+/* ------------------------------------------------------------------ */
+
 static void usage(FILE *fp)
 {
     fprintf(fp,
@@ -179,15 +187,19 @@ static void usage(FILE *fp)
 int main(int argc, char **argv)
 {
     int card = 0;
+    bool gl = false;
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "hc:");
+        c = getopt(argc, argv, "hgc:");
         if (c == -1)
             break;
         switch (c) {
         case 'c':
             card = atoi(optarg);
+            break;
+        case 'g':
+            gl = true;
             break;
         case 'h':
             usage(stdout);
@@ -198,11 +210,17 @@ int main(int argc, char **argv)
         }
     }
 
-    drm_init_dev(card, true, true);
-    drm_init_dumb_fb();
-    drm_draw_dumb_fb();
-    drm_show_dumb_fb();
-    sleep(3);
-    drm_fini_dev();
+    if (gl) {
+        drm_init_dev(card, true, true);
+        sleep(3);
+        drm_fini_dev();
+    } else {
+        drm_init_dev(card, true, true);
+        drm_init_dumb_fb();
+        drm_draw_dumb_fb();
+        drm_show_dumb_fb();
+        sleep(3);
+        drm_fini_dev();
+    }
     return 0;
 }

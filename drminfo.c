@@ -12,61 +12,7 @@
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
-/* ------------------------------------------------------------------ */
-
-static const char *conn_type[] = {
-    [ DRM_MODE_CONNECTOR_Unknown      ] = "Unknown",
-    [ DRM_MODE_CONNECTOR_VGA          ] = "VGA",
-    [ DRM_MODE_CONNECTOR_DVII         ] = "DVII",
-    [ DRM_MODE_CONNECTOR_DVID         ] = "DVID",
-    [ DRM_MODE_CONNECTOR_DVIA         ] = "DVIA",
-    [ DRM_MODE_CONNECTOR_Composite    ] = "Composite",
-    [ DRM_MODE_CONNECTOR_SVIDEO       ] = "SVIDEO",
-    [ DRM_MODE_CONNECTOR_LVDS         ] = "LVDS",
-    [ DRM_MODE_CONNECTOR_Component    ] = "Component",
-    [ DRM_MODE_CONNECTOR_9PinDIN      ] = "9PinDIN",
-    [ DRM_MODE_CONNECTOR_DisplayPort  ] = "DisplayPort",
-    [ DRM_MODE_CONNECTOR_HDMIA        ] = "HDMIA",
-    [ DRM_MODE_CONNECTOR_HDMIB        ] = "HDMIB",
-    [ DRM_MODE_CONNECTOR_TV           ] = "TV",
-    [ DRM_MODE_CONNECTOR_eDP          ] = "eDP",
-    [ DRM_MODE_CONNECTOR_VIRTUAL      ] = "VIRTUAL",
-    [ DRM_MODE_CONNECTOR_DSI          ] = "DSI",
-};
-
-static const char *conn_mode[] = {
-    [ DRM_MODE_CONNECTED         ] = "connected",
-    [ DRM_MODE_DISCONNECTED      ] = "disconnected",
-    [ DRM_MODE_UNKNOWNCONNECTION ] = "unknown",
-};
-
-static const char *enc_type[] = {
-    [ DRM_MODE_ENCODER_NONE         ] = "NONE",
-    [ DRM_MODE_ENCODER_DAC          ] = "DAC",
-    [ DRM_MODE_ENCODER_TMDS         ] = "TMDS",
-    [ DRM_MODE_ENCODER_LVDS         ] = "LVDS",
-    [ DRM_MODE_ENCODER_TVDAC        ] = "TVDAC",
-    [ DRM_MODE_ENCODER_VIRTUAL      ] = "VIRTUAL",
-    [ DRM_MODE_ENCODER_DSI          ] = "DSI",
-};
-
-static const char *enum2name(const char *names[], int len, int nr)
-{
-    if (nr >= len)
-        return "???";
-    if (!names[nr])
-        return "???";
-    return names[nr];
-}
-
-#define connector_type_name(_i) \
-    enum2name((conn_type), (sizeof(conn_type)/sizeof(conn_type[0])), (_i))
-
-#define connector_mode_name(_i)                                         \
-    enum2name((conn_mode), (sizeof(conn_mode)/sizeof(conn_mode[0])), (_i))
-
-#define encoder_type_name(_i) \
-    enum2name((enc_type), (sizeof(enc_type)/sizeof(enc_type[0])), (_i))
+#include "drmtools.h"
 
 /* ------------------------------------------------------------------ */
 
@@ -99,9 +45,9 @@ static void drm_info(int devnr)
 
         fprintf(stdout, "id %d: %s-%d, %s\n",
                 conn->connector_id,
-                connector_type_name(conn->connector_type),
+                drm_connector_type_name(conn->connector_type),
                 conn->connector_type_id,
-                connector_mode_name(conn->connection));
+                drm_connector_mode_name(conn->connection));
 
         if (conn->count_encoders) {
             fprintf(stdout, "    %d encoders\n",
@@ -112,7 +58,7 @@ static void drm_info(int devnr)
                     continue;
                 fprintf(stdout, "        id %d: %s",
                         enc->encoder_id,
-                        encoder_type_name(enc->encoder_type));
+                        drm_encoder_type_name(enc->encoder_type));
                 if (enc->encoder_id == conn->encoder_id)
                     fprintf(stdout, ", active");
                 if (enc->crtc_id) {
