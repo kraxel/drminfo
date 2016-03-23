@@ -14,18 +14,28 @@
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
+#include <gbm.h>
+#include <epoxy/gl.h>
+#include <epoxy/egl.h>
+
 /* ------------------------------------------------------------------ */
 
 /* device */
 static int fd;
 static drmModeConnector *conn = NULL;
 static drmModeEncoder *enc = NULL;
+static drmModeModeInfo *mode = NULL;
 static drmModeCrtc *scrtc = NULL;
+static uint32_t fb_id;
 
 /* dumb fb */
 static struct drm_mode_create_dumb creq;
-static uint32_t fb_id;
 static uint8_t *fbmem;
+
+/* opengl fb */
+static struct gbm_device *gbm;
+static EGLDisplay dpy;
+static EGLConfig cfg;
 
 /* ------------------------------------------------------------------ */
 
@@ -78,6 +88,7 @@ static void drm_init_dev(int devnr, bool need_dumb, bool need_master)
         fprintf(stderr, "no usable connector found\n");
         exit(1);
     }
+    mode = &conn->modes[0];
     enc = drmModeGetEncoder(fd, conn->encoder_id);
     if (enc == NULL) {
         fprintf(stderr, "drmModeGetEncoder() failed\n");
@@ -97,6 +108,19 @@ static void drm_fini_dev(void)
     }
 }
 
+static void drm_show_fb(void)
+{
+    int rc;
+
+    rc = drmModeSetCrtc(fd, enc->crtc_id, fb_id, 0, 0,
+                        &conn->connector_id, 1,
+                        &conn->modes[0]);
+    if (rc < 0) {
+        fprintf(stderr, "drmModeSetCrtc() failed\n");
+        exit (1);
+    }
+}
+
 /* ------------------------------------------------------------------ */
 
 static void drm_init_dumb_fb(void)
@@ -106,8 +130,8 @@ static void drm_init_dumb_fb(void)
 
     /* create framebuffer */
     memset(&creq, 0, sizeof(creq));
-    creq.width = conn->modes[0].hdisplay;
-    creq.height = conn->modes[0].vdisplay;
+    creq.width = mode->hdisplay;
+    creq.height = mode->vdisplay;
     creq.bpp = 32;
     rc = drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &creq);
     if (rc < 0) {
@@ -153,22 +177,107 @@ static void drm_draw_dumb_fb(void)
     drmModeDirtyFB(fd, fb_id, 0, 0);
 }
 
-static void drm_show_dumb_fb(void)
-{
-    int rc;
+/* ------------------------------------------------------------------ */
 
-    rc = drmModeSetCrtc(fd, enc->crtc_id, fb_id, 0, 0,
-                        &conn->connector_id, 1,
-                        &conn->modes[0]);
-    if (rc < 0) {
-        fprintf(stderr, "drmModeSetCrtc() failed\n");
-        exit (1);
+static void drm_init_egl(void)
+{
+    static const char *exts[] = {
+        "EGL_KHR_surfaceless_context",
+        "EGL_KHR_surfaceless_opengl",
+    };
+    static const EGLint conf_att[] = {
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_RED_SIZE,   5,
+        EGL_GREEN_SIZE, 5,
+        EGL_BLUE_SIZE,  5,
+        EGL_ALPHA_SIZE, 0,
+        EGL_NONE,
+    };
+    EGLint major, minor;
+    EGLBoolean b;
+    EGLint i, n;
+
+    gbm = gbm_create_device(fd);
+    if (!gbm) {
+        fprintf(stderr, "egl: gbm_create_device failed\n");
+        exit(1);
+    }
+
+    dpy = eglGetDisplay(gbm);
+    if (dpy == EGL_NO_DISPLAY) {
+        fprintf(stderr, "egl: eglGetDisplay failed\n");
+        exit(1);
+    }
+
+    b = eglInitialize(dpy, &major, &minor);
+    if (b == EGL_FALSE) {
+        fprintf(stderr, "egl: eglInitialize failed\n");
+        exit(1);
+    }
+
+    b = eglBindAPI(EGL_OPENGL_ES_API);
+    if (b == EGL_FALSE) {
+        fprintf(stderr, "egl: eglBindAPI failed\n");
+        exit(1);
+    }
+
+    b = eglChooseConfig(dpy, conf_att, &cfg, 1, &n);
+    if (b == EGL_FALSE || n != 1) {
+        fprintf(stderr, "egl: eglChooseConfig failed\n");
+        exit(1);
+    }
+
+    for (i = 0; i < sizeof(exts)/sizeof(exts[0]); i++) {
+        if (epoxy_has_egl_extension(dpy, exts[i]))
+            continue;
+        fprintf(stderr, "egl: %s not supported\n", exts[i]);
+        exit(1);
     }
 }
 
-/* ------------------------------------------------------------------ */
+static void drm_init_egl_fb(void)
+{
+    EGLImageKHR image;
+    struct gbm_bo *bo;
+    GLuint color_rb, depth_rb;
 
+    bo = gbm_bo_create(gbm, mode->hdisplay, mode->vdisplay,
+                       GBM_BO_FORMAT_XRGB8888,
+                       GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+    image = eglCreateImageKHR(dpy, NULL, EGL_NATIVE_PIXMAP_KHR, bo, NULL);
 
+    glGenFramebuffers(1, &fb_id);
+    glBindFramebuffer(GL_FRAMEBUFFER_EXT, fb_id);
+
+    /* Set up render buffer... */
+    glGenRenderbuffers(1, &color_rb);
+    glBindRenderbuffer(GL_RENDERBUFFER_EXT, color_rb);
+    glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER, image);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
+                                 GL_RENDERBUFFER_EXT, color_rb);
+
+    /* and depth buffer */
+    glGenRenderbuffers(1, &depth_rb);
+    glBindRenderbuffer(GL_RENDERBUFFER_EXT, depth_rb);
+    glRenderbufferStorage(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT,
+                          mode->hdisplay, mode->vdisplay);
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+                                 GL_RENDERBUFFER_EXT, depth_rb);
+
+    if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE) {
+        fprintf(stderr, "opengl framebuffer setup failed\n");
+        exit(1);
+    }
+}
+
+static void drm_draw_egl_fb(void)
+{
+    glViewport(0, 0, mode->hdisplay, mode->vdisplay);
+    glClearColor(0.7, 0, 0, 0); /* red */
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glFinish();
+}
 
 /* ------------------------------------------------------------------ */
 
@@ -212,15 +321,16 @@ int main(int argc, char **argv)
 
     if (gl) {
         drm_init_dev(card, true, true);
-        sleep(3);
-        drm_fini_dev();
+        drm_init_egl();
+        drm_init_egl_fb();
+        drm_draw_egl_fb();
     } else {
-        drm_init_dev(card, true, true);
+        drm_init_dev(card, false, true);
         drm_init_dumb_fb();
         drm_draw_dumb_fb();
-        drm_show_dumb_fb();
-        sleep(3);
-        drm_fini_dev();
     }
+    drm_show_fb();
+    sleep(3);
+    drm_fini_dev();
     return 0;
 }

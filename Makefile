@@ -4,8 +4,11 @@ CFLAGS	+= -Wall
 
 TARGETS	:= drminfo drmtest
 
-CFLAGS += $(shell pkg-config --cflags libdrm)
-LDLIBS += $(shell pkg-config --libs libdrm)
+drminfo : CFLAGS += $(shell pkg-config --cflags libdrm)
+drminfo : LDLIBS += $(shell pkg-config --libs libdrm)
+
+drmtest : CFLAGS += $(shell pkg-config --cflags libdrm gbm epoxy)
+drmtest : LDLIBS += $(shell pkg-config --libs libdrm gbm epoxy)
 
 all: $(TARGETS)
 
