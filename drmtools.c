@@ -60,6 +60,8 @@ static const char *enum2name(const char *names[], int len, int nr)
     return names[nr];
 }
 
+/* ------------------------------------------------------------------ */
+
 const char *drm_connector_type_name(int nr)
 {
     return enum2name(conn_type, sizeof(conn_type)/sizeof(conn_type[0]), nr);
@@ -74,3 +76,6 @@ const char *drm_encoder_type_name(int nr)
 {
     return enum2name(enc_type, sizeof(enc_type)/sizeof(enc_type[0]), nr);
 }
+
+/* ------------------------------------------------------------------ */
+
