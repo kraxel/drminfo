@@ -22,7 +22,7 @@ static void drm_info(int devnr)
     drmModeEncoder *enc;
     drmModeCrtc *crtc;
     drmModeRes *res;
-    char dev[64];
+    char dev[64], *busid;
     int fd, i, m, c, e;
 
     snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
@@ -31,6 +31,12 @@ static void drm_info(int devnr)
         fprintf(stderr, "open %s: %s\n", dev, strerror(errno));
         exit(1);
     }
+
+    busid = drmGetBusid(fd);
+    if (busid) {
+        fprintf(stdout, "busid: \"%s\"\n", busid);
+    }
+    fprintf(stdout, "\n");
 
     res = drmModeGetResources(fd);
     if (res == NULL) {
