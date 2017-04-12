@@ -36,19 +36,19 @@ static const char *conn_type[] = {
 };
 
 static const char *conn_mode[] = {
-    [ DRM_MODE_CONNECTED         ] = "connected",
-    [ DRM_MODE_DISCONNECTED      ] = "disconnected",
-    [ DRM_MODE_UNKNOWNCONNECTION ] = "unknown",
+    [ DRM_MODE_CONNECTED              ] = "connected",
+    [ DRM_MODE_DISCONNECTED           ] = "disconnected",
+    [ DRM_MODE_UNKNOWNCONNECTION      ] = "unknown",
 };
 
 static const char *enc_type[] = {
-    [ DRM_MODE_ENCODER_NONE         ] = "NONE",
-    [ DRM_MODE_ENCODER_DAC          ] = "DAC",
-    [ DRM_MODE_ENCODER_TMDS         ] = "TMDS",
-    [ DRM_MODE_ENCODER_LVDS         ] = "LVDS",
-    [ DRM_MODE_ENCODER_TVDAC        ] = "TVDAC",
-    [ DRM_MODE_ENCODER_VIRTUAL      ] = "VIRTUAL",
-    [ DRM_MODE_ENCODER_DSI          ] = "DSI",
+    [ DRM_MODE_ENCODER_NONE           ] = "NONE",
+    [ DRM_MODE_ENCODER_DAC            ] = "DAC",
+    [ DRM_MODE_ENCODER_TMDS           ] = "TMDS",
+    [ DRM_MODE_ENCODER_LVDS           ] = "LVDS",
+    [ DRM_MODE_ENCODER_TVDAC          ] = "TVDAC",
+    [ DRM_MODE_ENCODER_VIRTUAL        ] = "VIRTUAL",
+    [ DRM_MODE_ENCODER_DSI            ] = "DSI",
 };
 
 static const char *enum2name(const char *names[], int len, int nr)
