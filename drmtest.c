@@ -18,6 +18,8 @@
 #include <epoxy/gl.h>
 #include <epoxy/egl.h>
 
+#include "drmtools.h"
+
 /* ------------------------------------------------------------------ */
 
 /* device */
@@ -42,10 +44,12 @@ static EGLSurface surface;
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dev(int devnr, bool need_dumb, bool need_master)
+static void drm_init_dev(int devnr, const char *output,
+                         bool need_dumb, bool need_master)
 {
     drmModeRes *res;
     char dev[64];
+    char name[64];
     int i, rc;
     uint64_t has_dumb;
 
@@ -66,18 +70,45 @@ static void drm_init_dev(int devnr, bool need_dumb, bool need_master)
     }
     if (need_master) {
         rc = drmSetMaster(fd);
-        if (rc < 0 || !has_dumb) {
+        if (rc < 0) {
             fprintf(stderr, "drmSetMaster() failed, X11 running?\n");
             exit(1);
         }
     }
 
-    /* find connector (using first for now) */
+    /* find connector */
     res = drmModeGetResources(fd);
     if (res == NULL) {
         fprintf(stderr, "drmModeGetResources() failed\n");
         exit(1);
     }
+    for (i = 0; i < res->count_connectors; i++) {
+        conn = drmModeGetConnector(fd, res->connectors[i]);
+        if (conn &&
+            (conn->connection == DRM_MODE_CONNECTED) &&
+            conn->count_modes) {
+            if (output) {
+                drm_conn_name(conn, name, sizeof(name));
+                if (strcmp(name, output) == 0) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        drmModeFreeConnector(conn);
+        conn = NULL;
+    }
+    if (!conn) {
+        if (output) {
+            fprintf(stderr, "drm: output %s not found or disconnected\n",
+                    output);
+        } else {
+            fprintf(stderr, "drm: no usable output found\n");
+        }
+        exit(1);
+    }
+
     for (i = 0; i < res->count_connectors; i++) {
         conn = drmModeGetConnector(fd, res->connectors[i]);
         if (conn &&
@@ -309,6 +340,7 @@ static void usage(FILE *fp)
             "options:\n"
             "  -h         print this\n"
             "  -c <nr>    pick card\n"
+            "  -o <name>  pick output\n"
             "  -g         openngl mode\n"
 #if 0
             "  -d         debug mode (opengl)\n"
@@ -320,15 +352,19 @@ int main(int argc, char **argv)
 {
     int card = 0;
     bool gl = false;
+    char *output = NULL;
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "hgdc:");
+        c = getopt(argc, argv, "hgdc:o:");
         if (c == -1)
             break;
         switch (c) {
         case 'c':
             card = atoi(optarg);
+            break;
+        case 'o':
+            output = optarg;
             break;
         case 'g':
             gl = true;
@@ -349,12 +385,12 @@ int main(int argc, char **argv)
     }
 
     if (gl) {
-        drm_init_dev(card, true, true);
+        drm_init_dev(card, output, true, true);
         drm_init_egl();
         drm_draw_egl();
         drm_make_egl_fb();
     } else {
-        drm_init_dev(card, false, true);
+        drm_init_dev(card, output, false, true);
         drm_init_dumb_fb();
         drm_draw_dumb_fb();
     }

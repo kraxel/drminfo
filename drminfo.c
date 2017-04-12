@@ -23,6 +23,7 @@ static void drm_info(int devnr)
     drmModeCrtc *crtc;
     drmModeRes *res;
     char dev[64], *busid;
+    char name[64];
     int fd, i, m, c, e;
 
     snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
@@ -49,10 +50,9 @@ static void drm_info(int devnr)
         if (!conn)
             continue;
 
-        fprintf(stdout, "%s-%d, %s\n",
-                drm_connector_type_name(conn->connector_type),
-                conn->connector_type_id,
-                drm_connector_mode_name(conn->connection));
+        drm_conn_name(conn, name, sizeof(name));
+        fprintf(stdout, "%s, %s\n",
+                name, drm_connector_mode_name(conn->connection));
 
         for (e = 0; e < conn->count_encoders; e++) {
             enc = drmModeGetEncoder(fd, conn->encoders[e]);

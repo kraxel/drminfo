@@ -77,5 +77,18 @@ const char *drm_encoder_type_name(int nr)
     return enum2name(enc_type, sizeof(enc_type)/sizeof(enc_type[0]), nr);
 }
 
+void drm_conn_name(drmModeConnector *conn, char *dest, int dlen)
+{
+    const char *type;
+
+    if (conn->connector_type_id < sizeof(conn_type)/sizeof(conn_type[0]) &&
+        conn_type[conn->connector_type]) {
+        type = conn_type[conn->connector_type];
+    } else {
+        type = "unknown";
+    }
+    snprintf(dest, dlen, "%s-%d", type, conn->connector_type_id);
+}
+
 /* ------------------------------------------------------------------ */
 
