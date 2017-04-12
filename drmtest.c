@@ -354,6 +354,7 @@ static void usage(FILE *fp)
             "  -h         print this\n"
             "  -c <nr>    pick card\n"
             "  -o <name>  pick output\n"
+            "  -s <secs>  set sleep time\n"
             "  -g         openngl mode\n"
 #if 0
             "  -d         debug mode (opengl)\n"
@@ -364,17 +365,21 @@ static void usage(FILE *fp)
 int main(int argc, char **argv)
 {
     int card = 0;
+    int secs = 10;
     bool gl = false;
     char *output = NULL;
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "hgdc:o:");
+        c = getopt(argc, argv, "hgdc:s:o:");
         if (c == -1)
             break;
         switch (c) {
         case 'c':
             card = atoi(optarg);
+            break;
+        case 's':
+            secs = atoi(optarg);
             break;
         case 'o':
             output = optarg;
@@ -408,7 +413,7 @@ int main(int argc, char **argv)
         drm_draw_dumb_fb();
     }
     drm_show_fb();
-    sleep(3);
+    sleep(secs);
     drm_fini_dev();
     return 0;
 }
