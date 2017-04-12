@@ -1,5 +1,7 @@
 #include <cairo.h>
 
+#include "render.h"
+
 static int pad = 10;
 
 static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
@@ -26,11 +28,11 @@ static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
     cairo_show_text(cr, name);
 }
 
-void render_test(cairo_t *cr, int width, int height)
+void render_test(cairo_t *cr, int width, int height, const char *info)
 {
     int bar = 100;
 
-    while (6 * bar + 2 * pad > height &&
+    while (7 * bar + 2 * pad > height &&
            bar > 4 * pad)
         bar -= 10;
 
@@ -40,15 +42,18 @@ void render_test(cairo_t *cr, int width, int height)
 
     cairo_set_line_width (cr, 1);
     cairo_set_source_rgb (cr, 1, 1, 1);
-    cairo_rectangle (cr, pad - 0.5, pad - 0.5, width - 2*pad + 1, 6*bar + 1);
+    cairo_rectangle (cr, pad - 0.5, pad - 0.5, width - 2*pad + 1, 7*bar + 1);
     cairo_stroke (cr);
 
-    render_color_bar(cr, pad, bar * 0 + pad, width - 2*pad, bar, 1, 0, 0, "red");
-    render_color_bar(cr, pad, bar * 1 + pad, width - 2*pad, bar, 1, 1, 0, "yellow");
-    render_color_bar(cr, pad, bar * 2 + pad, width - 2*pad, bar, 0, 1, 0, "green");
-    render_color_bar(cr, pad, bar * 3 + pad, width - 2*pad, bar, 0, 1, 1, "cyan");
-    render_color_bar(cr, pad, bar * 4 + pad, width - 2*pad, bar, 0, 0, 1, "blue");
-    render_color_bar(cr, pad, bar * 5 + pad, width - 2*pad, bar, 1, 0, 1, "magenta");
+    render_color_bar(cr, pad, bar * 0 + pad, width - 2*pad, bar,
+                     0.8, 0.8, 0.8, info);
+
+    render_color_bar(cr, pad, bar * 1 + pad, width - 2*pad, bar, 1, 0, 0, "red");
+    render_color_bar(cr, pad, bar * 2 + pad, width - 2*pad, bar, 1, 1, 0, "yellow");
+    render_color_bar(cr, pad, bar * 3 + pad, width - 2*pad, bar, 0, 1, 0, "green");
+    render_color_bar(cr, pad, bar * 4 + pad, width - 2*pad, bar, 0, 1, 1, "cyan");
+    render_color_bar(cr, pad, bar * 5 + pad, width - 2*pad, bar, 0, 0, 1, "blue");
+    render_color_bar(cr, pad, bar * 6 + pad, width - 2*pad, bar, 1, 0, 1, "magenta");
 }
 
 

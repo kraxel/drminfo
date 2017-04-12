@@ -17,7 +17,7 @@ all: $(TARGETS)
 
 clean:
 	rm -f $(TARGETS)
-	rm -f *~
+	rm -f *~ *.o
 
 drminfo: drminfo.o drmtools.o
 drmtest: drmtest.o drmtools.o render.o

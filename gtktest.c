@@ -6,11 +6,14 @@
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
                               gpointer user_data)
 {
+    char info[80];
     int width, height;
 
     width = gtk_widget_get_allocated_width(widget);
     height = gtk_widget_get_allocated_height(widget);
-    render_test(cr, width, height);
+    snprintf(info, sizeof(info), "gtktest: %dx%d",
+             width, height);
+    render_test(cr, width, height, info);
     return FALSE;
 }
 

@@ -211,10 +211,15 @@ static void drm_init_dumb_fb(void)
 
 static void drm_draw_dumb_fb(void)
 {
+    char name[64];
+    char info[80];
     cairo_t *cr;
 
+    drm_conn_name(conn, name, sizeof(name));
+    snprintf(info, sizeof(info), "%s: %dx%d",
+             name, mode->hdisplay, mode->vdisplay);
     cr = cairo_create(cs);
-    render_test(cr, mode->hdisplay, mode->vdisplay);
+    render_test(cr, mode->hdisplay, mode->vdisplay, info);
     cairo_destroy(cr);
     drmModeDirtyFB(fd, fb_id, 0, 0);
 }
