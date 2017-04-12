@@ -226,7 +226,7 @@ static void drm_init_dumb_fb(void)
 
 static void drm_draw_dumb_fb(void)
 {
-    drm_draw("dumb");
+    drm_draw("dumb framebuffer mode");
     drmModeDirtyFB(fd, fb_id, 0, 0);
 }
 
@@ -324,7 +324,7 @@ static void drm_init_egl(void)
 
 static void drm_draw_egl(void)
 {
-    drm_draw("egl");
+    drm_draw((char*)glGetString(GL_RENDERER));
     cairo_gl_surface_swapbuffers(cs);
 }
 
