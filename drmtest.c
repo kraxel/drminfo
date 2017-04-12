@@ -80,7 +80,7 @@ static void drm_init_dev(int devnr, const char *output,
     if (need_master) {
         rc = drmSetMaster(fd);
         if (rc < 0) {
-            fprintf(stderr, "drmSetMaster() failed: %s (X11 running?)\n",
+            fprintf(stderr, "drmSetMaster() failed: %s\n",
                     strerror(errno));
             exit(1);
         }
@@ -375,7 +375,7 @@ static void usage(FILE *fp)
 int main(int argc, char **argv)
 {
     int card = 0;
-    int secs = 10;
+    int secs = 3;
     bool gl = false;
     char *output = NULL;
     int c;
