@@ -65,6 +65,8 @@ void render_test(cairo_t *cr, int width, int height, const char *l1, const char 
     render_color_bar(cr, pad, bar * 4 + pad, width - 2*pad, bar, 0, 1, 1, "cyan", NULL);
     render_color_bar(cr, pad, bar * 5 + pad, width - 2*pad, bar, 0, 0, 1, "blue", NULL);
     render_color_bar(cr, pad, bar * 6 + pad, width - 2*pad, bar, 1, 0, 1, "magenta", NULL);
+
+    cairo_show_page(cr);
 }
 
 
