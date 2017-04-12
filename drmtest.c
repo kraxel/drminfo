@@ -71,7 +71,8 @@ static void drm_init_dev(int devnr, const char *output,
     if (need_master) {
         rc = drmSetMaster(fd);
         if (rc < 0) {
-            fprintf(stderr, "drmSetMaster() failed, X11 running?\n");
+            fprintf(stderr, "drmSetMaster() failed: %s (X11 running?)\n",
+                    strerror(errno));
             exit(1);
         }
     }
