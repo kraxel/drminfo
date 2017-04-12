@@ -49,58 +49,51 @@ static void drm_info(int devnr)
         if (!conn)
             continue;
 
-        fprintf(stdout, "id %d: %s-%d, %s\n",
-                conn->connector_id,
+        fprintf(stdout, "%s-%d, %s\n",
                 drm_connector_type_name(conn->connector_type),
                 conn->connector_type_id,
                 drm_connector_mode_name(conn->connection));
 
-        if (conn->count_encoders) {
-            fprintf(stdout, "    %d encoders\n",
-                    conn->count_encoders);
-            for (e = 0; e < conn->count_encoders; e++) {
-                enc = drmModeGetEncoder(fd, conn->encoders[e]);
-                if (!enc)
-                    continue;
-                fprintf(stdout, "        id %d: %s",
-                        enc->encoder_id,
-                        drm_encoder_type_name(enc->encoder_type));
-                if (enc->encoder_id == conn->encoder_id)
-                    fprintf(stdout, ", active");
-                if (enc->crtc_id) {
-                    crtc = drmModeGetCrtc(fd, enc->crtc_id);
-                    if (crtc) {
-                        fprintf(stdout, ", crtc %d (%dx%d)",
-                                crtc->crtc_id,
+        for (e = 0; e < conn->count_encoders; e++) {
+            enc = drmModeGetEncoder(fd, conn->encoders[e]);
+            if (!enc)
+                continue;
+            fprintf(stdout, "    encoder: %s",
+                    drm_encoder_type_name(enc->encoder_type));
+            if (enc->encoder_id == conn->encoder_id)
+                fprintf(stdout, ", active");
+            if (enc->crtc_id) {
+                crtc = drmModeGetCrtc(fd, enc->crtc_id);
+                if (crtc) {
+                    if (crtc->x || crtc->y) {
+                        fprintf(stdout, ", %dx%d+%d+%d",
+                                crtc->width, crtc->height, crtc->x, crtc->y);
+                    } else {
+                        fprintf(stdout, ", %dx%d",
                                 crtc->width, crtc->height);
                     }
                 }
-                fprintf(stdout, "\n");
-                drmModeFreeEncoder(enc);
             }
+            fprintf(stdout, "\n");
+            drmModeFreeEncoder(enc);
         }
 
-        if (conn->count_modes) {
-            c = 1;
-            fprintf(stdout, "    %d modes\n", conn->count_modes);
-            for (m = 0; m < conn->count_modes; m++) {
-                if (m+1 < conn->count_modes &&
-                    conn->modes[m].hdisplay == conn->modes[m+1].hdisplay &&
-                    conn->modes[m].vdisplay == conn->modes[m+1].vdisplay) {
-                    c++;
-                } else {
-                    fprintf(stdout, "        %dx%d",
-                            conn->modes[m].hdisplay,
-                            conn->modes[m].vdisplay);
-                    if (c > 1) {
-                        fprintf(stdout, " (%dx)", c);
-                    }
-                    fprintf(stdout, "\n");
-                    c = 1;
-                };
-            }
-        } else {
-            fprintf(stdout, "    no modes\n");
+        c = 1;
+        for (m = 0; m < conn->count_modes; m++) {
+            if (m+1 < conn->count_modes &&
+                conn->modes[m].hdisplay == conn->modes[m+1].hdisplay &&
+                conn->modes[m].vdisplay == conn->modes[m+1].vdisplay) {
+                c++;
+            } else {
+                fprintf(stdout, "    mode: %dx%d",
+                        conn->modes[m].hdisplay,
+                        conn->modes[m].vdisplay);
+                if (c > 1) {
+                    fprintf(stdout, " (%dx)", c);
+                }
+                fprintf(stdout, "\n");
+                c = 1;
+            };
         }
 
         drmModeFreeConnector(conn);
