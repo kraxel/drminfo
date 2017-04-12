@@ -47,6 +47,7 @@ static EGLContext ctx;
 static EGLSurface surface;
 
 /* cairo */
+cairo_device_t *cd;
 cairo_surface_t *cs;
 cairo_t *cc;
 
@@ -164,6 +165,20 @@ static void drm_show_fb(void)
     }
 }
 
+static void drm_draw(const char *text)
+{
+    char name[64];
+    char info[80];
+    cairo_t *cr;
+
+    drm_conn_name(conn, name, sizeof(name));
+    snprintf(info, sizeof(info), "%s: %dx%d, %s",
+             name, mode->hdisplay, mode->vdisplay, text);
+    cr = cairo_create(cs);
+    render_test(cr, mode->hdisplay, mode->vdisplay, info);
+    cairo_destroy(cr);
+}
+
 /* ------------------------------------------------------------------ */
 
 static void drm_init_dumb_fb(void)
@@ -211,16 +226,7 @@ static void drm_init_dumb_fb(void)
 
 static void drm_draw_dumb_fb(void)
 {
-    char name[64];
-    char info[80];
-    cairo_t *cr;
-
-    drm_conn_name(conn, name, sizeof(name));
-    snprintf(info, sizeof(info), "%s: %dx%d",
-             name, mode->hdisplay, mode->vdisplay);
-    cr = cairo_create(cs);
-    render_test(cr, mode->hdisplay, mode->vdisplay, info);
-    cairo_destroy(cr);
+    drm_draw("dumb");
     drmModeDirtyFB(fd, fb_id, 0, 0);
 }
 
@@ -309,13 +315,17 @@ static void drm_init_egl(void)
         fprintf(stderr, "egl: eglMakeCurrent(surface) failed\n");
         exit(1);
     }
+
+    cd = cairo_egl_device_create(dpy, ctx);
+    cs = cairo_gl_surface_create_for_egl(cd, surface,
+                                         mode->hdisplay,
+                                         mode->vdisplay);
 }
 
 static void drm_draw_egl(void)
 {
-    glViewport(0, 0, mode->hdisplay, mode->vdisplay);
-    glClearColor(0.5, 0, 0, 0); /* red */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    drm_draw("egl");
+    cairo_gl_surface_swapbuffers(cs);
 }
 
 static void drm_make_egl_fb(void)

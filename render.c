@@ -47,7 +47,6 @@ void render_test(cairo_t *cr, int width, int height, const char *info)
 
     render_color_bar(cr, pad, bar * 0 + pad, width - 2*pad, bar,
                      0.8, 0.8, 0.8, info);
-
     render_color_bar(cr, pad, bar * 1 + pad, width - 2*pad, bar, 1, 0, 0, "red");
     render_color_bar(cr, pad, bar * 2 + pad, width - 2*pad, bar, 1, 1, 0, "yellow");
     render_color_bar(cr, pad, bar * 3 + pad, width - 2*pad, bar, 0, 1, 0, "green");
