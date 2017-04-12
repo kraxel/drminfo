@@ -235,7 +235,7 @@ static void drm_draw_dumb_fb(void)
 static void drm_init_egl(void)
 {
     static const EGLint conf_att[] = {
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
         EGL_RED_SIZE,   5,
         EGL_GREEN_SIZE, 5,
@@ -244,7 +244,6 @@ static void drm_init_egl(void)
         EGL_NONE,
     };
     static const EGLint ctx_att[] = {
-        EGL_CONTEXT_CLIENT_VERSION, 2,
         EGL_NONE
     };
     EGLint major, minor;
@@ -278,7 +277,7 @@ static void drm_init_egl(void)
         exit(1);
     }
 
-    b = eglBindAPI(EGL_OPENGL_ES_API);
+    b = eglBindAPI(EGL_OPENGL_API);
     if (b == EGL_FALSE) {
         fprintf(stderr, "egl: eglBindAPI failed\n");
         exit(1);
