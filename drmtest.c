@@ -331,14 +331,7 @@ static void drm_draw_egl(void)
 static void drm_make_egl_fb(void)
 {
     struct gbm_bo *bo;
-    EGLBoolean b;
     uint32_t handle, stride;
-
-    b = eglSwapBuffers(dpy, surface);
-    if (!b) {
-        fprintf(stderr, "egl: eglSwapBuffers failed");
-        exit(1);
-    }
 
     bo = gbm_surface_lock_front_buffer(gbm_surface);
     if (!bo) {
