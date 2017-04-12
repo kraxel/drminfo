@@ -172,10 +172,10 @@ static void drm_draw(const char *text)
     cairo_t *cr;
 
     drm_conn_name(conn, name, sizeof(name));
-    snprintf(info, sizeof(info), "%s: %dx%d, %s",
-             name, mode->hdisplay, mode->vdisplay, text);
+    snprintf(info, sizeof(info), "drmtest: %dx%d at %s",
+             mode->hdisplay, mode->vdisplay, name);
     cr = cairo_create(cs);
-    render_test(cr, mode->hdisplay, mode->vdisplay, info);
+    render_test(cr, mode->hdisplay, mode->vdisplay, info, text);
     cairo_destroy(cr);
 }
 

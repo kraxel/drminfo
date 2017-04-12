@@ -13,7 +13,7 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
     height = gtk_widget_get_allocated_height(widget);
     snprintf(info, sizeof(info), "gtktest: %dx%d",
              width, height);
-    render_test(cr, width, height, info);
+    render_test(cr, width, height, info, NULL);
     return FALSE;
 }
 
