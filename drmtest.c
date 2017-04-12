@@ -414,6 +414,7 @@ int main(int argc, char **argv)
     int secs = 60;
     bool gl = false;
     char *output = NULL;
+    char buf[32];
     int c;
 
     for (;;) {
@@ -462,6 +463,7 @@ int main(int argc, char **argv)
 
     tty_raw();
     kbd_wait(secs);
+    read(0, buf, sizeof(buf));
     tty_restore();
 
     drm_fini_dev();
