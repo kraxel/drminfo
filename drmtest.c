@@ -18,7 +18,11 @@
 #include <epoxy/gl.h>
 #include <epoxy/egl.h>
 
+#include <cairo.h>
+#include <cairo-gl.h>
+
 #include "drmtools.h"
+#include "render.h"
 
 /* ------------------------------------------------------------------ */
 
@@ -41,6 +45,10 @@ static EGLDisplay dpy;
 static EGLConfig cfg;
 static EGLContext ctx;
 static EGLSurface surface;
+
+/* cairo */
+cairo_surface_t *cs;
+cairo_t *cc;
 
 /* ------------------------------------------------------------------ */
 
@@ -193,22 +201,21 @@ static void drm_init_dumb_fb(void)
         fprintf(stderr, "framebuffer mmap: %s\n", strerror(errno));
         exit(1);
     }
+
+    cs = cairo_image_surface_create_for_data(fbmem,
+                                             CAIRO_FORMAT_ARGB32,
+                                             creq.width,
+                                             creq.height,
+                                             creq.pitch);
 }
 
 static void drm_draw_dumb_fb(void)
 {
-    int x, y;
-    uint8_t *ptr;
+    cairo_t *cr;
 
-    for (y = 0; y < creq.height; y++) {
-        for (x = 0; x < creq.width; x++) {
-            ptr = fbmem + creq.pitch * y + 4 * x;
-            ptr[0] = 0;         /* blue  */
-            ptr[1] = x & 0xff;  /* green */
-            ptr[2] = y & 0xff;  /* red   */
-            ptr[3] = 0;         /* alpha */
-        }
-    }
+    cr = cairo_create(cs);
+    render_test(cr, mode->hdisplay, mode->vdisplay);
+    cairo_destroy(cr);
     drmModeDirtyFB(fd, fb_id, 0, 0);
 }
 
