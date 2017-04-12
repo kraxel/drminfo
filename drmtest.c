@@ -45,6 +45,8 @@ static EGLDisplay dpy;
 static EGLConfig cfg;
 static EGLContext ctx;
 static EGLSurface surface;
+static const char *gl_vendor;
+static const char *gl_renderer;
 
 /* cairo */
 cairo_device_t *cd;
@@ -315,6 +317,9 @@ static void drm_init_egl(void)
         exit(1);
     }
 
+    gl_vendor = (char*)glGetString(GL_VENDOR);
+    gl_renderer = (char*)glGetString(GL_RENDERER);
+
     cd = cairo_egl_device_create(dpy, ctx);
     cs = cairo_gl_surface_create_for_egl(cd, surface,
                                          mode->hdisplay,
@@ -323,7 +328,7 @@ static void drm_init_egl(void)
 
 static void drm_draw_egl(void)
 {
-    drm_draw((char*)glGetString(GL_RENDERER));
+    drm_draw(gl_vendor);
     cairo_gl_surface_swapbuffers(cs);
 }
 
