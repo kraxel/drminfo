@@ -7,11 +7,13 @@ TARGETS	:= drminfo drmtest gtktest
 drminfo : CFLAGS += $(shell pkg-config --cflags libdrm)
 drminfo : LDLIBS += $(shell pkg-config --libs libdrm)
 
-drmtest : CFLAGS += $(shell pkg-config --cflags libdrm gbm epoxy cairo cairo-gl)
-drmtest : LDLIBS += $(shell pkg-config --libs libdrm gbm epoxy cairo cairo-gl)
+drmtest : CFLAGS += $(shell pkg-config --cflags libdrm gbm epoxy cairo cairo-gl pixman-1)
+drmtest : LDLIBS += $(shell pkg-config --libs libdrm gbm epoxy cairo cairo-gl pixman-1)
+drmtest : LDLIBS += -ljpeg
 
-gtktest : CFLAGS += $(shell pkg-config --cflags gtk+-3.0 cairo)
-gtktest : LDLIBS += $(shell pkg-config --libs gtk+-3.0 cairo)
+gtktest : CFLAGS += $(shell pkg-config --cflags gtk+-3.0 cairo pixman-1)
+gtktest : LDLIBS += $(shell pkg-config --libs gtk+-3.0 cairo pixman-1)
+gtktest : LDLIBS += -ljpeg
 
 all: $(TARGETS)
 
@@ -20,5 +22,5 @@ clean:
 	rm -f *~ *.o
 
 drminfo: drminfo.o drmtools.o
-drmtest: drmtest.o drmtools.o render.o
-gtktest: gtktest.o render.o
+drmtest: drmtest.o drmtools.o render.o image.o
+gtktest: gtktest.o render.o image.o

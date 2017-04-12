@@ -1,7 +1,11 @@
+#include <stdio.h>
 #include <cairo.h>
 #include <gtk/gtk.h>
 
 #include "render.h"
+#include "image.h"
+
+cairo_surface_t *image;
 
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
                               gpointer user_data)
@@ -11,9 +15,14 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
 
     width = gtk_widget_get_allocated_width(widget);
     height = gtk_widget_get_allocated_height(widget);
-    snprintf(info, sizeof(info), "gtktest: %dx%d",
-             width, height);
-    render_test(cr, width, height, info, NULL);
+
+    if (image) {
+        render_image(cr, width, height, image);
+    } else {
+        snprintf(info, sizeof(info), "gtktest: %dx%d",
+                 width, height);
+        render_test(cr, width, height, info, NULL);
+    }
     return FALSE;
 }
 
@@ -37,6 +46,11 @@ int main(int argc, char *argv[])
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size(GTK_WINDOW(window), 640, 480);
     gtk_window_set_title(GTK_WINDOW(window), "gtktest");
+
+    if (argv[1]) {
+        fprintf(stderr, "loading %s ...\n", argv[1]);
+        image = load_jpeg(argv[1]);
+    }
 
     gtk_widget_show_all(window);
 
