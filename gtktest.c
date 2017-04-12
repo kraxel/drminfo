@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
                      G_CALLBACK(gtk_main_quit), NULL);
 
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-    gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
+    gtk_window_set_default_size(GTK_WINDOW(window), 640, 480);
     gtk_window_set_title(GTK_WINDOW(window), "gtktest");
 
     gtk_widget_show_all(window);

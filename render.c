@@ -2,7 +2,7 @@
 
 #include "render.h"
 
-static int pad = 10;
+static int pad = 15;
 
 static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
                              double r, double g, double b, const char *name)
@@ -30,7 +30,7 @@ static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
 
 void render_test(cairo_t *cr, int width, int height, const char *info)
 {
-    int bar = 100;
+    int bar = 120;
 
     while (7 * bar + 2 * pad > height &&
            bar > 4 * pad)
