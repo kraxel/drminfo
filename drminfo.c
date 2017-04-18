@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -8,6 +9,7 @@
 #include <getopt.h>
 
 #include <sys/ioctl.h>
+#include <drm/drm_fourcc.h>
 
 #include <xf86drm.h>
 #include <xf86drmMode.h>
@@ -99,6 +101,51 @@ static void drm_info(int devnr)
         drmModeFreeConnector(conn);
         fprintf(stdout, "\n");
     }
+
+    fprintf(stdout, "legacy formats\n");
+    drm_probe_format(fd, 32, 24, 0, true);
+    drm_probe_format(fd, 32, 30, 0, true);
+    drm_probe_format(fd, 24, 24, 0, true);
+    drm_probe_format(fd, 16, 16, 0, true);
+    drm_probe_format(fd, 16, 15, 0, true);
+    fprintf(stdout, "\n");
+
+    fprintf(stdout, "fourcc formats\n");
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_XRGB8888,    true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_XBGR8888,    true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_RGBX8888,    true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_BGRX8888,    true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_ARGB8888,    true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_ABGR8888,    true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_RGBA8888,    true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_BGRA8888,    true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_XRGB2101010, true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_XBGR2101010, true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_RGBX1010102, true);
+    drm_probe_format(fd, 32, 0, DRM_FORMAT_BGRX1010102, true);
+
+    drm_probe_format(fd, 24, 0, DRM_FORMAT_RGB888,      true);
+    drm_probe_format(fd, 24, 0, DRM_FORMAT_BGR888,      true);
+
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_XRGB4444,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_XBGR4444,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_RGBX4444,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_BGRX4444,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_ARGB4444,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_ABGR4444,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_RGBA4444,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_BGRA4444,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_XRGB1555,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_XBGR1555,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_RGBX5551,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_BGRX5551,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_ARGB1555,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_ABGR1555,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_RGBA5551,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_BGRA5551,    true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_RGB565,      true);
+    drm_probe_format(fd, 16, 0, DRM_FORMAT_BGR565,      true);
+    fprintf(stdout, "\n");
 }
 
 /* ------------------------------------------------------------------ */

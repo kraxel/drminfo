@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -92,3 +93,52 @@ void drm_conn_name(drmModeConnector *conn, char *dest, int dlen)
 
 /* ------------------------------------------------------------------ */
 
+bool drm_probe_format(int fd, uint32_t bpp, uint32_t depth, uint32_t fourcc, bool print)
+{
+    struct drm_mode_create_dumb cd;
+    struct drm_mode_destroy_dumb dd;
+    uint32_t zero = 0;
+    uint32_t fb_id = 0;
+    bool result = false;
+    int rc;
+
+    /* create dumb buffer */
+    memset(&cd, 0, sizeof(cd));
+    cd.width = 64;
+    cd.height = 64;
+    cd.bpp = bpp;
+    rc = drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &cd);
+    if (rc < 0)
+        goto done;
+
+    /* create framebuffer */
+    if (fourcc) {
+        rc = drmModeAddFB2(fd, cd.width, cd.height, fourcc,
+                           &cd.handle, &cd.pitch, &zero,
+                           &fb_id, 0);
+        if (rc == 0 && print)
+            printf("    bpp %d, fourcc %c%c%c%c\n", cd.bpp,
+                   (fourcc >>  0) & 0xff,
+                   (fourcc >>  8) & 0xff,
+                   (fourcc >> 16) & 0xff,
+                   (fourcc >> 24) & 0xff);
+    } else if (depth) {
+        rc = drmModeAddFB(fd, cd.width, cd.height, depth, cd.bpp,
+                          cd.pitch, cd.handle, &fb_id);
+        if (rc == 0 && print)
+            printf("    bpp %d, depth %d\n", cd.bpp, depth);
+    } else {
+        rc = -1;
+    }
+
+    if (rc == 0) {
+        /* worked, yay! */
+        result = true;
+        drmModeRmFB(fd, fb_id);
+    }
+    dd.handle = cd.handle;
+    drmIoctl(fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dd);
+
+done:
+    return result;
+}
