@@ -1,1 +1,2 @@
-cairo_surface_t *load_jpeg(const char* filename);
+cairo_surface_t *load_image(const char* filename);
+

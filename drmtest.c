@@ -26,6 +26,7 @@
 
 #include "drmtools.h"
 #include "render.h"
+#include "image.h"
 
 /* ------------------------------------------------------------------ */
 
@@ -53,6 +54,9 @@ static EGLSurface surface;
 cairo_device_t *cd;
 cairo_surface_t *cs;
 cairo_t *cc;
+
+/* user options */
+cairo_surface_t *image;
 
 /* ------------------------------------------------------------------ */
 
@@ -178,7 +182,11 @@ static void drm_draw(const char *text)
     snprintf(info, sizeof(info), "drmtest: %dx%d at %s",
              mode->hdisplay, mode->vdisplay, name);
     cr = cairo_create(cs);
-    render_test(cr, mode->hdisplay, mode->vdisplay, info, text);
+    if (image) {
+        render_image(cr, mode->hdisplay, mode->vdisplay, image);
+    } else {
+        render_test(cr, mode->hdisplay, mode->vdisplay, info, text);
+    }
     cairo_destroy(cr);
 }
 
@@ -401,6 +409,7 @@ static void usage(FILE *fp)
             "  -c <nr>    pick card\n"
             "  -o <name>  pick output\n"
             "  -s <secs>  set sleep time\n"
+            "  -i <file>  load and display image <file>\n"
             "  -g         openngl mode\n"
 #if 0
             "  -d         debug mode (opengl)\n"
@@ -418,7 +427,7 @@ int main(int argc, char **argv)
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "hgdc:s:o:");
+        c = getopt(argc, argv, "hgdc:s:o:i:");
         if (c == -1)
             break;
         switch (c) {
@@ -427,6 +436,9 @@ int main(int argc, char **argv)
             break;
         case 's':
             secs = atoi(optarg);
+            break;
+        case 'i':
+            image = load_image(optarg);
             break;
         case 'o':
             output = optarg;

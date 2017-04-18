@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <errno.h>
 #include <endian.h>
@@ -12,7 +13,7 @@
 
 #include "image.h"
 
-cairo_surface_t *load_jpeg(const char* filename)
+static cairo_surface_t *load_jpeg(const char* filename)
 {
     struct jpeg_decompress_struct info;
     struct jpeg_error_mgr err;
@@ -55,4 +56,21 @@ cairo_surface_t *load_jpeg(const char* filename)
 
     fclose(file);
     return surface;
+}
+
+cairo_surface_t *load_image(const char* filename)
+{
+    char *ext = strrchr(filename, '.');
+
+    if (!ext)
+        return NULL;
+
+    if (strcasecmp(ext, ".jpeg") == 0 ||
+        strcasecmp(ext, ".jpg"))
+        return load_jpeg(filename);
+
+    if (strcasecmp(ext, ".png") == 0)
+        return cairo_image_surface_create_from_png(filename);
+
+    return NULL;
 }

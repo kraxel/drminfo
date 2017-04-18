@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
     if (argv[1]) {
         fprintf(stderr, "loading %s ...\n", argv[1]);
-        image = load_jpeg(argv[1]);
+        image = load_image(argv[1]);
     }
 
     gtk_widget_show_all(window);
