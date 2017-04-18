@@ -1,4 +1,5 @@
-./drminfo
-./drmtest
-./gtktest
+drminfo
+drmtest
+gtktest
 *.o
+!.tito/
