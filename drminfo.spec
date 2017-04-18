@@ -27,6 +27,7 @@ export CFLAGS="%{optflags}"
 make
 
 %install
+install -d %{buildroot}%{_bindir}
 install drminfo %{buildroot}%{_bindir}/drminfo
 install drmtest %{buildroot}%{_bindir}/drmtest
 
