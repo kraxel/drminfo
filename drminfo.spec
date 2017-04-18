@@ -24,7 +24,7 @@ drmtest - simple drm test app
 
 %build
 export CFLAGS="%{optflags}"
-make
+make drminfo drmtest
 
 %install
 install -d %{buildroot}%{_bindir}
