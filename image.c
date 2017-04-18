@@ -60,17 +60,20 @@ static cairo_surface_t *load_jpeg(const char* filename)
 
 cairo_surface_t *load_image(const char* filename)
 {
-    char *ext = strrchr(filename, '.');
+    const char *ext = strrchr(filename, '.');
 
-    if (!ext)
-        return NULL;
+    if (!ext) {
+        fprintf(stderr, "no file extension\n");
+        exit(1);
+    }
 
     if (strcasecmp(ext, ".jpeg") == 0 ||
-        strcasecmp(ext, ".jpg"))
+        strcasecmp(ext, ".jpg") == 0)
         return load_jpeg(filename);
 
     if (strcasecmp(ext, ".png") == 0)
         return cairo_image_surface_create_from_png(filename);
 
-    return NULL;
+    fprintf(stderr, "unknown file extension: \"%s\"\n", ext);
+    exit(1);
 }
