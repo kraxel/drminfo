@@ -77,7 +77,7 @@ static const struct fbformat fmts[] = {
         .fourcc = DRM_FORMAT_XRGB8888,
         .depth  = 24,
     },{
-        .name   = "rgb32",
+        .name   = "rgb30",
         .cairo  = CAIRO_FORMAT_RGB30,
         .bpp    = 32,
         .fourcc = DRM_FORMAT_XRGB2101010,
@@ -245,7 +245,7 @@ static void drm_init_dumb_fb(const struct fbformat *fmt)
                        &creq.handle, &creq.pitch, &zero,
                        &fb_id, 0);
     if (rc < 0) {
-        fprintf(stderr, "drmModeAddFB2() failed for %c%c%c%c\n",
+        fprintf(stderr, "drmModeAddFB2() failed (fourcc %c%c%c%c)\n",
                 (fmt->fourcc >>  0) & 0xff,
                 (fmt->fourcc >>  8) & 0xff,
                 (fmt->fourcc >> 16) & 0xff,
