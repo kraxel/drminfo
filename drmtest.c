@@ -461,6 +461,7 @@ static void usage(FILE *fp)
             "  -o <name>  pick output\n"
             "  -s <secs>  set sleep time\n"
             "  -i <file>  load and display image <file>\n"
+            "  -f <fmt>   pick framebuffer format\n"
             "  -g         openngl mode\n"
 #if 0
             "  -d         debug mode (opengl)\n"

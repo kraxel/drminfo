@@ -1,0 +1,48 @@
+.TH DRMTEST 1
+.SH NAME
+drmtest - show test image
+.SH SYNOPSIS
+\fBdrmtest\fP [\fIoptions\fP]
+.SH DESCRIPTION
+.BR drmtest
+renders a test image to the screen.
+.SH OPTIONS
+.TP
+.B -h
+Print usage info.
+.TP
+.BI "-c" "\ nr"
+Pick card number.
+.TP
+.BI "-o" "\ name"
+Pick output (use
+.BR "drminfo" "(1)"
+to print valid choices).
+.TP
+.BI "-s" "\ secs"
+Set sleep time.  Default is 60 secs.  Any key press will quit
+.B drmtest
+too.
+.TP
+.BI "-i" "\ file"
+Load and display the given image file instead of the test screen.
+Supports png and jpeg files.
+.TP
+.BI "-f" "\ fmt"
+Pick framebuffer format (rgb24, rgb30, rgb16).  Has no effect in GL mode.
+.TP
+.B -g
+Use GL mode.  Creates OpenGL context using EGL and uses that instead
+of (cairo) software rendering.
+.SH "SEE ALSO"
+.BR drminfo(1),
+.SH AUTHOR
+Gerd Hoffmann
+.BR <kraxel@redhat.com>
+.SH COPYRIGHT
+Copyright (c) 2017 Gerd Hoffmann <kraxel@redhat.com>
+.P
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
