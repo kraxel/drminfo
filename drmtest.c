@@ -13,6 +13,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <drm/drm_fourcc.h>
 
 #include <xf86drm.h>
 #include <xf86drmMode.h>
@@ -57,6 +58,38 @@ cairo_t *cc;
 
 /* user options */
 cairo_surface_t *image;
+
+/* ------------------------------------------------------------------ */
+
+struct fbformat {
+    const char      *name;
+    cairo_format_t  cairo;    /*  CAIRO_FORMAT_*   */
+    uint32_t        bpp;      /*  bytes per pixel  */
+    uint32_t        fourcc;   /*  DRM_FORMAT_*     */
+    uint32_t        depth;    /*  legacy depth     */
+};
+
+static const struct fbformat fmts[] = {
+    {
+        .name   = "rgb24",
+        .cairo  = CAIRO_FORMAT_RGB24,
+        .bpp    = 32,
+        .fourcc = DRM_FORMAT_XRGB8888,
+        .depth  = 24,
+    },{
+        .name   = "rgb32",
+        .cairo  = CAIRO_FORMAT_RGB30,
+        .bpp    = 32,
+        .fourcc = DRM_FORMAT_XRGB2101010,
+        .depth  = 30,
+    },{
+        .name   = "rgb16",
+        .cairo  = CAIRO_FORMAT_RGB16_565,
+        .bpp    = 16,
+        .fourcc = DRM_FORMAT_RGB565,
+        .depth  = 16,
+    }
+};
 
 /* ------------------------------------------------------------------ */
 
@@ -192,25 +225,31 @@ static void drm_draw(const char *text)
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dumb_fb(void)
+static void drm_init_dumb_fb(const struct fbformat *fmt)
 {
     struct drm_mode_map_dumb mreq;
+    uint32_t zero = 0;
     int rc;
 
     /* create framebuffer */
     memset(&creq, 0, sizeof(creq));
     creq.width = mode->hdisplay;
     creq.height = mode->vdisplay;
-    creq.bpp = 32;
+    creq.bpp = fmt->bpp;
     rc = drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &creq);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_MODE_CREATE_DUMB: %s\n", strerror(errno));
         exit(1);
     }
-    rc = drmModeAddFB(fd, creq.width, creq.height, 24, 32, creq.pitch,
-                      creq.handle, &fb_id);
+    rc = drmModeAddFB2(fd, creq.width, creq.height, fmt->fourcc,
+                       &creq.handle, &creq.pitch, &zero,
+                       &fb_id, 0);
     if (rc < 0) {
-        fprintf(stderr, "drmModeAddFB() failed\n");
+        fprintf(stderr, "drmModeAddFB2() failed for %c%c%c%c\n",
+                (fmt->fourcc >>  0) & 0xff,
+                (fmt->fourcc >>  8) & 0xff,
+                (fmt->fourcc >> 16) & 0xff,
+                (fmt->fourcc >> 24) & 0xff);
         exit(1);
     }
 
@@ -229,7 +268,7 @@ static void drm_init_dumb_fb(void)
     }
 
     cs = cairo_image_surface_create_for_data(fbmem,
-                                             CAIRO_FORMAT_ARGB32,
+                                             fmt->cairo,
                                              creq.width,
                                              creq.height,
                                              creq.pitch);
@@ -419,15 +458,17 @@ static void usage(FILE *fp)
 
 int main(int argc, char **argv)
 {
+    const struct fbformat *fmt = NULL;
     int card = 0;
     int secs = 60;
     bool gl = false;
     char *output = NULL;
+    char *format = NULL;
     char buf[32];
-    int c;
+    int c,i;
 
     for (;;) {
-        c = getopt(argc, argv, "hgdc:s:o:i:");
+        c = getopt(argc, argv, "hgdc:s:o:i:f:");
         if (c == -1)
             break;
         switch (c) {
@@ -442,6 +483,9 @@ int main(int argc, char **argv)
             break;
         case 'o':
             output = optarg;
+            break;
+        case 'f':
+            format = optarg;
             break;
         case 'g':
             gl = true;
@@ -461,6 +505,23 @@ int main(int argc, char **argv)
         }
     }
 
+    if (format) {
+        for (i = 0; i < sizeof(fmts)/sizeof(fmts[0]); i++) {
+            if (strcmp(format, fmts[i].name) == 0) {
+                fmt = &fmts[i];
+            }
+        }
+        if (!fmt) {
+            fprintf(stderr, "unknown format %s, valid choices are:", format);
+            for (i = 0; i < sizeof(fmts)/sizeof(fmts[0]); i++)
+                fprintf(stderr, " %s", fmts[i].name);
+            fprintf(stderr, "\n");
+            exit(1);
+        }
+    } else {
+        fmt = &fmts[0];
+    }
+
     if (gl) {
         drm_init_dev(card, output, true, true);
         drm_init_egl();
@@ -468,7 +529,7 @@ int main(int argc, char **argv)
         drm_make_egl_fb();
     } else {
         drm_init_dev(card, output, false, true);
-        drm_init_dumb_fb();
+        drm_init_dumb_fb(fmt);
         drm_draw_dumb_fb();
     }
     drm_show_fb();
