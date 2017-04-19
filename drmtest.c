@@ -92,8 +92,7 @@ static const struct fbformat fmts[] = {
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dev(int devnr, const char *output,
-                         bool need_dumb, bool need_master)
+static void drm_init_dev(int devnr, const char *output, bool need_dumb)
 {
     drmModeRes *res;
     char dev[64];
@@ -116,6 +115,7 @@ static void drm_init_dev(int devnr, const char *output,
             exit(1);
         }
     }
+#if 0
     if (need_master) {
         rc = drmSetMaster(fd);
         if (rc < 0) {
@@ -124,6 +124,7 @@ static void drm_init_dev(int devnr, const char *output,
             exit(1);
         }
     }
+#endif
 
     /* find connector */
     res = drmModeGetResources(fd);
@@ -533,12 +534,12 @@ int main(int argc, char **argv)
     }
 
     if (gl) {
-        drm_init_dev(card, output, true, true);
+        drm_init_dev(card, output, true);
         drm_init_egl();
         drm_draw_egl();
         drm_make_egl_fb();
     } else {
-        drm_init_dev(card, output, false, true);
+        drm_init_dev(card, output, false);
         drm_init_dumb_fb();
         drm_draw_dumb_fb();
     }
