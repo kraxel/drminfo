@@ -33,10 +33,9 @@
 
 struct fbformat {
     const char      *name;
-    cairo_format_t  cairo;    /*  CAIRO_FORMAT_*   */
     uint32_t        bpp;      /*  bytes per pixel  */
+    cairo_format_t  cairo;    /*  CAIRO_FORMAT_*   */
     uint32_t        fourcc;   /*  DRM_FORMAT_*     */
-    uint32_t        depth;    /*  legacy depth     */
 };
 
 /* ------------------------------------------------------------------ */
@@ -75,22 +74,19 @@ cairo_surface_t *image;
 static const struct fbformat fmts[] = {
     {
         .name   = "rgb24",
-        .cairo  = CAIRO_FORMAT_RGB24,
         .bpp    = 32,
+        .cairo  = CAIRO_FORMAT_RGB24,
         .fourcc = DRM_FORMAT_XRGB8888,
-        .depth  = 24,
     },{
         .name   = "rgb30",
-        .cairo  = CAIRO_FORMAT_RGB30,
         .bpp    = 32,
+        .cairo  = CAIRO_FORMAT_RGB30,
         .fourcc = DRM_FORMAT_XRGB2101010,
-        .depth  = 30,
     },{
         .name   = "rgb16",
-        .cairo  = CAIRO_FORMAT_RGB16_565,
         .bpp    = 16,
+        .cairo  = CAIRO_FORMAT_RGB16_565,
         .fourcc = DRM_FORMAT_RGB565,
-        .depth  = 16,
     }
 };
 
