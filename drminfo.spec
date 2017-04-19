@@ -37,5 +37,5 @@ install -m644 drminfo.man %{buildroot}%{_mandir}/man1/drminfo.1
 install -m644 drmtest.man %{buildroot}%{_mandir}/man1/drmtest.1
 
 %files
-%{_bindir}/drminfo
-%{_bindir}/drmtest
+%{_bindir}/drm*
+%{_mandir}/man1/drm*.1*
