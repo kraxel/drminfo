@@ -31,6 +31,16 @@
 
 /* ------------------------------------------------------------------ */
 
+struct fbformat {
+    const char      *name;
+    cairo_format_t  cairo;    /*  CAIRO_FORMAT_*   */
+    uint32_t        bpp;      /*  bytes per pixel  */
+    uint32_t        fourcc;   /*  DRM_FORMAT_*     */
+    uint32_t        depth;    /*  legacy depth     */
+};
+
+/* ------------------------------------------------------------------ */
+
 /* device */
 static int fd;
 static drmModeConnector *conn = NULL;
@@ -41,6 +51,7 @@ static uint32_t fb_id;
 
 /* dumb fb */
 static struct drm_mode_create_dumb creq;
+static const struct fbformat *fmt = NULL;
 static uint8_t *fbmem;
 
 /* opengl fb */
@@ -60,14 +71,6 @@ cairo_t *cc;
 cairo_surface_t *image;
 
 /* ------------------------------------------------------------------ */
-
-struct fbformat {
-    const char      *name;
-    cairo_format_t  cairo;    /*  CAIRO_FORMAT_*   */
-    uint32_t        bpp;      /*  bytes per pixel  */
-    uint32_t        fourcc;   /*  DRM_FORMAT_*     */
-    uint32_t        depth;    /*  legacy depth     */
-};
 
 static const struct fbformat fmts[] = {
     {
@@ -225,7 +228,7 @@ static void drm_draw(const char *text)
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dumb_fb(const struct fbformat *fmt)
+static void drm_init_dumb_fb(void)
 {
     struct drm_mode_map_dumb mreq;
     uint32_t zero = 0;
@@ -276,7 +279,15 @@ static void drm_init_dumb_fb(const struct fbformat *fmt)
 
 static void drm_draw_dumb_fb(void)
 {
-    drm_draw("dumb framebuffer mode");
+    char text[80];
+
+    snprintf(text, sizeof(text),
+             "dumb framebuffer, fourcc %c%c%c%c",
+             (fmt->fourcc >>  0) & 0xff,
+             (fmt->fourcc >>  8) & 0xff,
+             (fmt->fourcc >> 16) & 0xff,
+             (fmt->fourcc >> 24) & 0xff);
+    drm_draw(text);
     drmModeDirtyFB(fd, fb_id, 0, 0);
 }
 
@@ -373,7 +384,11 @@ static void drm_init_egl(void)
 
 static void drm_draw_egl(void)
 {
-    drm_draw("accelerated egl mode");
+    char text[80];
+
+    snprintf(text, sizeof(text),
+             "egl: %s", glGetString(GL_RENDERER));
+    drm_draw(text);
     cairo_gl_surface_swapbuffers(cs);
 }
 
@@ -458,7 +473,6 @@ static void usage(FILE *fp)
 
 int main(int argc, char **argv)
 {
-    const struct fbformat *fmt = NULL;
     int card = 0;
     int secs = 60;
     bool gl = false;
@@ -529,7 +543,7 @@ int main(int argc, char **argv)
         drm_make_egl_fb();
     } else {
         drm_init_dev(card, output, false, true);
-        drm_init_dumb_fb(fmt);
+        drm_init_dumb_fb();
         drm_draw_dumb_fb();
     }
     drm_show_fb();
