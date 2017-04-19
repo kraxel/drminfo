@@ -7,6 +7,8 @@ Group:        FIXME
 URL:          http://www.kraxel.org/blog/linux/%{name}/
 Source:       http://www.kraxel.org/releases/%{name}/%{name}-%{version}.tar.gz
 
+Requires:     font(liberationmono)
+
 BuildRequires: libjpeg-devel
 BuildRequires: pkgconfig(libdrm)
 BuildRequires: pkgconfig(gbm)

@@ -21,7 +21,7 @@ static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
     cairo_fill(cr);
     cairo_pattern_destroy(gr);
 
-    cairo_select_font_face(cr, "mono",
+    cairo_select_font_face(cr, "Liberation Mono",
                            CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_NORMAL);
     if (l2) {
