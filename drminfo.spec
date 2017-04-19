@@ -30,8 +30,11 @@ make drminfo drmtest
 
 %install
 install -d %{buildroot}%{_bindir}
+install -d %{buildroot}%{_mandir}/man1
 install drminfo %{buildroot}%{_bindir}/drminfo
 install drmtest %{buildroot}%{_bindir}/drmtest
+install -m644 drminfo.man %{buildroot}%{_mandir}/man1/drminfo.1
+install -m644 drmtest.man %{buildroot}%{_mandir}/man1/drmtest.1
 
 %files
 %{_bindir}/drminfo
