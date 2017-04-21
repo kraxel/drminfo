@@ -30,4 +30,5 @@ executable('drmtest',
            dependencies : drmtest_deps)
 executable('gtktest',
            sources      : gtktest_srcs,
-           dependencies : gtktest_deps)
+           dependencies : gtktest_deps,
+           install      : false)
