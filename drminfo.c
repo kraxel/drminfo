@@ -74,6 +74,23 @@ static void drm_info_conn(int fd, drmModeConnector *conn)
     }
 }
 
+static void drm_info_plane(int fd, drmModePlane *plane)
+{
+    int i;
+
+    fprintf(stdout, "plane: %d, crtc: %d, fb: %d\n",
+            plane->plane_id, plane->crtc_id, plane->fb_id);
+
+    fprintf(stdout, "    formats:");
+    for (i = 0; i < plane->count_formats; i++)
+        fprintf(stdout, " %c%c%c%c",
+                (plane->formats[i] >>  0) & 0xff,
+                (plane->formats[i] >>  8) & 0xff,
+                (plane->formats[i] >> 16) & 0xff,
+                (plane->formats[i] >> 24) & 0xff);
+    fprintf(stdout, "\n");
+}
+
 static void drm_info_fmts(int fd)
 {
     int i;
@@ -90,6 +107,8 @@ static void drm_info_fmts(int fd)
 static void drm_info(int devnr)
 {
     drmModeConnector *conn;
+    drmModePlaneRes *pres;
+    drmModePlane *plane;
     drmModeRes *res;
     char dev[64], *busid;
     int fd, i;
@@ -120,6 +139,23 @@ static void drm_info(int devnr)
 
         drm_info_conn(fd, conn);
         drmModeFreeConnector(conn);
+        fprintf(stdout, "\n");
+    }
+
+    drmSetClientCap(fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1);
+    pres = drmModeGetPlaneResources(fd);
+    if (pres == NULL) {
+        fprintf(stderr, "drmModeGetPlaneResources() failed\n");
+        exit(1);
+    }
+
+    for (i = 0; i < pres->count_planes; i++) {
+        plane = drmModeGetPlane(fd, pres->planes[i]);
+        if (!plane)
+            continue;
+
+        drm_info_plane(fd, plane);
+        drmModeFreePlane(plane);
         fprintf(stdout, "\n");
     }
 
