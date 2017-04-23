@@ -16,7 +16,7 @@ drminfo_srcs  = [ 'drminfo.c', 'drmtools.c' ]
 drmtest_srcs  = [ 'drmtest.c', 'drmtools.c', 'render.c', 'image.c' ]
 gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c' ]
 
-drminfo_deps  = [ libdrm_dep ]
+drminfo_deps  = [ libdrm_dep, cairo_dep ]
 drmtest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
                   cairo_dep, cairo_gl_dep, pixman_dep, jpeg_dep ]
 gtktest_deps  = [ gtk3_dep,

@@ -31,15 +31,6 @@
 
 /* ------------------------------------------------------------------ */
 
-struct fbformat {
-    const char      *name;
-    uint32_t        bpp;      /*  bytes per pixel  */
-    cairo_format_t  cairo;    /*  CAIRO_FORMAT_*   */
-    uint32_t        fourcc;   /*  DRM_FORMAT_*     */
-};
-
-/* ------------------------------------------------------------------ */
-
 /* device */
 static int fd;
 static drmModeConnector *conn = NULL;
@@ -68,27 +59,6 @@ cairo_t *cc;
 
 /* user options */
 cairo_surface_t *image;
-
-/* ------------------------------------------------------------------ */
-
-static const struct fbformat fmts[] = {
-    {
-        .name   = "rgb24",
-        .bpp    = 32,
-        .cairo  = CAIRO_FORMAT_RGB24,
-        .fourcc = DRM_FORMAT_XRGB8888,
-    },{
-        .name   = "rgb30",
-        .bpp    = 32,
-        .cairo  = CAIRO_FORMAT_RGB30,
-        .fourcc = DRM_FORMAT_XRGB2101010,
-    },{
-        .name   = "rgb16",
-        .bpp    = 16,
-        .cairo  = CAIRO_FORMAT_RGB16_565,
-        .fourcc = DRM_FORMAT_RGB565,
-    }
-};
 
 /* ------------------------------------------------------------------ */
 
@@ -241,16 +211,27 @@ static void drm_init_dumb_fb(void)
         fprintf(stderr, "DRM_IOCTL_MODE_CREATE_DUMB: %s\n", strerror(errno));
         exit(1);
     }
-    rc = drmModeAddFB2(fd, creq.width, creq.height, fmt->fourcc,
-                       &creq.handle, &creq.pitch, &zero,
-                       &fb_id, 0);
-    if (rc < 0) {
-        fprintf(stderr, "drmModeAddFB2() failed (fourcc %c%c%c%c)\n",
-                (fmt->fourcc >>  0) & 0xff,
-                (fmt->fourcc >>  8) & 0xff,
-                (fmt->fourcc >> 16) & 0xff,
-                (fmt->fourcc >> 24) & 0xff);
-        exit(1);
+
+    if (fmt->fourcc) {
+        rc = drmModeAddFB2(fd, creq.width, creq.height, fmt->fourcc,
+                           &creq.handle, &creq.pitch, &zero,
+                           &fb_id, 0);
+        if (rc < 0) {
+            fprintf(stderr, "drmModeAddFB2() failed (fourcc %c%c%c%c)\n",
+                    (fmt->fourcc >>  0) & 0xff,
+                    (fmt->fourcc >>  8) & 0xff,
+                    (fmt->fourcc >> 16) & 0xff,
+                    (fmt->fourcc >> 24) & 0xff);
+            exit(1);
+        }
+    } else {
+        rc = drmModeAddFB(fd, creq.width, creq.height, fmt->depth, fmt->bpp,
+                          creq.pitch, creq.handle, &fb_id);
+        if (rc < 0) {
+            fprintf(stderr, "drmModeAddFB() failed (bpp %d, depth %d)\n",
+                    fmt->bpp, fmt->depth);
+            exit(1);
+        }
     }
 
     /* map framebuffer */
@@ -518,16 +499,18 @@ int main(int argc, char **argv)
     }
 
     if (format) {
-        for (i = 0; i < sizeof(fmts)/sizeof(fmts[0]); i++) {
+        for (i = 0; i < fmtcnt; i++) {
             if (strcmp(format, fmts[i].name) == 0) {
                 fmt = &fmts[i];
             }
         }
         if (!fmt) {
-            fprintf(stderr, "unknown format %s, valid choices are:", format);
-            for (i = 0; i < sizeof(fmts)/sizeof(fmts[0]); i++)
-                fprintf(stderr, " %s", fmts[i].name);
-            fprintf(stderr, "\n");
+            fprintf(stderr, "unknown format %s, valid choices are:\n", format);
+            for (i = 0; i < fmtcnt; i++) {
+                if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
+                    continue;
+                drm_print_format(stderr, &fmts[i]);
+            }
             exit(1);
         }
     } else {
