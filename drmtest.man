@@ -29,7 +29,7 @@ Load and display the given image file instead of the test screen.
 Supports png and jpeg files.
 .TP
 .BI "-f" "\ fmt"
-Pick framebuffer format (rgb24, rgb30, rgb16).  Has no effect in GL mode.
+Pick framebuffer format.  Has no effect in GL mode.
 .TP
 .B -g
 Use GL mode.  Creates OpenGL context using EGL and uses that instead

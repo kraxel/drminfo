@@ -259,12 +259,19 @@ static void drm_draw_dumb_fb(void)
 {
     char text[80];
 
-    snprintf(text, sizeof(text),
-             "dumb framebuffer, fourcc %c%c%c%c",
-             (fmt->fourcc >>  0) & 0xff,
-             (fmt->fourcc >>  8) & 0xff,
-             (fmt->fourcc >> 16) & 0xff,
-             (fmt->fourcc >> 24) & 0xff);
+    if (fmt->fourcc) {
+        snprintf(text, sizeof(text),
+                 "dumb framebuffer, bpp %d, fourcc %c%c%c%c (ADDFB2)",
+                 fmt->bpp,
+                 (fmt->fourcc >>  0) & 0xff,
+                 (fmt->fourcc >>  8) & 0xff,
+                 (fmt->fourcc >> 16) & 0xff,
+                 (fmt->fourcc >> 24) & 0xff);
+    } else {
+        snprintf(text, sizeof(text),
+                 "dumb framebuffer, bpp %d, depth %d (legacy ADDFB)",
+                 fmt->bpp, fmt->depth);
+    }
     drm_draw(text);
     drmModeDirtyFB(fd, fb_id, 0, 0);
 }
