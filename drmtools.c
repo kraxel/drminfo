@@ -28,8 +28,7 @@
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 # define LE_BE(_le, _be) (_le)
-#endif
-#if __BYTE_ORDER == __BIG_ENDIAN
+#elif __BYTE_ORDER == __BIG_ENDIAN
 # define LE_BE(_le, _be) (_be)
 #endif
 
