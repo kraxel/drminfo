@@ -15,6 +15,11 @@ Print usage info.
 .TP
 .BI "-c" "\ nr"
 Pick card number.
+.TP
+.B -l
+Print all known framebuffer formats.
+.BR drminfo
+supports rgb and packed yuv formats only.
 .SH "SEE ALSO"
 .BR drmtest(1),
 .SH AUTHOR
