@@ -18,4 +18,5 @@ const char *drm_connector_mode_name(int nr);
 const char *drm_encoder_type_name(int nr);
 void drm_conn_name(drmModeConnector *conn, char *dest, int dlen);
 bool drm_probe_format(int fd, const struct fbformat *fmt);
-void drm_print_format(FILE *fp, const struct fbformat *fmt);
+void drm_print_format(FILE *fp, const struct fbformat *fmt,
+                      const char *pre, const char *post);

@@ -99,7 +99,7 @@ static void drm_info_fmts(int fd)
     for (i = 0; i < fmtcnt; i++) {
         if (!drm_probe_format(fd, &fmts[i]))
             continue;
-        drm_print_format(stdout, &fmts[i]);
+        drm_print_format(stdout, &fmts[i], "    ", "");
     }
     fprintf(stdout, "\n");
 }
@@ -164,11 +164,14 @@ static void drm_info(int devnr)
 
 static void list_formats(FILE *fp)
 {
+    char libs[64];
     int i;
 
     fprintf(stdout, "all known framebuffer formats (rgb + packed yuv)\n");
     for (i = 0; i < fmtcnt; i++) {
-        drm_print_format(stdout, &fmts[i]);
+        snprintf(libs, sizeof(libs), " %s",
+                 (fmts[i].cairo == CAIRO_FORMAT_INVALID) ? "" : "cairo");
+        drm_print_format(stdout, &fmts[i], "", libs);
     }
     fprintf(stdout, "\n");
 }

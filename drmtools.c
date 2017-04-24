@@ -27,9 +27,9 @@
         0 }
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-# define LE_BE(_le, _be) (_le)
+# define LE_BE(_le, _be) _le
 #elif __BYTE_ORDER == __BIG_ENDIAN
-# define LE_BE(_le, _be) (_be)
+# define LE_BE(_le, _be) _be
 #endif
 
 const struct fbformat fmts[] = {
@@ -512,11 +512,14 @@ done:
     return result;
 }
 
-void drm_print_format(FILE *fp, const struct fbformat *fmt)
+void drm_print_format(FILE *fp, const struct fbformat *fmt,
+                      const char *pre, const char *post)
 {
-    fprintf(fp, "    %-8s:  [%2d:0]  %-14s %-11s %s\n",
+    fprintf(fp, "%s%-8s:  [%2d:0]  %-14s %-11s %-24s%s\n",
+            pre,
             fmt->name, fmt->bpp - 1, fmt->fields, fmt->bits,
             fmt->fourcc
-            ? "fourcc (addfb2), little endian"
-            : "legacy (addfb), native endian");
+            ? "fourcc (addfb2), le"
+            : "legacy (addfb), cpu " LE_BE("(le)", "(be)"),
+            post);
 }
