@@ -75,6 +75,29 @@ static void drm_info_conn(int fd, drmModeConnector *conn)
     }
 }
 
+static void drm_info_conns(int fd)
+{
+    drmModeConnector *conn;
+    drmModeRes *res;
+    int i;
+
+    res = drmModeGetResources(fd);
+    if (res == NULL) {
+        fprintf(stderr, "drmModeGetResources() failed\n");
+        exit(1);
+    }
+
+    for (i = 0; i < res->count_connectors; i++) {
+        conn = drmModeGetConnector(fd, res->connectors[i]);
+        if (!conn)
+            continue;
+
+        drm_info_conn(fd, conn);
+        drmModeFreeConnector(conn);
+        fprintf(stdout, "\n");
+    }
+}
+
 static void drm_info_plane(int fd, drmModePlane *plane)
 {
     int i;
@@ -92,56 +115,11 @@ static void drm_info_plane(int fd, drmModePlane *plane)
     fprintf(stdout, "\n");
 }
 
-static void drm_info_fmts(int fd)
+static void drm_info_planes(int fd)
 {
-    int i;
-
-    fprintf(stdout, "framebuffer formats\n");
-    for (i = 0; i < fmtcnt; i++) {
-        if (!drm_probe_format(fd, &fmts[i]))
-            continue;
-        drm_print_format(stdout, &fmts[i], 4, true);
-    }
-    fprintf(stdout, "\n");
-}
-
-static void drm_info(int devnr)
-{
-    drmModeConnector *conn;
     drmModePlaneRes *pres;
     drmModePlane *plane;
-    drmModeRes *res;
-    char dev[64], *busid;
-    int fd, i;
-
-    snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
-    fd = open(dev, O_RDWR);
-    if (fd < 0) {
-        fprintf(stderr, "open %s: %s\n", dev, strerror(errno));
-        exit(1);
-    }
-
-    busid = drmGetBusid(fd);
-    if (busid) {
-        fprintf(stdout, "busid: \"%s\"\n", busid);
-    }
-    fprintf(stdout, "\n");
-
-    res = drmModeGetResources(fd);
-    if (res == NULL) {
-        fprintf(stderr, "drmModeGetResources() failed\n");
-        exit(1);
-    }
-
-    for (i = 0; i < res->count_connectors; i++) {
-        conn = drmModeGetConnector(fd, res->connectors[i]);
-        if (!conn)
-            continue;
-
-        drm_info_conn(fd, conn);
-        drmModeFreeConnector(conn);
-        fprintf(stdout, "\n");
-    }
+    int i;
 
     drmSetClientCap(fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1);
     pres = drmModeGetPlaneResources(fd);
@@ -159,7 +137,47 @@ static void drm_info(int devnr)
         drmModeFreePlane(plane);
         fprintf(stdout, "\n");
     }
+}
 
+static void drm_info_fmts(int fd)
+{
+    int i;
+
+    fprintf(stdout, "framebuffer formats\n");
+    for (i = 0; i < fmtcnt; i++) {
+        if (!drm_probe_format(fd, &fmts[i]))
+            continue;
+        drm_print_format(stdout, &fmts[i], 4, true);
+    }
+    fprintf(stdout, "\n");
+}
+
+static int drm_open(int devnr)
+{
+    char dev[64];
+    int fd;
+
+    snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
+    fd = open(dev, O_RDWR);
+    if (fd < 0) {
+        fprintf(stderr, "open %s: %s\n", dev, strerror(errno));
+        exit(1);
+    }
+    return fd;
+}
+
+static void drm_info_all(int fd)
+{
+    char *busid;
+
+    busid = drmGetBusid(fd);
+    if (busid) {
+        fprintf(stdout, "busid: \"%s\"\n", busid);
+    }
+    fprintf(stdout, "\n");
+
+    drm_info_conns(fd);
+    drm_info_planes(fd);
     drm_info_fmts(fd);
 }
 
@@ -193,7 +211,7 @@ static void usage(FILE *fp)
 int main(int argc, char **argv)
 {
     int card = 0;
-    int c;
+    int c, fd;
 
     for (;;) {
         c = getopt(argc, argv, "hlc:");
@@ -215,6 +233,7 @@ int main(int argc, char **argv)
         }
     }
 
-    drm_info(card);
+    fd = drm_open(card);
+    drm_info_all(fd);
     return 0;
 }
