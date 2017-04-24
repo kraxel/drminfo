@@ -144,6 +144,7 @@ static void drm_info_fmts(int fd)
     int i;
 
     fprintf(stdout, "framebuffer formats\n");
+    drm_print_format_hdr(stdout, 4, true);
     for (i = 0; i < fmtcnt; i++) {
         if (!drm_probe_format(fd, &fmts[i]))
             continue;
