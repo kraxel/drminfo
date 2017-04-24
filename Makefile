@@ -4,8 +4,8 @@ CFLAGS	+= -Wall
 
 TARGETS	:= drminfo drmtest gtktest
 
-drminfo : CFLAGS += $(shell pkg-config --cflags libdrm cairo)
-drminfo : LDLIBS += $(shell pkg-config --libs libdrm cairo)
+drminfo : CFLAGS += $(shell pkg-config --cflags libdrm cairo pixman-1)
+drminfo : LDLIBS += $(shell pkg-config --libs libdrm cairo pixman-1)
 
 drmtest : CFLAGS += $(shell pkg-config --cflags libdrm gbm epoxy cairo cairo-gl pixman-1)
 drmtest : LDLIBS += $(shell pkg-config --libs libdrm gbm epoxy cairo cairo-gl pixman-1)

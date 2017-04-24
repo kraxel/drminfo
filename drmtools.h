@@ -1,11 +1,12 @@
 struct fbformat {
-    const char      name[8];
-    const char      fields[16];
-    const char      bits[16];
-    uint32_t        bpp;      /*  bytes per pixel         */
-    uint32_t        depth;    /*  legacy        (ADDFB)   */
-    uint32_t        fourcc;   /*  DRM_FORMAT_*  (ADDFB2)  */
-    cairo_format_t  cairo;    /*  CAIRO_FORMAT_*          */
+    const char            name[8];
+    const char            fields[16];
+    const char            bits[16];
+    uint32_t              bpp;      /*  bytes per pixel         */
+    uint32_t              depth;    /*  legacy        (ADDFB)   */
+    uint32_t              fourcc;   /*  DRM_FORMAT_*  (ADDFB2)  */
+    cairo_format_t        cairo;    /*  CAIRO_FORMAT_*          */
+    pixman_format_code_t  pixman;   /* PIXMAN_*                 */
 };
 
 extern const struct fbformat fmts[];

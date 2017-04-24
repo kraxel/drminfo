@@ -24,6 +24,7 @@
 
 #include <cairo.h>
 #include <cairo-gl.h>
+#include <pixman.h>
 
 #include "drmtools.h"
 #include "render.h"

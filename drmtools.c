@@ -14,6 +14,7 @@
 #include <xf86drmMode.h>
 
 #include <cairo.h>
+#include <pixman.h>
 
 #include "drmtools.h"
 
@@ -45,6 +46,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .depth  = 24,
         .cairo  = CAIRO_FORMAT_RGB24,
+        .pixman = PIXMAN_x8r8g8b8,
     },{
         .name   = "30",
         .fields = "x:R:G:B",
@@ -52,6 +54,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .depth  = 30,
         .cairo  = CAIRO_FORMAT_RGB30,
+        .pixman = PIXMAN_x2b10g10r10,
     },{
         .name   = "15",
         .fields = "x:R:G:B",
@@ -59,6 +62,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .depth  = 15,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = PIXMAN_x1r5g5b5,
     },{
         .name   = "16",
         .fields = "R:G:B",
@@ -66,6 +70,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .depth  = 16,
         .cairo  = CAIRO_FORMAT_RGB16_565,
+        .pixman = PIXMAN_r5g6b5,
     },
 
     /*
@@ -81,6 +86,7 @@ const struct fbformat fmts[] = {
         .bpp    = 8,
         .fourcc = DRM_FORMAT_RGB332,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = PIXMAN_r3g3b2,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGR233),
         .fields = "B:G:R",
@@ -88,6 +94,7 @@ const struct fbformat fmts[] = {
         .bpp    = 8,
         .fourcc = DRM_FORMAT_BGR233,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = PIXMAN_b2g3r3,
     },
 
     /* -- 16 bpp, rgb --- */
@@ -98,6 +105,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_XRGB4444,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_x4r4g4b4, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_XBGR4444),
         .fields = "x:B:G:R",
@@ -105,6 +113,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_XBGR4444,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_x4b4g4r4, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_RGBX4444),
         .fields = "R:G:B:x",
@@ -112,6 +121,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_RGBX4444,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGRX4444),
         .fields = "B:G:R:x",
@@ -119,6 +129,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_BGRX4444,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_ARGB4444),
         .fields = "A:R:G:B",
@@ -126,6 +137,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_ARGB4444,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_a4r4g4b4, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_ABGR4444),
         .fields = "A:B:G:R",
@@ -133,6 +145,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_ABGR4444,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_a4b4g4r4, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_RGBA4444),
         .fields = "R:G:B:A",
@@ -140,6 +153,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_RGBA4444,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGRA4444),
         .fields = "B:G:R:A",
@@ -147,6 +161,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_BGRA4444,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_XRGB1555),
         .fields = "x:R:G:B",
@@ -154,6 +169,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_XRGB1555,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_x1r5g5b5, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_XBGR1555),
         .fields = "x:B:G:R",
@@ -161,6 +177,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_XBGR1555,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_x1b5g5r5, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_RGBX5551),
         .fields = "R:G:B:x",
@@ -168,6 +185,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_RGBX5551,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGRX5551),
         .fields = "B:G:R:x",
@@ -175,6 +193,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_BGRX5551,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_ARGB1555),
         .fields = "A:R:G:B",
@@ -182,6 +201,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_ARGB1555,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_a1r5g5b5, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_ABGR1555),
         .fields = "A:B:G:R",
@@ -189,6 +209,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_ABGR1555,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_a1b5g5r5, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_RGBA5551),
         .fields = "R:G:B:A",
@@ -196,6 +217,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_RGBA5551,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGRA5551),
         .fields = "B:G:R:A",
@@ -203,6 +225,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_BGRA5551,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_RGB565),
         .fields = "R:G:B",
@@ -210,6 +233,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_RGB565,
         .cairo  = LE_BE(CAIRO_FORMAT_RGB16_565, CAIRO_FORMAT_INVALID),
+        .pixman = LE_BE(PIXMAN_r5g6b5, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGR565),
         .fields = "B:G:R",
@@ -217,6 +241,7 @@ const struct fbformat fmts[] = {
         .bpp    = 16,
         .fourcc = DRM_FORMAT_BGR565,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_b5g6r5, 0),
     },
 
     /* --- 24 bpp, rgb --- */
@@ -227,6 +252,7 @@ const struct fbformat fmts[] = {
         .bpp    = 24,
         .fourcc = DRM_FORMAT_RGB888,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_r8g8b8, PIXMAN_b8g8r8),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGR888),
         .fields = "B:G:R",
@@ -234,6 +260,7 @@ const struct fbformat fmts[] = {
         .bpp    = 24,
         .fourcc = DRM_FORMAT_BGR888,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_b8g8r8, PIXMAN_r8g8b8),
     },
 
     /* --- 32 bpp, rgb --- */
@@ -244,6 +271,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_XRGB8888,
         .cairo  = LE_BE(CAIRO_FORMAT_RGB24, CAIRO_FORMAT_INVALID),
+        .pixman = LE_BE(PIXMAN_x8r8g8b8, PIXMAN_b8g8r8x8),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_XBGR8888),
         .fields = "x:B:G:R",
@@ -251,6 +279,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_XBGR8888,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_x8b8g8r8, PIXMAN_r8g8b8x8),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_RGBX8888),
         .fields = "R:G:B:x",
@@ -258,6 +287,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_RGBX8888,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_r8g8b8x8, PIXMAN_x8b8g8r8),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGRX8888),
         .fields = "B:G:R:x",
@@ -265,6 +295,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_BGRX8888,
         .cairo  = LE_BE(CAIRO_FORMAT_INVALID, CAIRO_FORMAT_RGB24),
+        .pixman = LE_BE(PIXMAN_b8g8r8x8, PIXMAN_x8r8g8b8),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_ARGB8888),
         .fields = "A:R:G:B",
@@ -272,6 +303,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_ARGB8888,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_a8r8g8b8, PIXMAN_b8g8r8a8),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_ABGR8888),
         .fields = "A:B:G:R",
@@ -279,6 +311,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_ABGR8888,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_a8b8g8r8, PIXMAN_r8g8b8a8),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_RGBA8888),
         .fields = "R:G:B:A",
@@ -286,6 +319,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_RGBA8888,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_r8g8b8a8, PIXMAN_a8b8g8r8),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGRA8888),
         .fields = "B:G:R:A",
@@ -293,13 +327,15 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_BGRA8888,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_b8g8r8a8, PIXMAN_a8r8g8b8),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_XRGB2101010),
         .fields = "x:R:G:B",
         .bits   = "2:10:10:10",
         .bpp    = 32,
         .fourcc = DRM_FORMAT_XRGB2101010,
-        .cairo  = LE_BE(CAIRO_FORMAT_RGB30, CAIRO_FORMAT_INVALID)
+        .cairo  = LE_BE(CAIRO_FORMAT_RGB30, CAIRO_FORMAT_INVALID),
+        .pixman = LE_BE(PIXMAN_x2r10g10b10, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_XBGR2101010),
         .fields = "x:B:G:R",
@@ -307,6 +343,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_XBGR2101010,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_x2b10g10r10, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_RGBX1010102),
         .fields = "R:G:B:x",
@@ -314,6 +351,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_RGBX1010102,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGRX1010102),
         .fields = "B:G:R:x",
@@ -321,6 +359,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_BGRX1010102,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_ARGB2101010),
         .fields = "A:R:G:B",
@@ -328,6 +367,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_ARGB2101010,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_a2r10g10b10, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_ABGR2101010),
         .fields = "A:B:G:R",
@@ -335,6 +375,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_ABGR2101010,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = LE_BE(PIXMAN_a2b10g10r10, 0),
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_RGBA1010102),
         .fields = "R:G:B:A",
@@ -342,6 +383,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_RGBA1010102,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_BGRA1010102),
         .fields = "B:G:R:A",
@@ -349,6 +391,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_BGRA1010102,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },
 
     /* --- 32 bpp, yuv --- */
@@ -359,6 +402,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_YUYV,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_YVYU),
         .fields = "Cb0:Y1:Cr0:Y0",
@@ -366,6 +410,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_YVYU,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_UYVY),
         .fields = "Y1:Cr0:Y0:Cb0",
@@ -373,6 +418,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_UYVY,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_VYUY),
         .fields = "Y1:Cb0:Y0:Cr0",
@@ -380,6 +426,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_VYUY,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },{
         .name   = FOURCC_NAME(DRM_FORMAT_AYUV),
         .fields = "A:Y:Cb:Cr",
@@ -387,6 +434,7 @@ const struct fbformat fmts[] = {
         .bpp    = 32,
         .fourcc = DRM_FORMAT_AYUV,
         .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = 0,
     },
 };
 const uint32_t fmtcnt = sizeof(fmts)/sizeof(fmts[0]);
@@ -522,8 +570,9 @@ void drm_print_format(FILE *fp, const struct fbformat *fmt,
             ? "fourcc  le"
             : "legacy  cpu " LE_BE("(le)", "(be)"));
     if (libs) {
-        fprintf(fp, "  %s",
-                (fmt->cairo == CAIRO_FORMAT_INVALID) ? "" : "cairo");
+        fprintf(fp, "  %-5s %-6s",
+                (fmt->cairo != CAIRO_FORMAT_INVALID) ? "cairo"  : "",
+                fmt->pixman                          ? "pixman" : "");
     }
     fprintf(fp, "\n");
 }
@@ -535,7 +584,7 @@ void drm_print_format_hdr(FILE *fp, int indent, bool libs)
             "name", "bpp", "fields", "bits",
             "type    endian");
     if (libs) {
-        fprintf(fp, "  libs");
+        fprintf(fp, "  lib support");
     }
     fprintf(fp, "\n");
 }

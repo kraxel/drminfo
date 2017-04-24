@@ -15,6 +15,7 @@
 #include <xf86drmMode.h>
 
 #include <cairo.h>
+#include <pixman.h>
 
 #include "drmtools.h"
 
