@@ -570,9 +570,9 @@ void drm_print_format(FILE *fp, const struct fbformat *fmt,
             ? "fourcc  le"
             : "legacy  cpu " LE_BE("(le)", "(be)"));
     if (libs) {
-        fprintf(fp, "  %-5s %-6s",
-                (fmt->cairo != CAIRO_FORMAT_INVALID) ? "cairo"  : "",
-                fmt->pixman                          ? "pixman" : "");
+        fprintf(fp, "  %-6s %-5s",
+                fmt->pixman                          ? "pixman" : "",
+                (fmt->cairo != CAIRO_FORMAT_INVALID) ? "cairo"  : "");
     }
     fprintf(fp, "\n");
 }
