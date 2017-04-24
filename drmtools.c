@@ -513,13 +513,29 @@ done:
 }
 
 void drm_print_format(FILE *fp, const struct fbformat *fmt,
-                      const char *pre, const char *post)
+                      int indent, bool libs)
 {
-    fprintf(fp, "%s%-8s:  [%2d:0]  %-14s %-11s %-24s%s\n",
-            pre,
+    fprintf(fp, "%*s%-8s:  [%2d:0]  %-14s %-11s %-16s",
+            indent, "",
             fmt->name, fmt->bpp - 1, fmt->fields, fmt->bits,
             fmt->fourcc
-            ? "fourcc (addfb2), le"
-            : "legacy (addfb), cpu " LE_BE("(le)", "(be)"),
-            post);
+            ? "fourcc  le"
+            : "legacy  cpu " LE_BE("(le)", "(be)"));
+    if (libs) {
+        fprintf(fp, "  %s",
+                (fmt->cairo == CAIRO_FORMAT_INVALID) ? "" : "cairo");
+    }
+    fprintf(fp, "\n");
+}
+
+void drm_print_format_hdr(FILE *fp, int indent, bool libs)
+{
+    fprintf(fp, "%*s%-8s:  %-6s  %-14s %-11s %-16s",
+            indent, "",
+            "name", "bpp", "fields", "bits",
+            "type    endian");
+    if (libs) {
+        fprintf(fp, "  libs");
+    }
+    fprintf(fp, "\n");
 }

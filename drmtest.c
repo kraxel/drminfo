@@ -516,7 +516,7 @@ int main(int argc, char **argv)
             for (i = 0; i < fmtcnt; i++) {
                 if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
                     continue;
-                drm_print_format(stderr, &fmts[i], "    ", "");
+                drm_print_format(stderr, &fmts[i], 4, false);
             }
             exit(1);
         }
