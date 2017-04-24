@@ -16,8 +16,18 @@ Print usage info.
 .BI "-c" "\ nr"
 Pick card number.
 .TP
+.B -a
+Print all card info.
+.B -m
+Print misc card info (busid).
+.B -o
+Print supported outputs (crtcs).
+.B -p
+Print supported planes.
+.B -f
+Print supported framebuffer formats.
 .B -l
-Print all known framebuffer formats.
+List all known framebuffer formats.
 .BR drminfo
 supports rgb and packed yuv formats only.
 .SH "SEE ALSO"

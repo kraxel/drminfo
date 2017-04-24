@@ -166,7 +166,7 @@ static int drm_open(int devnr)
     return fd;
 }
 
-static void drm_info_all(int fd)
+static void drm_info_misc(int fd)
 {
     char *busid;
 
@@ -175,10 +175,6 @@ static void drm_info_all(int fd)
         fprintf(stdout, "busid: \"%s\"\n", busid);
     }
     fprintf(stdout, "\n");
-
-    drm_info_conns(fd);
-    drm_info_planes(fd);
-    drm_info_fmts(fd);
 }
 
 static void list_formats(FILE *fp)
@@ -204,7 +200,12 @@ static void usage(FILE *fp)
             "options:\n"
             "  -h         print this\n"
             "  -c <nr>    pick card\n"
-            "  -l         print all known formats\n"
+            "  -a         print all card info\n"
+            "  -m         print misc card info (busid)\n"
+            "  -o         print supported outputs (crtcs)\n"
+            "  -p         print supported planes\n"
+            "  -f         print supported formats\n"
+            "  -l         list all known formats\n"
             "\n");
 }
 
@@ -212,9 +213,13 @@ int main(int argc, char **argv)
 {
     int card = 0;
     int c, fd;
+    bool misc = false;
+    bool conn = false;
+    bool plane = false;
+    bool format = false;
 
     for (;;) {
-        c = getopt(argc, argv, "hlc:");
+        c = getopt(argc, argv, "hlamopfc:");
         if (c == -1)
             break;
         switch (c) {
@@ -224,6 +229,24 @@ int main(int argc, char **argv)
         case 'l':
             list_formats(stdout);
             exit(0);
+        case 'a':
+            misc = true;
+            conn = true;
+            plane = true;
+            format = true;
+            break;
+        case 'm':
+            misc = true;
+            break;
+        case 'o':
+            conn = true;
+            break;
+        case 'p':
+            plane = true;
+            break;
+        case 'f':
+            format = true;
+            break;
         case 'h':
             usage(stdout);
             exit(0);
@@ -234,6 +257,13 @@ int main(int argc, char **argv)
     }
 
     fd = drm_open(card);
-    drm_info_all(fd);
+    if (misc)
+        drm_info_misc(fd);
+    if (conn)
+        drm_info_conns(fd);
+    if (plane)
+        drm_info_planes(fd);
+    if (format)
+        drm_info_fmts(fd);
     return 0;
 }
