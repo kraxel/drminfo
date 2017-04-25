@@ -24,10 +24,12 @@ gtktest_deps  = [ gtk3_dep,
 
 executable('drminfo',
            sources      : drminfo_srcs,
-           dependencies : drminfo_deps)
+           dependencies : drminfo_deps,
+           install      : true)
 executable('drmtest',
            sources      : drmtest_srcs,
-           dependencies : drmtest_deps)
+           dependencies : drmtest_deps,
+           install      : true)
 executable('gtktest',
            sources      : gtktest_srcs,
            dependencies : gtktest_deps,
