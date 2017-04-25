@@ -34,3 +34,6 @@ executable('gtktest',
            sources      : gtktest_srcs,
            dependencies : gtktest_deps,
            install      : false)
+
+install_man('drminfo.1')
+install_man('drmtest.1')
