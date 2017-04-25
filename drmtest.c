@@ -13,7 +13,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#include <drm/drm_fourcc.h>
+#include <libdrm/drm_fourcc.h>
 
 #include <xf86drm.h>
 #include <xf86drmMode.h>

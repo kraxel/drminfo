@@ -8,7 +8,7 @@
 #include <inttypes.h>
 
 #include <sys/ioctl.h>
-#include <drm/drm_fourcc.h>
+#include <libdrm/drm_fourcc.h>
 
 #include <xf86drm.h>
 #include <xf86drmMode.h>
