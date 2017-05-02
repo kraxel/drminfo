@@ -1,3 +1,24 @@
+MESON	:= $(shell which meson 2>&1)
+
+ifneq ($(MESON),)
+
+HOST	:= $(shell hostname -s)
+BDIR	:= build-meson-$(HOST)
+
+build: $(BDIR)/build.ninja
+	ninja-build -C $(BDIR)
+
+install: build
+	ninja-build -C $(BDIR) install
+
+clean:
+	rm -rf $(BDIR)
+
+$(BDIR)/build.ninja:
+	$(MESON) $(BDIR)
+
+else
+
 CC	?= gcc
 CFLAGS	?= -Os -g -std=c99
 CFLAGS	+= -Wall
@@ -24,3 +45,5 @@ clean:
 drminfo: drminfo.o drmtools.o
 drmtest: drmtest.o drmtools.o render.o image.o
 gtktest: gtktest.o render.o image.o
+
+endif
