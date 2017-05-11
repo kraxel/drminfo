@@ -27,7 +27,7 @@ drmtest - simple drm test app
 
 %build
 export CFLAGS="%{optflags}"
-meson build-rpm
+meson --prefix=%{prefix} build-rpm
 ninja-build -C build-rpm
 
 %install
