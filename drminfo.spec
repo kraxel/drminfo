@@ -9,6 +9,7 @@ Source:       http://www.kraxel.org/releases/%{name}/%{name}-%{version}.tar.gz
 
 Requires:     font(liberationmono)
 
+BuildRequires: meson ninja-build
 BuildRequires: libjpeg-devel
 BuildRequires: pkgconfig(libdrm)
 BuildRequires: pkgconfig(gbm)
@@ -26,15 +27,12 @@ drmtest - simple drm test app
 
 %build
 export CFLAGS="%{optflags}"
-make drminfo drmtest
+meson build-rpm
+ninja-build -C build-rpm
 
 %install
-install -d %{buildroot}%{_bindir}
-install -d %{buildroot}%{_mandir}/man1
-install drminfo %{buildroot}%{_bindir}/drminfo
-install drmtest %{buildroot}%{_bindir}/drmtest
-install -m644 drminfo.1 %{buildroot}%{_mandir}/man1/drminfo.1
-install -m644 drmtest.1 %{buildroot}%{_mandir}/man1/drmtest.1
+export DESTDIR=%{buildroot}
+ninja-build -C build-rpm install
 
 %files
 %{_bindir}/drm*
