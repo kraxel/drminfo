@@ -17,6 +17,7 @@ BuildRequires: pkgconfig(epoxy)
 BuildRequires: pkgconfig(cairo)
 BuildRequires: pkgconfig(cairo-gl)
 BuildRequires: pkgconfig(pixman-1)
+BuildRequires: pkgconfig(gtk+-3.0)
 
 %description
 drminfo - print drm device props
