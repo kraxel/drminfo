@@ -10,7 +10,7 @@ build: $(BDIR)/build.ninja
 	$(NINJA) -C $(BDIR)
 
 install: build
-	$(NNJA) -C $(BDIR) install
+	$(NINJA) -C $(BDIR) install
 
 clean:
 	rm -rf $(BDIR)
