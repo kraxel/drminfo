@@ -63,11 +63,13 @@ cairo_surface_t *image;
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dev(int devnr, const char *output, bool need_dumb)
+static void drm_init_dev(int devnr, const char *output,
+                         const char *modename, bool need_dumb)
 {
     drmModeRes *res;
     char dev[64];
     char name[64];
+    char m[64];
     int i, rc;
     uint64_t has_dumb;
 
@@ -143,7 +145,23 @@ static void drm_init_dev(int devnr, const char *output, bool need_dumb)
         fprintf(stderr, "no usable connector found\n");
         exit(1);
     }
-    mode = &conn->modes[0];
+
+    if (modename) {
+        for (i = 0; i < conn->count_modes; i++) {
+            snprintf(m, sizeof(m), "%dx%d",
+                     conn->modes[i].hdisplay,
+                     conn->modes[i].vdisplay);
+            if (strcmp(m, modename) == 0) {
+                fprintf(stderr, "Using mode %s\n", modename);
+                mode = &conn->modes[i];
+                break;
+            }
+        }
+    }
+    if (!mode) {
+        mode = &conn->modes[0];
+    }
+
     enc = drmModeGetEncoder(fd, conn->encoder_id);
     if (enc == NULL) {
         fprintf(stderr, "drmModeGetEncoder() failed\n");
@@ -169,7 +187,7 @@ static void drm_show_fb(void)
 
     rc = drmModeSetCrtc(fd, enc->crtc_id, fb_id, 0, 0,
                         &conn->connector_id, 1,
-                        &conn->modes[0]);
+                        mode);
     if (rc < 0) {
         fprintf(stderr, "drmModeSetCrtc() failed\n");
         exit (1);
@@ -451,6 +469,7 @@ static void usage(FILE *fp)
             "  -s <secs>  set sleep time\n"
             "  -i <file>  load and display image <file>\n"
             "  -f <fmt>   pick framebuffer format\n"
+            "  -m <mode>  pick video mode format\n"
             "  -g         openngl mode\n"
 #if 0
             "  -d         debug mode (opengl)\n"
@@ -465,11 +484,12 @@ int main(int argc, char **argv)
     bool gl = false;
     char *output = NULL;
     char *format = NULL;
+    char *modename = NULL;
     char buf[32];
     int c,i;
 
     for (;;) {
-        c = getopt(argc, argv, "hgdc:s:o:i:f:");
+        c = getopt(argc, argv, "hgdc:s:o:i:f:m:");
         if (c == -1)
             break;
         switch (c) {
@@ -487,6 +507,9 @@ int main(int argc, char **argv)
             break;
         case 'f':
             format = optarg;
+            break;
+        case 'm':
+            modename = optarg;
             break;
         case 'g':
             gl = true;
@@ -526,12 +549,12 @@ int main(int argc, char **argv)
     }
 
     if (gl) {
-        drm_init_dev(card, output, true);
+        drm_init_dev(card, output, modename, true);
         drm_init_egl();
         drm_draw_egl();
         drm_make_egl_fb();
     } else {
-        drm_init_dev(card, output, false);
+        drm_init_dev(card, output, modename, false);
         drm_init_dumb_fb();
         drm_draw_dumb_fb();
     }
