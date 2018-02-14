@@ -29,20 +29,24 @@ static void drm_info_conn(int fd, drmModeConnector *conn)
     int e, c, m;
 
     drm_conn_name(conn, name, sizeof(name));
-    fprintf(stdout, "%s, %s\n",
-            name, drm_connector_mode_name(conn->connection));
+    fprintf(stdout, "%s (#%d), %s\n",
+            name, conn->connector_id,
+            drm_connector_mode_name(conn->connection));
 
     for (e = 0; e < conn->count_encoders; e++) {
         enc = drmModeGetEncoder(fd, conn->encoders[e]);
         if (!enc)
             continue;
-        fprintf(stdout, "    encoder: %s",
-                drm_encoder_type_name(enc->encoder_type));
+        fprintf(stdout, "    encoder: %s (#%d)",
+                drm_encoder_type_name(enc->encoder_type),
+                enc->encoder_id);
         if (enc->encoder_id == conn->encoder_id)
             fprintf(stdout, ", active");
         if (enc->crtc_id) {
             crtc = drmModeGetCrtc(fd, enc->crtc_id);
             if (crtc) {
+                fprintf(stdout, ", crtc #%d", crtc->crtc_id);
+                fprintf(stdout, ", fb #%d", crtc->buffer_id);
                 if (crtc->x || crtc->y) {
                     fprintf(stdout, ", %dx%d+%d+%d",
                             crtc->width, crtc->height, crtc->x, crtc->y);
