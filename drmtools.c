@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <string.h>
 #include <inttypes.h>
+#include <endian.h>
 
 #include <sys/ioctl.h>
 #include <libdrm/drm_fourcc.h>
