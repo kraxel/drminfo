@@ -15,7 +15,6 @@ BuildRequires: pkgconfig(libdrm)
 BuildRequires: pkgconfig(gbm)
 BuildRequires: pkgconfig(epoxy)
 BuildRequires: pkgconfig(cairo)
-BuildRequires: pkgconfig(cairo-gl)
 BuildRequires: pkgconfig(pixman-1)
 BuildRequires: pkgconfig(gtk+-3.0)
 

@@ -29,8 +29,8 @@ TARGETS	:= drminfo drmtest gtktest
 drminfo : CFLAGS += $(shell pkg-config --cflags libdrm cairo pixman-1)
 drminfo : LDLIBS += $(shell pkg-config --libs libdrm cairo pixman-1)
 
-drmtest : CFLAGS += $(shell pkg-config --cflags libdrm gbm epoxy cairo cairo-gl pixman-1)
-drmtest : LDLIBS += $(shell pkg-config --libs libdrm gbm epoxy cairo cairo-gl pixman-1)
+drmtest : CFLAGS += $(shell pkg-config --cflags libdrm gbm epoxy cairo pixman-1)
+drmtest : LDLIBS += $(shell pkg-config --libs libdrm gbm epoxy cairo pixman-1)
 drmtest : LDLIBS += -ljpeg
 
 gtktest : CFLAGS += $(shell pkg-config --cflags gtk+-3.0 cairo pixman-1)
