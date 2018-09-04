@@ -45,14 +45,6 @@ static struct drm_mode_create_dumb creq;
 static const struct fbformat *fmt = NULL;
 static uint8_t *fbmem;
 
-/* opengl fb */
-static struct gbm_device *gbm_dev;
-static struct gbm_surface *gbm_surface;
-static EGLDisplay dpy;
-static EGLConfig cfg;
-static EGLContext ctx;
-static EGLSurface surface;
-
 /* cairo */
 cairo_device_t *cd;
 cairo_surface_t *cs;
@@ -297,124 +289,6 @@ static void drm_draw_dumb_fb(void)
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_egl(void)
-{
-    static const EGLint conf_att[] = {
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-        EGL_RED_SIZE,   5,
-        EGL_GREEN_SIZE, 5,
-        EGL_BLUE_SIZE,  5,
-        EGL_ALPHA_SIZE, 0,
-        EGL_NONE,
-    };
-    static const EGLint ctx_att[] = {
-        EGL_NONE
-    };
-    EGLint major, minor;
-    EGLBoolean b;
-    EGLint n;
-
-    gbm_dev = gbm_create_device(fd);
-    if (!gbm_dev) {
-        fprintf(stderr, "egl: gbm_create_device failed\n");
-        exit(1);
-    }
-
-    gbm_surface = gbm_surface_create(gbm_dev,
-                                     mode->hdisplay, mode->vdisplay,
-                                     GBM_FORMAT_XRGB8888,
-                                     GBM_BO_USE_RENDERING);
-    if (!gbm_surface) {
-        fprintf(stderr, "egl: gbm_create_surface failed\n");
-        exit(1);
-    }
-
-    dpy = eglGetDisplay(gbm_dev);
-    if (dpy == EGL_NO_DISPLAY) {
-        fprintf(stderr, "egl: eglGetDisplay failed\n");
-        exit(1);
-    }
-
-    b = eglInitialize(dpy, &major, &minor);
-    if (b == EGL_FALSE) {
-        fprintf(stderr, "egl: eglInitialize failed\n");
-        exit(1);
-    }
-
-    b = eglBindAPI(EGL_OPENGL_API);
-    if (b == EGL_FALSE) {
-        fprintf(stderr, "egl: eglBindAPI failed\n");
-        exit(1);
-    }
-
-    b = eglChooseConfig(dpy, conf_att, &cfg, 1, &n);
-    if (b == EGL_FALSE || n != 1) {
-        fprintf(stderr, "egl: eglChooseConfig failed\n");
-        exit(1);
-    }
-
-    ctx = eglCreateContext(dpy, cfg, EGL_NO_CONTEXT, ctx_att);
-    if (ctx == EGL_NO_CONTEXT) {
-        fprintf(stderr, "egl: eglCreateContext failed\n");
-        exit(1);
-    }
-
-    b = eglMakeCurrent(dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, ctx);
-    if (b == EGL_FALSE) {
-        fprintf(stderr, "egl: eglMakeCurrent(EGL_NO_SURFACE) failed\n");
-        exit(1);
-    }
-
-    surface = eglCreateWindowSurface (dpy, cfg,
-                                      (EGLNativeWindowType)gbm_surface,
-                                      NULL);
-    if (!surface) {
-        fprintf(stderr, "egl: eglCreateWindowSurface failed\n");
-        exit(1);
-    }
-
-    b = eglMakeCurrent(dpy, surface, surface, ctx);
-    if (b == EGL_FALSE) {
-        fprintf(stderr, "egl: eglMakeCurrent(surface) failed\n");
-        exit(1);
-    }
-
-    cd = cairo_egl_device_create(dpy, ctx);
-    cs = cairo_gl_surface_create_for_egl(cd, surface,
-                                         mode->hdisplay,
-                                         mode->vdisplay);
-}
-
-static void drm_draw_egl(void)
-{
-    char text[80];
-
-    snprintf(text, sizeof(text),
-             "egl: %s", glGetString(GL_RENDERER));
-    drm_draw(text);
-    cairo_gl_surface_swapbuffers(cs);
-}
-
-static void drm_make_egl_fb(void)
-{
-    struct gbm_bo *bo;
-    uint32_t handle, stride;
-
-    bo = gbm_surface_lock_front_buffer(gbm_surface);
-    if (!bo) {
-        fprintf(stderr, "egl: gbm_surface_lock_front_buffer failed");
-        exit(1);
-    }
-    handle = gbm_bo_get_handle(bo).u32;
-    stride = gbm_bo_get_stride(bo);
-
-    drmModeAddFB(fd, mode->hdisplay, mode->vdisplay, 24, 32,
-                 stride, handle, &fb_id);
-}
-
-/* ------------------------------------------------------------------ */
-
 struct termios  saved_attributes;
 int             saved_fl;
 
@@ -470,10 +344,6 @@ static void usage(FILE *fp)
             "  -i <file>  load and display image <file>\n"
             "  -f <fmt>   pick framebuffer format\n"
             "  -m <mode>  pick video mode format\n"
-            "  -g         openngl mode\n"
-#if 0
-            "  -d         debug mode (opengl)\n"
-#endif
             "\n");
 }
 
@@ -481,7 +351,6 @@ int main(int argc, char **argv)
 {
     int card = 0;
     int secs = 60;
-    bool gl = false;
     char *output = NULL;
     char *format = NULL;
     char *modename = NULL;
@@ -511,15 +380,6 @@ int main(int argc, char **argv)
         case 'm':
             modename = optarg;
             break;
-        case 'g':
-            gl = true;
-            break;
-#if 0
-        case 'd':
-            setenv("EGL_LOG_LEVEL", "debug", true);
-            setenv("LIBGL_DEBUG", "verbose", true);
-            break;
-#endif
         case 'h':
             usage(stdout);
             exit(0);
@@ -548,16 +408,9 @@ int main(int argc, char **argv)
         fmt = &fmts[0];
     }
 
-    if (gl) {
-        drm_init_dev(card, output, modename, true);
-        drm_init_egl();
-        drm_draw_egl();
-        drm_make_egl_fb();
-    } else {
-        drm_init_dev(card, output, modename, false);
-        drm_init_dumb_fb();
-        drm_draw_dumb_fb();
-    }
+    drm_init_dev(card, output, modename, false);
+    drm_init_dumb_fb();
+    drm_draw_dumb_fb();
     drm_show_fb();
 
     tty_raw();
