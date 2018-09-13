@@ -102,6 +102,130 @@ static void drm_info_conns(int fd)
     }
 }
 
+static const char* drm_info_modifier_string(uint64_t mod){
+    switch (mod) {
+#define CASE_(X) case X: return #X
+        CASE_(DRM_FORMAT_MOD_INVALID);
+        CASE_(DRM_FORMAT_MOD_LINEAR);
+
+        /* Intel */
+        CASE_(I915_FORMAT_MOD_X_TILED);
+        CASE_(I915_FORMAT_MOD_Y_TILED);
+        CASE_(I915_FORMAT_MOD_Yf_TILED);
+        CASE_(I915_FORMAT_MOD_Y_TILED_CCS);
+        CASE_(I915_FORMAT_MOD_Yf_TILED_CCS);
+
+        /* Samsung */
+        CASE_(DRM_FORMAT_MOD_SAMSUNG_64_32_TILE);
+
+        /* Vivante */
+        CASE_(DRM_FORMAT_MOD_VIVANTE_TILED);
+        CASE_(DRM_FORMAT_MOD_VIVANTE_SUPER_TILED);
+        CASE_(DRM_FORMAT_MOD_VIVANTE_SPLIT_TILED);
+        CASE_(DRM_FORMAT_MOD_VIVANTE_SPLIT_SUPER_TILED);
+
+        /* NVIDIA */
+        CASE_(DRM_FORMAT_MOD_NVIDIA_TEGRA_TILED);
+        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_ONE_GOB);
+        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_TWO_GOB);
+        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_FOUR_GOB);
+        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_EIGHT_GOB);
+        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_SIXTEEN_GOB);
+        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_THIRTYTWO_GOB);
+
+        /* Broadcom */
+        CASE_(DRM_FORMAT_MOD_BROADCOM_VC4_T_TILED);
+
+#undef CASE_
+        default:
+        {
+            static char mod_string[32] = ""; /* not thread-safe! */
+            snprintf(mod_string, sizeof(mod_string), "%#lx", mod);
+            return mod_string;
+        }
+    }
+}
+
+static size_t drm_modifiers_for_format(int fd, uint32_t plane_id,
+                                       uint32_t drm_format,
+                                       uint64_t **drm_modifiers)
+{
+   /* Get the properties of the plane */
+   drmModeObjectProperties *props =
+       drmModeObjectGetProperties(fd, plane_id, DRM_MODE_OBJECT_PLANE);
+   if (!props)
+       return 0;
+
+   /* Find the blob the contains the formats and their modifiers */
+   uint32_t blob_id = 0;
+   for (size_t i = 0; i< props->count_props; i++) {
+      const drmModePropertyPtr prop =
+          drmModeGetProperty(fd, props->props[i]);
+
+      if (!strcmp(prop->name, "IN_FORMATS")) {
+          blob_id = props->prop_values[i];
+          drmModeFreeProperty(prop);
+          break;
+      }
+
+      drmModeFreeProperty(prop);
+   }
+
+   /* Property not found, which means old kernel, so definitely no
+    * modifiers support */
+   if (blob_id == 0) {
+       drmModeFreeObjectProperties(props);
+       return 0;
+   }
+
+   /* Grab the IN_FORMATS blob */
+   drmModePropertyBlobRes *blob = drmModeGetPropertyBlob(fd, blob_id);
+   if (!blob) {
+       drmModeFreeObjectProperties(props);
+       return 0;
+   }
+
+   /* Get the formats and modifiers out of the blob */
+   struct drm_format_modifier_blob *fmt_mod_blob = blob->data;
+   uint32_t *blob_formats = (uint32_t*)((char*)fmt_mod_blob +
+                                        fmt_mod_blob->formats_offset);
+   struct drm_format_modifier *blob_modifiers =
+       (struct drm_format_modifier *)((char*)fmt_mod_blob +
+                                     fmt_mod_blob->modifiers_offset);
+
+   /* Find the format we care about in the list */
+   size_t format_index = 0;
+   for (size_t i = 0; i < fmt_mod_blob->count_formats; i++) {
+       if (blob_formats[i] == drm_format) {
+           format_index = i;
+           break;
+      }
+   }
+
+   /* Get the list of modifiers supported by that format */
+   uint32_t modifiers_count = 0;
+   uint64_t *modifiers = NULL;
+   for (size_t i = 0; i < fmt_mod_blob->count_modifiers; i++) {
+       struct drm_format_modifier *mod = &blob_modifiers[i];
+
+       if ((format_index < mod->offset) || (format_index > mod->offset + 63))
+           continue;
+       if (!(mod->formats & (1 << (format_index - mod->offset))))
+           continue;
+
+       modifiers = realloc(modifiers,
+                           (modifiers_count + 1) *
+                           sizeof(modifiers[0]));
+       modifiers[modifiers_count++] = mod->modifier;
+   }
+
+   drmModeFreePropertyBlob(blob);
+   drmModeFreeObjectProperties(props);
+
+   *drm_modifiers = modifiers;
+   return modifiers_count;
+}
+
 static void drm_info_plane(int fd, drmModePlane *plane)
 {
     int i;
@@ -109,14 +233,35 @@ static void drm_info_plane(int fd, drmModePlane *plane)
     fprintf(stdout, "plane: %d, crtc: %d, fb: %d\n",
             plane->plane_id, plane->crtc_id, plane->fb_id);
 
-    fprintf(stdout, "    formats:");
-    for (i = 0; i < plane->count_formats; i++)
-        fprintf(stdout, " %c%c%c%c",
+    fprintf(stdout, "    formats:  (modifier(s) supported by this format)\n");
+    for (i = 0; i < plane->count_formats; i++) {
+        size_t m;
+        uint64_t *drm_modifiers;
+        size_t drm_modifiers_count =
+          drm_modifiers_for_format(fd, plane->plane_id,
+                                   plane->formats[i],
+                                   &drm_modifiers);
+
+        fprintf(stdout, "      - %c%c%c%c",
                 (plane->formats[i] >>  0) & 0xff,
                 (plane->formats[i] >>  8) & 0xff,
                 (plane->formats[i] >> 16) & 0xff,
                 (plane->formats[i] >> 24) & 0xff);
-    fprintf(stdout, "\n");
+
+        if (drm_modifiers_count == 0) {
+            fprintf(stdout, "\n");
+            continue;
+        }
+
+        fprintf(stdout, "  (");
+        for (m = 0; m < drm_modifiers_count; m++)
+            fprintf(stdout, "%s%s",
+                    (m == 0) ? "" : ", ",
+                    drm_info_modifier_string(drm_modifiers[m]));
+        fprintf(stdout, ")\n");
+
+        free(drm_modifiers);
+    }
 }
 
 static void drm_info_planes(int fd)
