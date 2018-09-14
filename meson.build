@@ -1,4 +1,4 @@
-project('drminfo', 'c')
+project('drminfo', 'c', default_options : [ 'c_std=c99' ] )
 
 # pkg-config deps
 libdrm_dep    = dependency('libdrm')
