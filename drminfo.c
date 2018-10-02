@@ -19,6 +19,8 @@
 
 #include "drmtools.h"
 
+static int ttycols = 80;
+
 /* ------------------------------------------------------------------ */
 
 static void drm_info_conn(int fd, drmModeConnector *conn)
@@ -102,48 +104,23 @@ static void drm_info_conns(int fd)
     }
 }
 
-static const char* drm_info_modifier_string(uint64_t mod){
-    switch (mod) {
-#define CASE_(X) case X: return #X
-        CASE_(DRM_FORMAT_MOD_INVALID);
-        CASE_(DRM_FORMAT_MOD_LINEAR);
+static const struct {
+    uint64_t mod;
+    const char *name;
+} drm_fmt_mod_name[] = {
+#include "drmfmtmods.h"
+};
 
-        /* Intel */
-        CASE_(I915_FORMAT_MOD_X_TILED);
-        CASE_(I915_FORMAT_MOD_Y_TILED);
-        CASE_(I915_FORMAT_MOD_Yf_TILED);
-        CASE_(I915_FORMAT_MOD_Y_TILED_CCS);
-        CASE_(I915_FORMAT_MOD_Yf_TILED_CCS);
+static const char *drm_info_modifier_string(uint64_t mod)
+{
+    int i = 0;
 
-        /* Samsung */
-        CASE_(DRM_FORMAT_MOD_SAMSUNG_64_32_TILE);
-
-        /* Vivante */
-        CASE_(DRM_FORMAT_MOD_VIVANTE_TILED);
-        CASE_(DRM_FORMAT_MOD_VIVANTE_SUPER_TILED);
-        CASE_(DRM_FORMAT_MOD_VIVANTE_SPLIT_TILED);
-        CASE_(DRM_FORMAT_MOD_VIVANTE_SPLIT_SUPER_TILED);
-
-        /* NVIDIA */
-        CASE_(DRM_FORMAT_MOD_NVIDIA_TEGRA_TILED);
-        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_ONE_GOB);
-        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_TWO_GOB);
-        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_FOUR_GOB);
-        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_EIGHT_GOB);
-        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_SIXTEEN_GOB);
-        CASE_(DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK_THIRTYTWO_GOB);
-
-        /* Broadcom */
-        CASE_(DRM_FORMAT_MOD_BROADCOM_VC4_T_TILED);
-
-#undef CASE_
-        default:
-        {
-            static char mod_string[32] = ""; /* not thread-safe! */
-            snprintf(mod_string, sizeof(mod_string), "%#lx", mod);
-            return mod_string;
-        }
+    while (i < (sizeof(drm_fmt_mod_name)/sizeof(drm_fmt_mod_name[0]))) {
+        if (drm_fmt_mod_name[i].mod == mod)
+            return drm_fmt_mod_name[i].name;
+        i++;
     }
+    return "unknown";
 }
 
 static size_t drm_modifiers_for_format(int fd, uint32_t plane_id,
@@ -226,45 +203,59 @@ static size_t drm_modifiers_for_format(int fd, uint32_t plane_id,
    return modifiers_count;
 }
 
-static void drm_info_plane(int fd, drmModePlane *plane)
+static void drm_info_plane(int fd, drmModePlane *plane,
+                           bool print_modifiers)
 {
     int i;
 
     fprintf(stdout, "plane: %d, crtc: %d, fb: %d\n",
             plane->plane_id, plane->crtc_id, plane->fb_id);
 
-    fprintf(stdout, "    formats:  (modifier(s) supported by this format)\n");
+    if (!print_modifiers) {
+        fprintf(stdout, "    formats:");
+        for (i = 0; i < plane->count_formats; i++)
+            fprintf(stdout, " %c%c%c%c",
+                    (plane->formats[i] >>  0) & 0xff,
+                    (plane->formats[i] >>  8) & 0xff,
+                    (plane->formats[i] >> 16) & 0xff,
+                    (plane->formats[i] >> 24) & 0xff);
+        fprintf(stdout, "\n");
+        return;
+    }
+
+    fprintf(stdout, "    format   modifiers\n");
     for (i = 0; i < plane->count_formats; i++) {
-        size_t m;
-        uint64_t *drm_modifiers;
-        size_t drm_modifiers_count =
-          drm_modifiers_for_format(fd, plane->plane_id,
-                                   plane->formats[i],
-                                   &drm_modifiers);
-
-        fprintf(stdout, "      - %c%c%c%c",
-                (plane->formats[i] >>  0) & 0xff,
-                (plane->formats[i] >>  8) & 0xff,
-                (plane->formats[i] >> 16) & 0xff,
-                (plane->formats[i] >> 24) & 0xff);
-
-        if (drm_modifiers_count == 0) {
+        if (print_modifiers) {
+            uint64_t *drm_modifiers;
+            size_t drm_modifiers_count;
+            size_t m;
+            int pos = 12;
+            drm_modifiers_count =
+                drm_modifiers_for_format(fd, plane->plane_id,
+                                         plane->formats[i],
+                                         &drm_modifiers);
+            fprintf(stdout, "    %c%c%c%c    ",
+                    (plane->formats[i] >>  0) & 0xff,
+                    (plane->formats[i] >>  8) & 0xff,
+                    (plane->formats[i] >> 16) & 0xff,
+                    (plane->formats[i] >> 24) & 0xff);
+            for (m = 0; m < drm_modifiers_count; m++) {
+                const char *name = drm_info_modifier_string(drm_modifiers[m]);
+                int len = strlen(name);
+                if (pos + len + 2 > ttycols) {
+                    fprintf(stdout, "\n            ");
+                    pos = 12;
+                }
+                fprintf(stdout, " %s", name);
+                pos += len + 1;
+            }
+            free(drm_modifiers);
             fprintf(stdout, "\n");
-            continue;
         }
-
-        fprintf(stdout, "  (");
-        for (m = 0; m < drm_modifiers_count; m++)
-            fprintf(stdout, "%s%s",
-                    (m == 0) ? "" : ", ",
-                    drm_info_modifier_string(drm_modifiers[m]));
-        fprintf(stdout, ")\n");
-
-        free(drm_modifiers);
     }
 }
 
-static void drm_info_planes(int fd)
+static void drm_info_planes(int fd, bool print_modifiers)
 {
     drmModePlaneRes *pres;
     drmModePlane *plane;
@@ -282,7 +273,7 @@ static void drm_info_planes(int fd)
         if (!plane)
             continue;
 
-        drm_info_plane(fd, plane);
+        drm_info_plane(fd, plane, print_modifiers);
         drmModeFreePlane(plane);
         fprintf(stdout, "\n");
     }
@@ -354,6 +345,7 @@ static void usage(FILE *fp)
             "  -m         print misc card info (busid)\n"
             "  -o         print supported outputs (crtcs)\n"
             "  -p         print supported planes\n"
+            "  -P         print supported planes, with modifiers\n"
             "  -f         print supported formats\n"
             "  -l         list all known formats\n"
             "\n");
@@ -366,10 +358,12 @@ int main(int argc, char **argv)
     bool misc = false;
     bool conn = false;
     bool plane = false;
+    bool modifiers = false;
     bool format = false;
+    char *columns;
 
     for (;;) {
-        c = getopt(argc, argv, "hlamopfc:");
+        c = getopt(argc, argv, "hlamopPfc:");
         if (c == -1)
             break;
         switch (c) {
@@ -384,6 +378,7 @@ int main(int argc, char **argv)
             conn = true;
             plane = true;
             format = true;
+            modifiers = true;
             break;
         case 'm':
             misc = true;
@@ -393,6 +388,10 @@ int main(int argc, char **argv)
             break;
         case 'p':
             plane = true;
+            break;
+        case 'P':
+            plane = true;
+            modifiers = true;
             break;
         case 'f':
             format = true;
@@ -406,13 +405,17 @@ int main(int argc, char **argv)
         }
     }
 
+    columns = getenv("COLUMNS");
+    if (columns)
+        ttycols = atoi(columns);
+
     fd = drm_open(card);
     if (misc)
         drm_info_misc(fd);
     if (conn)
         drm_info_conns(fd);
     if (plane)
-        drm_info_planes(fd);
+        drm_info_planes(fd, modifiers);
     if (format)
         drm_info_fmts(fd);
     return 0;
