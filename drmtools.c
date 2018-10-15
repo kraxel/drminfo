@@ -589,3 +589,144 @@ void drm_print_format_hdr(FILE *fp, int indent, bool libs)
     }
     fprintf(fp, "\n");
 }
+
+/* ------------------------------------------------------------------ */
+
+int fd;
+uint32_t fb_id;
+drmModeConnector *conn = NULL;
+drmModeModeInfo *mode = NULL;
+
+static drmModeEncoder *enc = NULL;
+static drmModeCrtc *scrtc = NULL;
+
+void drm_init_dev(int devnr, const char *output,
+                  const char *modename, bool need_dumb)
+{
+    drmModeRes *res;
+    char dev[64];
+    char name[64];
+    char m[64];
+    int i, rc;
+    uint64_t has_dumb;
+
+    /* open device */
+    snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
+    fd = open(dev, O_RDWR);
+    if (fd < 0) {
+        fprintf(stderr, "open %s: %s\n", dev, strerror(errno));
+        exit(1);
+    }
+
+    if (need_dumb) {
+        rc = drmGetCap(fd, DRM_CAP_DUMB_BUFFER, &has_dumb);
+        if (rc < 0 || !has_dumb) {
+            fprintf(stderr, "no dumb buffer support\n");
+            exit(1);
+        }
+    }
+#if 0
+    if (need_master) {
+        rc = drmSetMaster(fd);
+        if (rc < 0) {
+            fprintf(stderr, "drmSetMaster() failed: %s\n",
+                    strerror(errno));
+            exit(1);
+        }
+    }
+#endif
+
+    /* find connector */
+    res = drmModeGetResources(fd);
+    if (res == NULL) {
+        fprintf(stderr, "drmModeGetResources() failed\n");
+        exit(1);
+    }
+    for (i = 0; i < res->count_connectors; i++) {
+        conn = drmModeGetConnector(fd, res->connectors[i]);
+        if (conn &&
+            (conn->connection == DRM_MODE_CONNECTED) &&
+            conn->count_modes) {
+            if (output) {
+                drm_conn_name(conn, name, sizeof(name));
+                if (strcmp(name, output) == 0) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        drmModeFreeConnector(conn);
+        conn = NULL;
+    }
+    if (!conn) {
+        if (output) {
+            fprintf(stderr, "drm: output %s not found or disconnected\n",
+                    output);
+        } else {
+            fprintf(stderr, "drm: no usable output found\n");
+        }
+        exit(1);
+    }
+
+    for (i = 0; i < res->count_connectors; i++) {
+        conn = drmModeGetConnector(fd, res->connectors[i]);
+        if (conn &&
+            (conn->connection == DRM_MODE_CONNECTED) &&
+            conn->count_modes)
+            break;
+        drmModeFreeConnector(conn);
+        conn = NULL;
+    }
+    if (!conn) {
+        fprintf(stderr, "no usable connector found\n");
+        exit(1);
+    }
+
+    if (modename) {
+        for (i = 0; i < conn->count_modes; i++) {
+            snprintf(m, sizeof(m), "%dx%d",
+                     conn->modes[i].hdisplay,
+                     conn->modes[i].vdisplay);
+            if (strcmp(m, modename) == 0) {
+                fprintf(stderr, "Using mode %s\n", modename);
+                mode = &conn->modes[i];
+                break;
+            }
+        }
+    }
+    if (!mode) {
+        mode = &conn->modes[0];
+    }
+
+    enc = drmModeGetEncoder(fd, conn->encoder_id);
+    if (enc == NULL) {
+        fprintf(stderr, "drmModeGetEncoder() failed\n");
+        exit(1);
+    }
+
+    /* save crtc */
+    scrtc = drmModeGetCrtc(fd, enc->crtc_id);
+}
+
+void drm_fini_dev(void)
+{
+    /* restore crtc */
+    if (scrtc) {
+        drmModeSetCrtc(fd, scrtc->crtc_id, scrtc->buffer_id, scrtc->x, scrtc->y,
+                       &conn->connector_id, 1, &scrtc->mode);
+    }
+}
+
+void drm_show_fb(void)
+{
+    int rc;
+
+    rc = drmModeSetCrtc(fd, enc->crtc_id, fb_id, 0, 0,
+                        &conn->connector_id, 1,
+                        mode);
+    if (rc < 0) {
+        fprintf(stderr, "drmModeSetCrtc() failed\n");
+        exit (1);
+    }
+}

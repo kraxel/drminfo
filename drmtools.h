@@ -22,3 +22,15 @@ bool drm_probe_format(int fd, const struct fbformat *fmt);
 void drm_print_format(FILE *fp, const struct fbformat *fmt,
                       int indent, bool libs);
 void drm_print_format_hdr(FILE *fp, int indent, bool libs);
+
+/* ------------------------------------------------------------------ */
+
+extern int fd;
+extern uint32_t fb_id;
+extern drmModeConnector *conn;
+extern drmModeModeInfo *mode;
+
+void drm_init_dev(int devnr, const char *output,
+                  const char *modename, bool need_dumb);
+void drm_fini_dev(void);
+void drm_show_fb(void);
