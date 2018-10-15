@@ -118,15 +118,6 @@ static void virtio_init_fb(void)
     create.height = mode->vdisplay;
     stride = create.width * fmt->bpp / 8;
     create.size   = stride * create.height;
-#if 0
-	__u32 target;
-	__u32 bind;
-	__u32 depth;
-	__u32 array_size;
-	__u32 last_level;
-	__u32 nr_samples;
-	__u32 flags;
-#endif
     rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE, &create);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_VIRTGPU_RESOURCE_CREATE: %s\n",
