@@ -36,32 +36,38 @@ static struct {
 #endif
 };
 
-static uint64_t virtio_get_cap(uint64_t cap)
+static int virtio_get_cap(uint64_t cap, int *value)
 {
     struct drm_virtgpu_getparam args;
-    int value = 0;
     int rc;
 
     args.param = cap;
-    args.value = (intptr_t)(&value);
+    args.value = (intptr_t)(value);
     rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_GETPARAM, &args);
     if (rc != 0) {
-        fprintf(stderr, "ioctl DRM_IOCTL_VIRTGPU_GETPARAM(%" PRId64 "): %s\n",
-                cap, strerror(errno));
-        exit(1);
+        if (errno == EINVAL) {
+            return -1;
+        } else {
+            fprintf(stderr, "ioctl DRM_IOCTL_VIRTGPU_GETPARAM(%" PRId64 "): %s\n",
+                    cap, strerror(errno));
+            exit(1);
+        }
     }
-    return value;
+    return 0;
 }
 
 static void virtio_print_caps(void)
 {
-    uint64_t value;
-    int i;
+    int i, rc, value;
 
     printf("virtio capabilities\n");
     for (i = 0; i < ARRAY_SIZE(virtio_caps); i++) {
-        value = virtio_get_cap(virtio_caps[i].cap);
-        printf("    %s: %" PRId64 "\n", virtio_caps[i].name, value);
+        rc = virtio_get_cap(virtio_caps[i].cap, &value);
+        if (rc == -1) {
+            printf("    %-12s: not available\n", virtio_caps[i].name);
+        } else {
+            printf("    %-12s: %d\n", virtio_caps[i].name, value);
+        }
     }
 }
 
