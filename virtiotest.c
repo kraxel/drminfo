@@ -38,19 +38,19 @@ static struct {
 
 static uint64_t virtio_get_cap(uint64_t cap)
 {
-    struct drm_virtgpu_getparam param = {
-        .param = cap,
-        .value = 0,
-    };
+    struct drm_virtgpu_getparam args;
+    int value = 0;
     int rc;
 
-    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_GETPARAM, &param);
+    args.param = cap;
+    args.value = (intptr_t)(&value);
+    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_GETPARAM, &args);
     if (rc != 0) {
         fprintf(stderr, "ioctl DRM_IOCTL_VIRTGPU_GETPARAM(%" PRId64 "): %s\n",
                 cap, strerror(errno));
         exit(1);
     }
-    return param.value;
+    return value;
 }
 
 static void virtio_print_caps(void)
