@@ -20,6 +20,10 @@
 
 /* ------------------------------------------------------------------ */
 
+#define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(_x[0]))
+
+/* ------------------------------------------------------------------ */
+
 static struct {
     uint64_t cap;
     const char *name;
@@ -53,7 +57,7 @@ static void virtio_print_caps(void)
     int i;
 
     printf("virtio capabilities\n");
-    for (i = 0; i < sizeof(virtio_caps)/sizeof(virtio_caps[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(virtio_caps); i++) {
         value = virtio_get_cap(virtio_caps[i].cap);
         printf("    %s: %" PRId64 "\n", virtio_caps[i].name, value);
     }
