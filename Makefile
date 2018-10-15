@@ -33,6 +33,10 @@ drmtest : CFLAGS += $(shell pkg-config --cflags libdrm gbm epoxy cairo pixman-1)
 drmtest : LDLIBS += $(shell pkg-config --libs libdrm gbm epoxy cairo pixman-1)
 drmtest : LDLIBS += -ljpeg
 
+virtiotest : CFLAGS += $(shell pkg-config --cflags libdrm gbm epoxy cairo pixman-1)
+virtiotest : LDLIBS += $(shell pkg-config --libs libdrm gbm epoxy cairo pixman-1)
+virtiotest : LDLIBS += -ljpeg
+
 gtktest : CFLAGS += $(shell pkg-config --cflags gtk+-3.0 cairo pixman-1)
 gtktest : LDLIBS += $(shell pkg-config --libs gtk+-3.0 cairo pixman-1)
 gtktest : LDLIBS += -ljpeg
@@ -45,6 +49,7 @@ clean:
 
 drminfo: drminfo.o drmtools.o
 drmtest: drmtest.o drmtools.o ttytools.o render.o image.o
+virtiotest: virtiotest.o drmtools.o
 gtktest: gtktest.o render.o image.o
 
 endif

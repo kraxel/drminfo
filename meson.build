@@ -13,10 +13,13 @@ jpeg_dep      = declare_dependency(link_args : '-ljpeg')
 
 drminfo_srcs  = [ 'drminfo.c', 'drmtools.c' ]
 drmtest_srcs  = [ 'drmtest.c', 'drmtools.c', 'ttytools.c', 'render.c', 'image.c' ]
+viotest_srcs  = [ 'virtiotest.c', 'drmtools.c' ]
 gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c' ]
 
 drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep ]
 drmtest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
+                  cairo_dep, pixman_dep, jpeg_dep ]
+viotest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
                   cairo_dep, pixman_dep, jpeg_dep ]
 gtktest_deps  = [ gtk3_dep,
                   cairo_dep, pixman_dep, jpeg_dep ]
@@ -28,6 +31,10 @@ executable('drminfo',
 executable('drmtest',
            sources      : drmtest_srcs,
            dependencies : drmtest_deps,
+           install      : true)
+executable('virtiotest',
+           sources      : viotest_srcs,
+           dependencies : viotest_deps,
            install      : true)
 executable('gtktest',
            sources      : gtktest_srcs,
