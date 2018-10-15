@@ -40,11 +40,11 @@ static uint64_t virtio_get_cap(uint64_t cap)
         .param = cap,
         .value = 0,
     };
-    int ret;
+    int rc;
 
-    ret = ioctl(fd, DRM_VIRTGPU_GETPARAM, &param);
-    if (ret != 0) {
-        fprintf(stderr, "ioctl DRM_VIRTGPU_GETPARAM(%" PRId64 "): %s\n",
+    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_GETPARAM, &param);
+    if (rc != 0) {
+        fprintf(stderr, "ioctl DRM_IOCTL_VIRTGPU_GETPARAM(%" PRId64 "): %s\n",
                 cap, strerror(errno));
         exit(1);
     }
@@ -60,6 +60,25 @@ static void virtio_print_caps(void)
     for (i = 0; i < ARRAY_SIZE(virtio_caps); i++) {
         value = virtio_get_cap(virtio_caps[i].cap);
         printf("    %s: %" PRId64 "\n", virtio_caps[i].name, value);
+    }
+}
+
+static void virtio_check(int cardno)
+{
+    char syspath[128];
+    char symlink[128];
+    int len;
+
+    snprintf(syspath, sizeof(syspath), "/sys/class/drm/card%d", cardno);
+    len = readlink(syspath, symlink, sizeof(symlink));
+    if (len < 0) {
+        fprintf(stderr, "readlink %s: %s\n", syspath, strerror(errno));
+        exit(1);
+    }
+    symlink[len] = 0;
+    if (strstr(symlink, "/virtio") == NULL) {
+        fprintf(stderr, "card%d: not a virtio-gpu device\n", cardno);
+        exit(1);
     }
 }
 
@@ -105,6 +124,8 @@ int main(int argc, char **argv)
             exit(1);
         }
     }
+
+    virtio_check(card);
 
     drm_init_dev(card, output, modename, false);
 
