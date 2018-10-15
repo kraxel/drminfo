@@ -9,6 +9,7 @@
 #include <endian.h>
 
 #include <sys/ioctl.h>
+#include <linux/virtio_gpu.h>
 #include <libdrm/drm_fourcc.h>
 
 #include <xf86drm.h>
@@ -271,6 +272,7 @@ const struct fbformat fmts[] = {
         .bits   = "8:8:8:8",
         .bpp    = 32,
         .fourcc = DRM_FORMAT_XRGB8888,
+        .virtio = VIRTIO_GPU_FORMAT_B8G8R8X8_UNORM,
         .cairo  = LE_BE(CAIRO_FORMAT_RGB24, CAIRO_FORMAT_INVALID),
         .pixman = LE_BE(PIXMAN_x8r8g8b8, PIXMAN_b8g8r8x8),
     },{
@@ -295,6 +297,7 @@ const struct fbformat fmts[] = {
         .bits   = "8:8:8:8",
         .bpp    = 32,
         .fourcc = DRM_FORMAT_BGRX8888,
+        .virtio = VIRTIO_GPU_FORMAT_X8R8G8B8_UNORM,
         .cairo  = LE_BE(CAIRO_FORMAT_INVALID, CAIRO_FORMAT_RGB24),
         .pixman = LE_BE(PIXMAN_b8g8r8x8, PIXMAN_x8r8g8b8),
     },{
@@ -303,6 +306,7 @@ const struct fbformat fmts[] = {
         .bits   = "8:8:8:8",
         .bpp    = 32,
         .fourcc = DRM_FORMAT_ARGB8888,
+        .virtio = VIRTIO_GPU_FORMAT_B8G8R8A8_UNORM,
         .cairo  = CAIRO_FORMAT_INVALID,
         .pixman = LE_BE(PIXMAN_a8r8g8b8, PIXMAN_b8g8r8a8),
     },{
@@ -327,6 +331,7 @@ const struct fbformat fmts[] = {
         .bits   = "8:8:8:8",
         .bpp    = 32,
         .fourcc = DRM_FORMAT_BGRA8888,
+        .virtio = VIRTIO_GPU_FORMAT_A8R8G8B8_UNORM,
         .cairo  = CAIRO_FORMAT_INVALID,
         .pixman = LE_BE(PIXMAN_b8g8r8a8, PIXMAN_a8r8g8b8),
     },{
@@ -726,7 +731,7 @@ void drm_show_fb(void)
                         &conn->connector_id, 1,
                         mode);
     if (rc < 0) {
-        fprintf(stderr, "drmModeSetCrtc() failed\n");
+        fprintf(stderr, "drmModeSetCrtc() failed: %s\n", strerror(errno));
         exit (1);
     }
 }

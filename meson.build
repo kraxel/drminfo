@@ -13,7 +13,7 @@ jpeg_dep      = declare_dependency(link_args : '-ljpeg')
 
 drminfo_srcs  = [ 'drminfo.c', 'drmtools.c' ]
 drmtest_srcs  = [ 'drmtest.c', 'drmtools.c', 'ttytools.c', 'render.c', 'image.c' ]
-viotest_srcs  = [ 'virtiotest.c', 'drmtools.c' ]
+viotest_srcs  = [ 'virtiotest.c', 'drmtools.c', 'ttytools.c', 'render.c' ]
 gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c' ]
 
 drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep ]

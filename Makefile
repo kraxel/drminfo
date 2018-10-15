@@ -49,7 +49,7 @@ clean:
 
 drminfo: drminfo.o drmtools.o
 drmtest: drmtest.o drmtools.o ttytools.o render.o image.o
-virtiotest: virtiotest.o drmtools.o
+virtiotest: virtiotest.o drmtools.o ttytools.o render.o
 gtktest: gtktest.o render.o image.o
 
 endif

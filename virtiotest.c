@@ -8,9 +8,13 @@
 #include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
+#include <assert.h>
 
+#include <sys/mman.h>
 #include <sys/ioctl.h>
-#include "virtgpu_drm.h"
+#include <linux/virtio_gpu.h>
+#include <libdrm/drm_fourcc.h>
+#include <libdrm/virtgpu_drm.h>
 
 #include <xf86drm.h>
 #include <xf86drmMode.h>
@@ -19,6 +23,8 @@
 #include <pixman.h>
 
 #include "drmtools.h"
+#include "ttytools.h"
+#include "render.h"
 
 /* ------------------------------------------------------------------ */
 
@@ -92,6 +98,117 @@ static void virtio_check(int cardno)
 
 /* ------------------------------------------------------------------ */
 
+static struct drm_virtgpu_resource_create create;
+static uint8_t *fbmem;
+static const struct fbformat *fmt;
+static cairo_surface_t *cs;
+
+static void virtio_init_fb(void)
+{
+    struct drm_virtgpu_resource_info info;
+    struct drm_virtgpu_map map;
+    uint32_t stride, zero = 0;
+    int rc;
+
+    /* create framebuffer */
+    memset(&create, 0, sizeof(create));
+    create.target = 2; /* ??? */
+    create.format = fmt->virtio;
+    create.width  = mode->hdisplay;
+    create.height = mode->vdisplay;
+    stride = create.width * fmt->bpp / 8;
+    create.size   = stride * create.height;
+#if 0
+	__u32 target;
+	__u32 bind;
+	__u32 depth;
+	__u32 array_size;
+	__u32 last_level;
+	__u32 nr_samples;
+	__u32 flags;
+#endif
+    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE, &create);
+    if (rc < 0) {
+        fprintf(stderr, "DRM_IOCTL_VIRTGPU_RESOURCE_CREATE: %s\n",
+                strerror(errno));
+        exit(1);
+    }
+
+    memset(&info, 0, sizeof(info));
+    info.bo_handle = create.bo_handle;
+    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_RESOURCE_INFO, &info);
+    if (rc < 0) {
+        fprintf(stderr, "DRM_IOCTL_VIRTGPU_RESOURCE_INFO: %s\n",
+                strerror(errno));
+        exit(1);
+    }
+
+    memset(&map, 0, sizeof(map));
+    map.handle = create.bo_handle;
+    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_MAP, &map);
+    if (rc < 0) {
+        fprintf(stderr, "DRM_IOCTL_VIRTGPU_MAP: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    fbmem = mmap(0, info.size, PROT_READ | PROT_WRITE,
+                 MAP_SHARED, fd, map.offset);
+    if (fbmem == MAP_FAILED) {
+        fprintf(stderr, "framebuffer mmap: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    if (info.stride)
+        stride = info.stride;
+    rc = drmModeAddFB2(fd, create.width, create.height, fmt->fourcc,
+                       &create.bo_handle, &stride, &zero, &fb_id, 0);
+    if (rc < 0) {
+        fprintf(stderr, "drmModeAddFB2() failed: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    cs = cairo_image_surface_create_for_data(fbmem,
+                                             fmt->cairo,
+                                             create.width,
+                                             create.height,
+                                             stride);
+}
+
+static void virtio_draw(const char *text)
+{
+    char info[80];
+    cairo_t *cr;
+
+    snprintf(info, sizeof(info), "virtiotest: %dx%d, fourcc %c%c%c%c",
+             mode->hdisplay, mode->vdisplay,
+             (fmt->fourcc >>  0) & 0xff,
+             (fmt->fourcc >>  8) & 0xff,
+             (fmt->fourcc >> 16) & 0xff,
+             (fmt->fourcc >> 24) & 0xff);
+    cr = cairo_create(cs);
+    render_test(cr, mode->hdisplay, mode->vdisplay, info, text);
+    cairo_destroy(cr);
+}
+
+static void virtio_transfer(void)
+{
+    struct drm_virtgpu_3d_transfer_to_host xfer;
+    int rc;
+
+    memset(&xfer, 0, sizeof(xfer));
+    xfer.bo_handle = create.bo_handle;
+    xfer.box.w = mode->hdisplay;
+    xfer.box.h = mode->vdisplay;
+    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_TRANSFER_TO_HOST, &xfer);
+    if (rc < 0) {
+        fprintf(stderr, "DRM_IOCTL_VIRTGPU_TRANSFER_TO_HOST: %s\n",
+                strerror(errno));
+        exit(1);
+    }
+}
+
+/* ------------------------------------------------------------------ */
+
 static void usage(FILE *fp)
 {
     fprintf(fp,
@@ -108,18 +225,23 @@ static void usage(FILE *fp)
 int main(int argc, char **argv)
 {
     int card = 0;
+    int secs = 60;
     char *output = NULL;
     char *modename = NULL;
     bool printinfo = false;
-    int c;
+    char buf[32];
+    int c, i;
 
     for (;;) {
-        c = getopt(argc, argv, "hic:");
+        c = getopt(argc, argv, "hic:s:");
         if (c == -1)
             break;
         switch (c) {
         case 'c':
             card = atoi(optarg);
+            break;
+        case 's':
+            secs = atoi(optarg);
             break;
         case 'i':
             printinfo = true;
@@ -135,12 +257,32 @@ int main(int argc, char **argv)
 
     virtio_check(card);
 
+    for (i = 0; i < fmtcnt; i++) {
+        if (fmts[i].cairo == CAIRO_FORMAT_RGB24) {
+            fmt = &fmts[i];
+        }
+    }
+    assert(fmt != NULL);
+    assert(fmt->virtio != 0);
+
     drm_init_dev(card, output, modename, false);
 
     if (printinfo) {
         virtio_print_caps();
+        goto done;
     }
 
+    virtio_init_fb();
+    virtio_draw("hello world");
+    virtio_transfer();
+    drm_show_fb();
+
+    tty_raw();
+    kbd_wait(secs);
+    read(0, buf, sizeof(buf));
+    tty_restore();
+
+done:
     drm_fini_dev();
     return 0;
 }

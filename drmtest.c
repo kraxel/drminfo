@@ -34,12 +34,10 @@ static const struct fbformat *fmt = NULL;
 static uint8_t *fbmem;
 
 /* cairo */
-cairo_device_t *cd;
-cairo_surface_t *cs;
-cairo_t *cc;
+static cairo_surface_t *cs;
 
 /* user options */
-cairo_surface_t *image;
+static cairo_surface_t *image;
 
 /* ------------------------------------------------------------------ */
 
