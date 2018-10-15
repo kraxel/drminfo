@@ -44,7 +44,7 @@ clean:
 	rm -f *~ *.o
 
 drminfo: drminfo.o drmtools.o
-drmtest: drmtest.o drmtools.o render.o image.o
+drmtest: drmtest.o drmtools.o ttytools.o render.o image.o
 gtktest: gtktest.o render.o image.o
 
 endif

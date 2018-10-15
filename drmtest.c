@@ -2,17 +2,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
-#include <time.h>
-#include <termios.h>
 
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sys/time.h>
 #include <libdrm/drm_fourcc.h>
 
 #include <xf86drm.h>
@@ -25,6 +21,7 @@
 #include <cairo.h>
 #include <pixman.h>
 
+#include "ttytools.h"
 #include "drmtools.h"
 #include "render.h"
 #include "image.h"
@@ -145,47 +142,6 @@ static void drm_draw_dumb_fb(void)
     }
     drm_draw(text);
     drmModeDirtyFB(fd, fb_id, 0, 0);
-}
-
-/* ------------------------------------------------------------------ */
-
-struct termios  saved_attributes;
-int             saved_fl;
-
-void tty_raw(void)
-{
-    struct termios tattr;
-
-    fcntl(STDIN_FILENO, F_GETFL, &saved_fl);
-    tcgetattr (0, &saved_attributes);
-
-    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-    memcpy(&tattr,&saved_attributes,sizeof(struct termios));
-    tattr.c_lflag &= ~(ICANON|ECHO);
-    tattr.c_cc[VMIN] = 1;
-    tattr.c_cc[VTIME] = 0;
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &tattr);
-}
-
-void tty_restore(void)
-{
-    fcntl(STDIN_FILENO, F_SETFL, saved_fl);
-    tcsetattr(STDIN_FILENO, TCSANOW, &saved_attributes);
-}
-
-int kbd_wait(int timeout)
-{
-    struct timeval limit;
-    fd_set set;
-    int rc;
-
-    FD_ZERO(&set);
-    FD_SET(STDIN_FILENO, &set);
-    limit.tv_sec = timeout;
-    limit.tv_usec = 0;
-    rc = select(STDIN_FILENO + 1, &set, NULL, NULL,
-                timeout ? &limit : NULL);
-    return rc;
 }
 
 /* ------------------------------------------------------------------ */
