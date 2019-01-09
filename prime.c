@@ -159,7 +159,7 @@ void gbm_export_import(int ex, int im)
     char devname[64];
     int card_ex, card_im, dmabuf;
 
-    fprintf(stderr, "test export/import: %d -> %d\n", ex, im);
+    fprintf(stderr, "test export/import: card %d -> card %d\n", ex, im);
 
     snprintf(devname, sizeof(devname), DRM_DEV_NAME, DRM_DIR_NAME, ex);
     card_ex = open(devname, O_RDWR);
@@ -216,6 +216,8 @@ static void usage(FILE *fp)
             "\n"
             "options:\n"
             "  -h         print this\n"
+            "  -e <nr>    export from this card\n"
+            "  -i <nr>    import into this card\n"
             "\n");
 }
 
@@ -228,10 +230,16 @@ int main(int argc, char **argv)
     int im = -1;
 
     for (;;) {
-        c = getopt(argc, argv, "h");
+        c = getopt(argc, argv, "he:i:");
         if (c == -1)
             break;
         switch (c) {
+        case 'e':
+            ex = atoi(optarg);
+            break;
+        case 'i':
+            im = atoi(optarg);
+            break;
         case 'h':
             usage(stdout);
             exit(0);
