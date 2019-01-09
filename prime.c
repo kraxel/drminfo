@@ -52,7 +52,7 @@ int drm_init_dev(const char *devname, bool *import, bool *export)
     fprintf(stderr, "%s:\n", devname);
     fprintf(stderr, "   driver: %s, %s, v%d.%d.%d\n", ver->name, ver->desc,
             ver->version_major, ver->version_minor, ver->version_patchlevel);
-    fprintf(stderr, "   device capabilities:\n");
+    fprintf(stderr, "   device capabilities\n");
     fprintf(stderr, "      dumb buffers: %s\n", dumb    ? "yes" : "no");
     fprintf(stderr, "      prime import: %s\n", *import ? "yes" : "no");
     fprintf(stderr, "      prime export: %s\n", *export ? "yes" : "no");
@@ -173,6 +173,8 @@ int main(int argc, char **argv)
     char devname[64];
     bool import, export;
     int card, handle, dmabuf, c, i;
+    int ex = -1;
+    int im = -1;
 
     for (;;) {
         c = getopt(argc, argv, "h");
@@ -206,7 +208,16 @@ int main(int argc, char **argv)
 
         gbm_test(card, export);
 
+        if (export && (ex == -1 || ex == im))
+            ex = i;
+        if (import && (im == -1 || im == ex))
+            im = i;
+
         close(card);
+    }
+
+    if (ex != -1 && im != -1 && ex != im) {
+        fprintf(stderr, "test export + import: %d -> %d\n", ex, im);
     }
 
     return 0;
