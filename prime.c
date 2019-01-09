@@ -37,8 +37,9 @@ int drm_init_dev(const char *devname, bool *import, bool *export)
 
     ver = drmGetVersion(fd);
     fprintf(stderr, "%s:\n", devname);
-    fprintf(stderr, "   driver: %s, %s, v%d.%d.%d\n", ver->name, ver->desc,
-            ver->version_major, ver->version_minor, ver->version_patchlevel);
+    fprintf(stderr, "   driver: %s, v%d.%d.%d\n", ver->name,
+            ver->version_major, ver->version_minor,
+            ver->version_patchlevel);
 
     rc = drmGetCap(fd, DRM_CAP_PRIME, &prime);
     if (rc < 0) {
@@ -165,7 +166,7 @@ void gbm_export_import(int ex, int im)
     card_ex = open(devname, O_RDWR);
     gbm_ex = gbm_create_device(card_ex);
     if (!gbm_ex) {
-        fprintf(stderr, "%s: gdm init failed\n", devname);
+        fprintf(stderr, "%s: gdm init (ex) failed\n", devname);
         exit(1);
     }
 
@@ -173,7 +174,7 @@ void gbm_export_import(int ex, int im)
     card_im = open(devname, O_RDWR);
     gbm_im = gbm_create_device(card_im);
     if (!gbm_im) {
-        fprintf(stderr, "%s: gdm init failed\n", devname);
+        fprintf(stderr, "%s: gdm init (im) failed\n", devname);
         exit(1);
     }
 
