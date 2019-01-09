@@ -24,6 +24,7 @@
 
 int drm_init_dev(const char *devname, bool *import, bool *export)
 {
+    drmVersion *ver;
     uint64_t prime, dumb;
     int fd, rc;
 
@@ -34,6 +35,7 @@ int drm_init_dev(const char *devname, bool *import, bool *export)
         exit(1);
     }
 
+    ver = drmGetVersion(fd);
     rc = drmGetCap(fd, DRM_CAP_DUMB_BUFFER, &dumb);
     if (rc < 0) {
         fprintf(stderr, "drmGetCap(DRM_CAP_DUMB_BUFFER): %s\n", strerror(errno));
@@ -48,7 +50,9 @@ int drm_init_dev(const char *devname, bool *import, bool *export)
     *export = prime & DRM_PRIME_CAP_EXPORT;
 
     fprintf(stderr, "%s:\n", devname);
-    fprintf(stderr, "   device capabilities\n");
+    fprintf(stderr, "   driver: %s, %s, v%d.%d.%d\n", ver->name, ver->desc,
+            ver->version_major, ver->version_minor, ver->version_patchlevel);
+    fprintf(stderr, "   device capabilities:\n");
     fprintf(stderr, "      dumb buffers: %s\n", dumb    ? "yes" : "no");
     fprintf(stderr, "      prime import: %s\n", *import ? "yes" : "no");
     fprintf(stderr, "      prime export: %s\n", *export ? "yes" : "no");
@@ -122,8 +126,7 @@ void gbm_test(int card, bool export)
         fprintf(stderr, "      create gbm dev: FAILED\n");
         return;
     }
-    fprintf(stderr, "      create gbm dev: OK (backend: %s)\n",
-            gbm_device_get_backend_name(gbm));
+    fprintf(stderr, "      create gbm dev: OK\n");
 
     bo = gbm_bo_create(gbm, TEST_WIDTH, TEST_HEIGHT,
                        GBM_FORMAT_XRGB8888,
