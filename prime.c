@@ -25,7 +25,7 @@
 int drm_init_dev(const char *devname, bool *import, bool *export)
 {
     drmVersion *ver;
-    uint64_t prime, dumb;
+    uint64_t prime;
     int fd, rc;
 
     /* open device */
@@ -36,11 +36,10 @@ int drm_init_dev(const char *devname, bool *import, bool *export)
     }
 
     ver = drmGetVersion(fd);
-    rc = drmGetCap(fd, DRM_CAP_DUMB_BUFFER, &dumb);
-    if (rc < 0) {
-        fprintf(stderr, "drmGetCap(DRM_CAP_DUMB_BUFFER): %s\n", strerror(errno));
-        exit(1);
-    }
+    fprintf(stderr, "%s:\n", devname);
+    fprintf(stderr, "   driver: %s, %s, v%d.%d.%d\n", ver->name, ver->desc,
+            ver->version_major, ver->version_minor, ver->version_patchlevel);
+
     rc = drmGetCap(fd, DRM_CAP_PRIME, &prime);
     if (rc < 0) {
         fprintf(stderr, "drmGetCap(DRM_CAP_PRIME): %s\n", strerror(errno));
@@ -49,11 +48,7 @@ int drm_init_dev(const char *devname, bool *import, bool *export)
     *import = prime & DRM_PRIME_CAP_IMPORT;
     *export = prime & DRM_PRIME_CAP_EXPORT;
 
-    fprintf(stderr, "%s:\n", devname);
-    fprintf(stderr, "   driver: %s, %s, v%d.%d.%d\n", ver->name, ver->desc,
-            ver->version_major, ver->version_minor, ver->version_patchlevel);
     fprintf(stderr, "   device capabilities\n");
-    fprintf(stderr, "      dumb buffers: %s\n", dumb    ? "yes" : "no");
     fprintf(stderr, "      prime import: %s\n", *import ? "yes" : "no");
     fprintf(stderr, "      prime export: %s\n", *export ? "yes" : "no");
 
@@ -155,6 +150,62 @@ done_gbm:
     gbm_device_destroy(gbm);
 }
 
+void gbm_export_import(int ex, int im)
+{
+    struct gbm_device *gbm_ex;
+    struct gbm_device *gbm_im;
+    struct gbm_bo *bo_ex, *bo_im;
+    struct gbm_import_fd_data import;
+    char devname[64];
+    int card_ex, card_im, dmabuf;
+
+    fprintf(stderr, "test export/import: %d -> %d\n", ex, im);
+
+    snprintf(devname, sizeof(devname), DRM_DEV_NAME, DRM_DIR_NAME, ex);
+    card_ex = open(devname, O_RDWR);
+    gbm_ex = gbm_create_device(card_ex);
+    if (!gbm_ex) {
+        fprintf(stderr, "%s: gdm init failed\n", devname);
+        exit(1);
+    }
+
+    snprintf(devname, sizeof(devname), DRM_DEV_NAME, DRM_DIR_NAME, im);
+    card_im = open(devname, O_RDWR);
+    gbm_im = gbm_create_device(card_im);
+    if (!gbm_im) {
+        fprintf(stderr, "%s: gdm init failed\n", devname);
+        exit(1);
+    }
+
+    bo_ex = gbm_bo_create(gbm_ex, TEST_WIDTH, TEST_HEIGHT,
+                          GBM_FORMAT_XRGB8888,
+                          0);
+    if (!bo_ex) {
+        fprintf(stderr, "create gbm bo: FAILED\n");
+        exit(1);
+    }
+    fprintf(stderr, "create gbm bo: OK\n");
+
+    dmabuf = gbm_bo_get_fd(bo_ex);
+    if (dmabuf < 0) {
+        fprintf(stderr, "export gbm bo: FAILED\n");
+        exit(1);
+    }
+    fprintf(stderr, "export gbm bo: OK\n");
+
+    import.fd = dmabuf;
+    import.width = TEST_WIDTH;
+    import.height = TEST_HEIGHT;
+    import.stride = TEST_WIDTH * 4;
+    import.format = GBM_FORMAT_XRGB8888;
+    bo_im = gbm_bo_import(gbm_im, GBM_BO_IMPORT_FD, &import, 0);
+    if (!bo_im) {
+        fprintf(stderr, "import gbm bo: FAILED\n");
+        exit(1);
+    }
+    fprintf(stderr, "import gbm bo: OK\n");
+}
+
 /* ------------------------------------------------------------------ */
 
 static void usage(FILE *fp)
@@ -216,9 +267,8 @@ int main(int argc, char **argv)
         close(card);
     }
 
-    if (ex != -1 && im != -1 && ex != im) {
-        fprintf(stderr, "test export + import: %d -> %d\n", ex, im);
-    }
+    if (ex != -1 && im != -1 && ex != im)
+        gbm_export_import(ex, im);
 
     return 0;
 }
