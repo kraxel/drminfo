@@ -125,24 +125,26 @@ static void dmabuf_mmap(int dmabuf)
 
 /* ------------------------------------------------------------------ */
 
-static void gbm_test(int card, bool export)
+static struct gbm_device *gbm_init(int card)
 {
     struct gbm_device *gbm;
-    struct gbm_bo *bo;
-    int dmabuf;
 
-    fprintf(stderr, "   test gdm buffer (mesa-libgbm)\n");
     gbm = gbm_create_device(card);
     print_test("create gbm dev", !gbm, 0);
-    if (!gbm)
-        return;
+    return gbm;
+}
+
+static void gbm_test(struct gbm_device *gbm, bool export)
+{
+    struct gbm_bo *bo;
+    int dmabuf;
 
     bo = gbm_bo_create(gbm, TEST_WIDTH, TEST_HEIGHT,
                        GBM_FORMAT_XRGB8888,
                        0);
     print_test("create gbm bo", !bo, 0);
     if (!bo)
-        goto done_gbm;
+        return;
 
     if (!export)
         goto done_bo;
@@ -156,36 +158,17 @@ static void gbm_test(int card, bool export)
 
 done_bo:
     gbm_bo_destroy(bo);
-done_gbm:
-    gbm_device_destroy(gbm);
 }
 
-static void gbm_export_import(int ex, int im)
+static void gbm_export_import(struct gbm_device *gbm_ex,
+                              struct gbm_device *gbm_im,
+                              int ex, int im)
 {
-    struct gbm_device *gbm_ex;
-    struct gbm_device *gbm_im;
     struct gbm_bo *bo_ex, *bo_im;
     struct gbm_import_fd_data import;
-    char devname[64];
-    int card_ex, card_im, dmabuf;
+    int dmabuf;
 
     fprintf(stderr, "test export/import: card %d -> card %d\n", ex, im);
-
-    snprintf(devname, sizeof(devname), DRM_DEV_NAME, DRM_DIR_NAME, ex);
-    card_ex = open(devname, O_RDWR);
-    gbm_ex = gbm_create_device(card_ex);
-    if (!gbm_ex) {
-        fprintf(stderr, "%s: gdm init (ex) failed\n", devname);
-        exit(1);
-    }
-
-    snprintf(devname, sizeof(devname), DRM_DEV_NAME, DRM_DIR_NAME, im);
-    card_im = open(devname, O_RDWR);
-    gbm_im = gbm_create_device(card_im);
-    if (!gbm_im) {
-        fprintf(stderr, "%s: gdm init (im) failed\n", devname);
-        exit(1);
-    }
 
     bo_ex = gbm_bo_create(gbm_ex, TEST_WIDTH, TEST_HEIGHT,
                           GBM_FORMAT_XRGB8888,
@@ -229,13 +212,14 @@ static void usage(FILE *fp)
 
 int main(int argc, char **argv)
 {
+    struct gbm_device *gbm;
+    struct gbm_device *gbm_ex = NULL;
+    struct gbm_device *gbm_im = NULL;
     char devname[64];
     bool import, export;
     int card, handle, dmabuf, c, i;
     int ex = -1;
     int im = -1;
-    bool exarg = false;
-    bool imarg = false;
     bool list = false;
 
     for (;;) {
@@ -247,11 +231,9 @@ int main(int argc, char **argv)
             list = true;
             break;
         case 'e':
-            exarg = true;
             ex = atoi(optarg);
             break;
         case 'i':
-            imarg = true;
             im = atoi(optarg);
             break;
         case 'h':
@@ -273,6 +255,12 @@ int main(int argc, char **argv)
             continue;
         }
 
+        if (export && ex == -1 && i != im) {
+            ex = i;
+        } else if (import && im == -1 && i != ex) {
+            im = i;
+        }
+
         fprintf(stderr, "   test dumb buffer (ioctl)\n");
         handle = drm_dumb_buf(card);
         if (handle >= 0 && export) {
@@ -283,18 +271,25 @@ int main(int argc, char **argv)
             }
         }
 
-        gbm_test(card, export);
-
-        if (export && !exarg && (ex == -1 || ex == im))
-            ex = i;
-        if (import && !imarg && (im == -1 || im == ex))
-            im = i;
+        fprintf(stderr, "   test gdm buffer (mesa-libgbm)\n");
+        gbm = gbm_init(card);
+        if (gbm) {
+            gbm_test(gbm, export);
+            if (i == ex) {
+                gbm_ex = gbm;
+            } else if (i == im) {
+                gbm_im = gbm;
+            } else {
+                gbm_device_destroy(gbm);
+            }
+        }
 
         close(card);
+        fprintf(stderr, "\n");
     }
 
-    if (!list && ex != -1 && im != -1 && ex != im)
-        gbm_export_import(ex, im);
+    if (!list && gbm_ex && gbm_im)
+        gbm_export_import(gbm_ex, gbm_im, ex, im);
 
     return 0;
 }
