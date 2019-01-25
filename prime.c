@@ -20,22 +20,27 @@
 #define TEST_HEIGHT 480
 #define TEST_SIZE   (TEST_WIDTH * TEST_HEIGHT * 4)
 
-#define NAME_WIDTH  16
+#define INDENT_WIDTH  4
+#define NAME_WIDTH   16
 
 static void print_head(const char *name)
 {
-    fprintf(stderr, "   %s\n", name);
+    fprintf(stderr, "%*s%s\n", INDENT_WIDTH, "", name);
 }
 
 static void print_caps(const char *name, bool available)
 {
-    fprintf(stderr, "      %-*s: %s\n", NAME_WIDTH, name,
+    fprintf(stderr, "%*s%-*s: %s\n",
+            INDENT_WIDTH * 2, "",
+            NAME_WIDTH, name,
             available ? "yes" : "no");
 }
 
 static void print_test(const char *name, bool failed, int err)
 {
-    fprintf(stderr, "      %-*s: %s", NAME_WIDTH, name,
+    fprintf(stderr, "%*s%-*s: %s",
+            INDENT_WIDTH * 2, "",
+            NAME_WIDTH, name,
             !failed ? "OK" : "FAILED");
     if (failed && err)
         fprintf(stderr, " (%s)", strerror(err));
@@ -59,7 +64,8 @@ static int drm_init_dev(const char *devname, bool *import, bool *export)
 
     ver = drmGetVersion(fd);
     fprintf(stderr, "%s:\n", devname);
-    fprintf(stderr, "   driver: %s, v%d.%d.%d\n", ver->name,
+    fprintf(stderr, "%*sdriver: %s, v%d.%d.%d\n",
+            INDENT_WIDTH, "", ver->name,
             ver->version_major, ver->version_minor,
             ver->version_patchlevel);
 
@@ -261,7 +267,7 @@ int main(int argc, char **argv)
             im = i;
         }
 
-        fprintf(stderr, "   test dumb buffer (ioctl)\n");
+        print_head("test dumb buffer (ioctl)");
         handle = drm_dumb_buf(card);
         if (handle >= 0 && export) {
             dmabuf = drm_export_buf(card, handle);
@@ -271,7 +277,7 @@ int main(int argc, char **argv)
             }
         }
 
-        fprintf(stderr, "   test gdm buffer (mesa-libgbm)\n");
+        print_head("test gdm buffer (mesa-libgbm)");
         gbm = gbm_init(card);
         if (gbm) {
             gbm_test(gbm, export);
