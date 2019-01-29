@@ -310,11 +310,21 @@ static int drm_open(int devnr)
 static void drm_info_misc(int fd)
 {
     char *busid;
+    drmVersion *ver;
+
+    ver = drmGetVersion(fd);
+    fprintf(stderr, "name    : \"%s\"\n", ver->name);
+    fprintf(stderr, "desc    : \"%s\"\n", ver->desc);
+    fprintf(stderr, "date    : \"%s\"\n", ver->date);
+    fprintf(stderr, "version : v%d.%d.%d\n",
+            ver->version_major, ver->version_minor,
+            ver->version_patchlevel);
 
     busid = drmGetBusid(fd);
     if (busid) {
-        fprintf(stdout, "busid: \"%s\"\n", busid);
+        fprintf(stdout, "busid   : \"%s\"\n", busid);
     }
+
     fprintf(stdout, "\n");
 }
 
