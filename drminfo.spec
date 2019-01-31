@@ -9,7 +9,7 @@ Source:       http://www.kraxel.org/releases/%{name}/%{name}-%{version}.tar.gz
 
 Requires:     font(liberationmono)
 
-BuildRequires: meson ninja-build
+BuildRequires: meson ninja-build gcc
 BuildRequires: libjpeg-devel
 BuildRequires: pkgconfig(libdrm)
 BuildRequires: pkgconfig(gbm)
@@ -36,4 +36,5 @@ ninja-build -C build-rpm install
 
 %files
 %{_bindir}/drm*
+%{_bindir}/prime*
 %{_mandir}/man1/drm*.1*
