@@ -36,5 +36,6 @@ ninja-build -C build-rpm install
 
 %files
 %{_bindir}/drm*
-%{_bindir}/prime*
+%{_bindir}/prime
+%{_bindir}/virtiotest
 %{_mandir}/man1/drm*.1*
