@@ -64,6 +64,7 @@ int main(int argc, char **argv)
     int framebuffer = 0;
     int secs = 60;
     char buf[32];
+    char text[128];
     int c;
 
     for (;;) {
@@ -95,7 +96,9 @@ int main(int argc, char **argv)
                                              fb_var.xres,
                                              fb_var.yres,
                                              fb_fix.line_length);
-    fb_draw("*");
+    snprintf(text, sizeof(text), "fbdev, %d bpp",
+             fb_var.bits_per_pixel);
+    fb_draw(text);
 
     tty_raw();
     kbd_wait(secs);
