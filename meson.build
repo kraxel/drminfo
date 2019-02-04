@@ -1,5 +1,9 @@
 project('drminfo', 'c', default_options : [ 'c_std=c99' ] )
 
+# tweak warnings
+add_global_arguments('-D_POSIX_SOURCE=1', language : 'c')
+add_global_arguments('-D_GNU_SOURCE=1', language : 'c')
+
 # pkg-config deps
 libdrm_dep    = dependency('libdrm')
 gbm_dep       = dependency('gbm')
@@ -13,6 +17,7 @@ jpeg_dep      = declare_dependency(link_args : '-ljpeg')
 
 drminfo_srcs  = [ 'drminfo.c', 'drmtools.c' ]
 drmtest_srcs  = [ 'drmtest.c', 'drmtools.c', 'ttytools.c', 'render.c', 'image.c' ]
+fbtest_srcs   = [ 'fbtest.c', 'fbtools.c', 'ttytools.c', 'render.c', 'image.c' ]
 prime_srcs    = [ 'prime.c' ]
 viotest_srcs  = [ 'virtiotest.c', 'drmtools.c', 'ttytools.c', 'render.c' ]
 gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c' ]
@@ -20,6 +25,7 @@ gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c' ]
 drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep ]
 drmtest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
                   cairo_dep, pixman_dep, jpeg_dep ]
+fbtest_deps   = [ cairo_dep, pixman_dep, jpeg_dep ]
 prime_deps    = [ libdrm_dep, gbm_dep ]
 viotest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
                   cairo_dep, pixman_dep, jpeg_dep ]
@@ -33,6 +39,10 @@ executable('drminfo',
 executable('drmtest',
            sources      : drmtest_srcs,
            dependencies : drmtest_deps,
+           install      : true)
+executable('fbtest',
+           sources      : fbtest_srcs,
+           dependencies : fbtest_deps,
            install      : true)
 executable('prime',
            sources      : prime_srcs,

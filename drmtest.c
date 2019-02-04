@@ -172,7 +172,7 @@ int main(int argc, char **argv)
     int c,i;
 
     for (;;) {
-        c = getopt(argc, argv, "hgdc:s:o:i:f:m:");
+        c = getopt(argc, argv, "hc:s:o:i:f:m:");
         if (c == -1)
             break;
         switch (c) {
