@@ -226,7 +226,7 @@ static void drm_info_plane(int fd, drmModePlane *plane,
     fprintf(stdout, "    format   modifiers\n");
     for (i = 0; i < plane->count_formats; i++) {
         if (print_modifiers) {
-            uint64_t *drm_modifiers;
+            uint64_t *drm_modifiers = NULL;
             size_t drm_modifiers_count;
             size_t m;
             int pos = 12;
