@@ -41,20 +41,39 @@ static cairo_surface_t *image;
 
 /* ------------------------------------------------------------------ */
 
-static void drm_draw(const char *text)
+static void drm_draw(void)
 {
     char name[64];
-    char info[80];
+    char info1[80], info2[80], info3[80];
     cairo_t *cr;
 
+    snprintf(info1, sizeof(info1), "drm driver: %s, v%d.%d.%d (%s)",
+             version->name, version->version_major, version->version_minor,
+             version->version_patchlevel, version->desc);
+
     drm_conn_name(conn, name, sizeof(name));
-    snprintf(info, sizeof(info), "drmtest: %dx%d at %s",
+    snprintf(info2, sizeof(info2), "%dx%d, output %s",
              mode->hdisplay, mode->vdisplay, name);
+
+    if (fmt->fourcc) {
+        snprintf(info3, sizeof(info3),
+                 "dumb drm buffer, bpp %d, fourcc %c%c%c%c (ADDFB2)",
+                 fmt->bpp,
+                 (fmt->fourcc >>  0) & 0xff,
+                 (fmt->fourcc >>  8) & 0xff,
+                 (fmt->fourcc >> 16) & 0xff,
+                 (fmt->fourcc >> 24) & 0xff);
+    } else {
+        snprintf(info3, sizeof(info3),
+                 "dumb drm buffer, bpp %d, depth %d (legacy ADDFB)",
+                 fmt->bpp, fmt->depth);
+    }
+
     cr = cairo_create(cs);
     if (image) {
         render_image(cr, mode->hdisplay, mode->vdisplay, image);
     } else {
-        render_test(cr, mode->hdisplay, mode->vdisplay, info, text);
+        render_test(cr, mode->hdisplay, mode->vdisplay, info1, info2, info3);
     }
     cairo_destroy(cr);
 }
@@ -123,22 +142,7 @@ static void drm_init_dumb_fb(void)
 
 static void drm_draw_dumb_fb(void)
 {
-    char text[80];
-
-    if (fmt->fourcc) {
-        snprintf(text, sizeof(text),
-                 "dumb framebuffer, bpp %d, fourcc %c%c%c%c (ADDFB2)",
-                 fmt->bpp,
-                 (fmt->fourcc >>  0) & 0xff,
-                 (fmt->fourcc >>  8) & 0xff,
-                 (fmt->fourcc >> 16) & 0xff,
-                 (fmt->fourcc >> 24) & 0xff);
-    } else {
-        snprintf(text, sizeof(text),
-                 "dumb framebuffer, bpp %d, depth %d (legacy ADDFB)",
-                 fmt->bpp, fmt->depth);
-    }
-    drm_draw(text);
+    drm_draw();
     drmModeDirtyFB(fd, fb_id, 0, 0);
 }
 

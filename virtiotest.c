@@ -165,19 +165,22 @@ static void virtio_init_fb(void)
                                              stride);
 }
 
-static void virtio_draw(const char *text)
+static void virtio_draw(void)
 {
-    char info[80];
+    char info1[80], info2[80], info3[80];
     cairo_t *cr;
 
-    snprintf(info, sizeof(info), "virtiotest: %dx%d, fourcc %c%c%c%c",
-             mode->hdisplay, mode->vdisplay,
+    snprintf(info1, sizeof(info1), "virtio-gpu");
+    snprintf(info2, sizeof(info2), "%dx%d",
+             mode->hdisplay, mode->vdisplay);
+    snprintf(info3, sizeof(info3), "fourcc %c%c%c%c",
              (fmt->fourcc >>  0) & 0xff,
              (fmt->fourcc >>  8) & 0xff,
              (fmt->fourcc >> 16) & 0xff,
              (fmt->fourcc >> 24) & 0xff);
+
     cr = cairo_create(cs);
-    render_test(cr, mode->hdisplay, mode->vdisplay, info, text);
+    render_test(cr, mode->hdisplay, mode->vdisplay, info1, info2, info3);
     cairo_destroy(cr);
 }
 
@@ -264,7 +267,7 @@ int main(int argc, char **argv)
     }
 
     virtio_init_fb();
-    virtio_draw("hello world");
+    virtio_draw();
     virtio_transfer();
     drm_show_fb();
 

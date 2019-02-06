@@ -28,17 +28,23 @@ static cairo_surface_t *image;
 
 /* ------------------------------------------------------------------ */
 
-static void fb_draw(const char *text)
+static void fb_draw(void)
 {
-    char info[80];
+    char info1[80];
+    char info2[80];
+    char info3[80];
     cairo_t *cr;
 
-    snprintf(info, sizeof(info), "fbtest: %dx%d", fb_var.xres, fb_var.yres);
+    snprintf(info1, sizeof(info1), "fb driver: %s", fb_fix.id);
+    snprintf(info2, sizeof(info2), "%dx%d", fb_var.xres, fb_var.yres);
+    snprintf(info3, sizeof(info3), "fbdev, %d bpp",
+             fb_var.bits_per_pixel);
+
     cr = cairo_create(cs);
     if (image) {
         render_image(cr, fb_var.xres, fb_var.yres, image);
     } else {
-        render_test(cr, fb_var.xres, fb_var.yres, info, text);
+        render_test(cr, fb_var.xres, fb_var.yres, info1, info2, info3);
     }
     cairo_destroy(cr);
 }
@@ -64,7 +70,6 @@ int main(int argc, char **argv)
     int framebuffer = 0;
     int secs = 60;
     char buf[32];
-    char text[128];
     int c;
 
     for (;;) {
@@ -96,9 +101,7 @@ int main(int argc, char **argv)
                                              fb_var.xres,
                                              fb_var.yres,
                                              fb_fix.line_length);
-    snprintf(text, sizeof(text), "fbdev, %d bpp",
-             fb_var.bits_per_pixel);
-    fb_draw(text);
+    fb_draw();
 
     tty_raw();
     kbd_wait(secs);

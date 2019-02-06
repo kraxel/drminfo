@@ -8,7 +8,7 @@ static int pad = 15;
 
 static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
                              double r, double g, double b,
-                             const char *l1, const char *l2)
+                             const char *l1, const char *l2, const char *l3)
 {
     cairo_font_extents_t ext;
     cairo_pattern_t *gr;
@@ -26,12 +26,14 @@ static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
                            CAIRO_FONT_WEIGHT_NORMAL);
     if (l2) {
         cairo_set_source_rgb(cr, 1, 1, 1);
-        cairo_set_font_size(cr, h/2 - pad);
+        cairo_set_font_size(cr, (h - 2*pad) / 3);
         cairo_font_extents(cr, &ext);
         cairo_move_to(cr, x + pad, y + pad + ext.ascent);
         cairo_show_text(cr, l1);
         cairo_move_to(cr, x + pad, y + pad + ext.ascent + ext.height);
         cairo_show_text(cr, l2);
+        cairo_move_to(cr, x + pad, y + pad + ext.ascent + ext.height * 2);
+        cairo_show_text(cr, l3);
     } else {
         cairo_set_source_rgb(cr, r, g, b);
         cairo_set_font_size(cr, h - 2*pad);
@@ -41,7 +43,8 @@ static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
     }
 }
 
-void render_test(cairo_t *cr, int width, int height, const char *l1, const char *l2)
+void render_test(cairo_t *cr, int width, int height,
+                 const char *l1, const char *l2, const char *l3)
 {
     int bar = 120;
 
@@ -59,13 +62,19 @@ void render_test(cairo_t *cr, int width, int height, const char *l1, const char 
     cairo_stroke(cr);
 
     render_color_bar(cr, pad, bar * 0 + pad, width - 2*pad, bar,
-                     0.6, 0.6, 0.6, l1, l2);
-    render_color_bar(cr, pad, bar * 1 + pad, width - 2*pad, bar, 1, 0, 0, "red", NULL);
-    render_color_bar(cr, pad, bar * 2 + pad, width - 2*pad, bar, 1, 1, 0, "yellow", NULL);
-    render_color_bar(cr, pad, bar * 3 + pad, width - 2*pad, bar, 0, 1, 0, "green", NULL);
-    render_color_bar(cr, pad, bar * 4 + pad, width - 2*pad, bar, 0, 1, 1, "cyan", NULL);
-    render_color_bar(cr, pad, bar * 5 + pad, width - 2*pad, bar, 0, 0, 1, "blue", NULL);
-    render_color_bar(cr, pad, bar * 6 + pad, width - 2*pad, bar, 1, 0, 1, "magenta", NULL);
+                     0.6, 0.6, 0.6, l1, l2, l3);
+    render_color_bar(cr, pad, bar * 1 + pad, width - 2*pad, bar, 1, 0, 0,
+                     "red", NULL, NULL);
+    render_color_bar(cr, pad, bar * 2 + pad, width - 2*pad, bar, 1, 1, 0,
+                     "yellow", NULL, NULL);
+    render_color_bar(cr, pad, bar * 3 + pad, width - 2*pad, bar, 0, 1, 0,
+                     "green", NULL, NULL);
+    render_color_bar(cr, pad, bar * 4 + pad, width - 2*pad, bar, 0, 1, 1,
+                     "cyan", NULL, NULL);
+    render_color_bar(cr, pad, bar * 5 + pad, width - 2*pad, bar, 0, 0, 1,
+                     "blue", NULL, NULL);
+    render_color_bar(cr, pad, bar * 6 + pad, width - 2*pad, bar, 1, 0, 1,
+                     "magenta", NULL, NULL);
 
     cairo_show_page(cr);
 }

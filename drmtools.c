@@ -601,6 +601,7 @@ int fd;
 uint32_t fb_id;
 drmModeConnector *conn = NULL;
 drmModeModeInfo *mode = NULL;
+drmVersion *version = NULL;
 
 static drmModeEncoder *enc = NULL;
 static drmModeCrtc *scrtc = NULL;
@@ -622,6 +623,7 @@ void drm_init_dev(int devnr, const char *output,
         fprintf(stderr, "open %s: %s\n", dev, strerror(errno));
         exit(1);
     }
+    version = drmGetVersion(fd);
 
     if (need_dumb) {
         rc = drmGetCap(fd, DRM_CAP_DUMB_BUFFER, &has_dumb);

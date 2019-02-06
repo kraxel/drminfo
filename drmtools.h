@@ -30,6 +30,7 @@ extern int fd;
 extern uint32_t fb_id;
 extern drmModeConnector *conn;
 extern drmModeModeInfo *mode;
+extern drmVersion *version;
 
 void drm_init_dev(int devnr, const char *output,
                   const char *modename, bool need_dumb);

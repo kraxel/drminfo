@@ -21,7 +21,7 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
     } else {
         snprintf(info, sizeof(info), "gtktest: %dx%d",
                  width, height);
-        render_test(cr, width, height, info, NULL);
+        render_test(cr, width, height, info, "line #2", "line #3");
     }
     return FALSE;
 }
