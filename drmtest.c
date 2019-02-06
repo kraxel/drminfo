@@ -223,7 +223,12 @@ int main(int argc, char **argv)
             exit(1);
         }
     } else {
-        fmt = &fmts[0];
+        for (i = 0; i < fmtcnt; i++) {
+            if (!drm_probe_format(fd, &fmts[i]))
+                continue;
+            fmt = &fmts[i];
+            break;
+        }
     }
 
     drm_init_dev(card, output, modename, false);
