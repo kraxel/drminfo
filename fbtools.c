@@ -141,7 +141,6 @@ void fb_init(int cardno)
     char device[64];
 
     snprintf(device, sizeof(device), "/dev/fb%d", cardno);
-    fprintf(stderr, "trying fbdev: %s ...\n", device);
 
     if (-1 == ioctl(STDIN_FILENO, KDGETMODE, &kd_mode)) {
 	perror("ioctl KDGETMODE");
