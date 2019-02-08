@@ -222,16 +222,24 @@ int main(int argc, char **argv)
             }
             exit(1);
         }
-    } else {
+    }
+
+    drm_init_dev(card, output, modename, false);
+
+    if (!fmt) {
         for (i = 0; i < fmtcnt; i++) {
             if (!drm_probe_format(fd, &fmts[i]))
                 continue;
             fmt = &fmts[i];
             break;
         }
+        if (!fmt) {
+            drm_fini_dev();
+            fprintf(stderr, "Huh? No working drm format found.\n");
+            exit(1);
+        }
     }
 
-    drm_init_dev(card, output, modename, false);
     drm_init_dumb_fb();
     drm_draw_dumb_fb();
     drm_show_fb();
