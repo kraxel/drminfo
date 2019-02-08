@@ -227,7 +227,10 @@ int main(int argc, char **argv)
     drm_init_dev(card, output, modename, false);
 
     if (!fmt) {
+        /* find first supported in list */
         for (i = 0; i < fmtcnt; i++) {
+            if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
+                continue;
             if (!drm_probe_format(fd, &fmts[i]))
                 continue;
             fmt = &fmts[i];
@@ -235,7 +238,7 @@ int main(int argc, char **argv)
         }
         if (!fmt) {
             drm_fini_dev();
-            fprintf(stderr, "Huh? No working drm format found.\n");
+            fprintf(stderr, "No drm format (with cairo support) found.\n");
             exit(1);
         }
     }

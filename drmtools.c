@@ -39,44 +39,6 @@ const struct fbformat fmts[] = {
 
     /*
      * -----------------------------------------------------------------
-     * legacy formats, native endian (DRM_IOCTL_MODE_ADDFB)
-     */
-    {
-        .name   = "24",
-        .fields = "x:R:G:B",
-        .bits   = "8:8:8:8",
-        .bpp    = 32,
-        .depth  = 24,
-        .cairo  = CAIRO_FORMAT_RGB24,
-        .pixman = PIXMAN_x8r8g8b8,
-    },{
-        .name   = "30",
-        .fields = "x:R:G:B",
-        .bits   = "2:10:10:10",
-        .bpp    = 32,
-        .depth  = 30,
-        .cairo  = CAIRO_FORMAT_RGB30,
-        .pixman = PIXMAN_x2b10g10r10,
-    },{
-        .name   = "15",
-        .fields = "x:R:G:B",
-        .bits   = "1:5:5:5",
-        .bpp    = 16,
-        .depth  = 15,
-        .cairo  = CAIRO_FORMAT_INVALID,
-        .pixman = PIXMAN_x1r5g5b5,
-    },{
-        .name   = "16",
-        .fields = "R:G:B",
-        .bits   = "5:6:5",
-        .bpp    = 16,
-        .depth  = 16,
-        .cairo  = CAIRO_FORMAT_RGB16_565,
-        .pixman = PIXMAN_r5g6b5,
-    },
-
-    /*
-     * -----------------------------------------------------------------
      * fourcc formats, little endian (DRM_IOCTL_MODE_ADDFB2)
      */
 
@@ -441,6 +403,44 @@ const struct fbformat fmts[] = {
         .fourcc = DRM_FORMAT_AYUV,
         .cairo  = CAIRO_FORMAT_INVALID,
         .pixman = 0,
+    },
+
+    /*
+     * -----------------------------------------------------------------
+     * legacy formats, native endian (DRM_IOCTL_MODE_ADDFB)
+     */
+    {
+        .name   = "24",
+        .fields = "x:R:G:B",
+        .bits   = "8:8:8:8",
+        .bpp    = 32,
+        .depth  = 24,
+        .cairo  = CAIRO_FORMAT_RGB24,
+        .pixman = PIXMAN_x8r8g8b8,
+    },{
+        .name   = "30",
+        .fields = "x:R:G:B",
+        .bits   = "2:10:10:10",
+        .bpp    = 32,
+        .depth  = 30,
+        .cairo  = CAIRO_FORMAT_RGB30,
+        .pixman = PIXMAN_x2b10g10r10,
+    },{
+        .name   = "15",
+        .fields = "x:R:G:B",
+        .bits   = "1:5:5:5",
+        .bpp    = 16,
+        .depth  = 15,
+        .cairo  = CAIRO_FORMAT_INVALID,
+        .pixman = PIXMAN_x1r5g5b5,
+    },{
+        .name   = "16",
+        .fields = "R:G:B",
+        .bits   = "5:6:5",
+        .bpp    = 16,
+        .depth  = 16,
+        .cairo  = CAIRO_FORMAT_RGB16_565,
+        .pixman = PIXMAN_r5g6b5,
     },
 };
 const uint32_t fmtcnt = sizeof(fmts)/sizeof(fmts[0]);
