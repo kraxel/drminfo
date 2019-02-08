@@ -112,10 +112,15 @@ static void virtio_init_fb(void)
 
     /* create framebuffer */
     memset(&create, 0, sizeof(create));
-    create.target = 2; /* ??? */
     create.format = fmt->virtio;
     create.width  = mode->hdisplay;
     create.height = mode->vdisplay;
+
+    create.target = 2;       /* ??? */
+    create.bind = (1 << 1);  /* ??? */
+    create.depth = 1;
+    create.array_size = 1;
+
     stride = create.width * fmt->bpp / 8;
     create.size   = stride * create.height;
     rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE, &create);
@@ -193,6 +198,7 @@ static void virtio_transfer(void)
     xfer.bo_handle = create.bo_handle;
     xfer.box.w = mode->hdisplay;
     xfer.box.h = mode->vdisplay;
+    xfer.box.d = 1;
     rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_TRANSFER_TO_HOST, &xfer);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_VIRTGPU_TRANSFER_TO_HOST: %s\n",
