@@ -676,20 +676,6 @@ void drm_init_dev(int devnr, const char *output,
         exit(1);
     }
 
-    for (i = 0; i < res->count_connectors; i++) {
-        conn = drmModeGetConnector(fd, res->connectors[i]);
-        if (conn &&
-            (conn->connection == DRM_MODE_CONNECTED) &&
-            conn->count_modes)
-            break;
-        drmModeFreeConnector(conn);
-        conn = NULL;
-    }
-    if (!conn) {
-        fprintf(stderr, "no usable connector found\n");
-        exit(1);
-    }
-
     if (modename) {
         for (i = 0; i < conn->count_modes; i++) {
             snprintf(m, sizeof(m), "%dx%d",
