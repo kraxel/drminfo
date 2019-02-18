@@ -10,7 +10,7 @@ cairo_surface_t *image;
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
                               gpointer user_data)
 {
-    char info[80];
+    char info1[80], info2[80];
     int width, height;
 
     width = gtk_widget_get_allocated_width(widget);
@@ -19,9 +19,9 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
     if (image) {
         render_image(cr, width, height, image);
     } else {
-        snprintf(info, sizeof(info), "gtktest: %dx%d",
-                 width, height);
-        render_test(cr, width, height, info, "line #2", "line #3");
+        snprintf(info1, sizeof(info1), "gtktest");
+        snprintf(info2, sizeof(info2), "%dx%d", width, height);
+        render_test(cr, width, height, info1, info2, "");
     }
     return FALSE;
 }
