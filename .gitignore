@@ -1,5 +1,3 @@
-drminfo
-drmtest
-gtktest
+build-meson-*
 *.o
 !.tito/
