@@ -6,5 +6,6 @@ extern unsigned char            *fb_mem;
 extern int		        fb_mem_offset;
 extern cairo_format_t           fb_format;
 
+void fb_query(int devnr);
 void fb_init(int devnr);
 void fb_fini(void);

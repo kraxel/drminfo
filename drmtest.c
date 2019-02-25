@@ -33,8 +33,10 @@ static struct drm_mode_create_dumb creq;
 static const struct fbformat *fmt = NULL;
 static uint8_t *fbmem;
 
-/* cairo */
+/* cairo + pixman */
 static cairo_surface_t *cs;
+static pixman_image_t *pxcs;
+static pixman_image_t *pxfb;
 
 /* user options */
 static cairo_surface_t *image;
@@ -52,8 +54,9 @@ static void drm_draw(void)
              version->version_patchlevel, version->desc);
 
     drm_conn_name(conn, name, sizeof(name));
-    snprintf(info2, sizeof(info2), "%dx%d, output %s",
-             mode->hdisplay, mode->vdisplay, name);
+    snprintf(info2, sizeof(info2), "%dx%d, output %.10s, %.10s mode",
+             mode->hdisplay, mode->vdisplay, name,
+             pxcs && pxfb ? "pixman" : "cairo");
 
     if (fmt->fourcc) {
         snprintf(info3, sizeof(info3),
@@ -76,11 +79,19 @@ static void drm_draw(void)
         render_test(cr, mode->hdisplay, mode->vdisplay, info1, info2, info3);
     }
     cairo_destroy(cr);
+
+    if (pxcs && pxfb) {
+        pixman_image_composite(PIXMAN_OP_SRC, pxcs, NULL, pxfb,
+                               0, 0,
+                               0, 0,
+                               0, 0,
+                               mode->hdisplay, mode->vdisplay);
+    }
 }
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dumb_fb(void)
+static void drm_init_dumb_fb(bool use_pixman)
 {
     struct drm_mode_map_dumb mreq;
     uint32_t zero = 0;
@@ -133,11 +144,28 @@ static void drm_init_dumb_fb(void)
         exit(1);
     }
 
-    cs = cairo_image_surface_create_for_data(fbmem,
-                                             fmt->cairo,
-                                             creq.width,
-                                             creq.height,
-                                             creq.pitch);
+    if (use_pixman) {
+        pxfb = pixman_image_create_bits(fmt->pixman,
+                                        creq.width,
+                                        creq.height,
+                                        (void*)fbmem,
+                                        creq.pitch);
+        pxcs = pixman_image_create_bits(PIXMAN_x2r10g10b10,
+                                        creq.width,
+                                        creq.height,
+                                        NULL, 0);
+        cs = cairo_image_surface_create_for_data((void*)pixman_image_get_data(pxcs),
+                                                 CAIRO_FORMAT_RGB30,
+                                                 creq.width,
+                                                 creq.height,
+                                                 pixman_image_get_stride(pxcs));
+    } else {
+        cs = cairo_image_surface_create_for_data(fbmem,
+                                                 fmt->cairo,
+                                                 creq.width,
+                                                 creq.height,
+                                                 creq.pitch);
+    }
 }
 
 static void drm_draw_dumb_fb(void)
@@ -156,6 +184,7 @@ static void usage(FILE *fp)
             "\n"
             "options:\n"
             "  -h         print this\n"
+            "  -p         pixman mode\n"
             "  -c <nr>    pick card\n"
             "  -o <name>  pick output\n"
             "  -s <secs>  set sleep time\n"
@@ -173,13 +202,17 @@ int main(int argc, char **argv)
     char *format = NULL;
     char *modename = NULL;
     char buf[32];
+    bool pixman = false;
     int c,i;
 
     for (;;) {
-        c = getopt(argc, argv, "hc:s:o:i:f:m:");
+        c = getopt(argc, argv, "hpc:s:o:i:f:m:");
         if (c == -1)
             break;
         switch (c) {
+        case 'p':
+            pixman = true;
+            break;
         case 'c':
             card = atoi(optarg);
             break;
@@ -216,8 +249,13 @@ int main(int argc, char **argv)
         if (!fmt) {
             fprintf(stderr, "unknown format %s, valid choices are:\n", format);
             for (i = 0; i < fmtcnt; i++) {
-                if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
-                    continue;
+                if (pixman) {
+                    if (fmts[i].pixman == 0)
+                        continue;
+                } else {
+                    if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
+                        continue;
+                }
                 drm_print_format(stderr, &fmts[i], 4, false);
             }
             exit(1);
@@ -229,8 +267,13 @@ int main(int argc, char **argv)
     if (!fmt) {
         /* find first supported in list */
         for (i = 0; i < fmtcnt; i++) {
-            if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
-                continue;
+            if (pixman) {
+                if (fmts[i].pixman == 0)
+                    continue;
+            } else {
+                if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
+                    continue;
+            }
             if (!drm_probe_format(fd, &fmts[i]))
                 continue;
             fmt = &fmts[i];
@@ -243,7 +286,7 @@ int main(int argc, char **argv)
         }
     }
 
-    drm_init_dumb_fb();
+    drm_init_dumb_fb(pixman);
     drm_draw_dumb_fb();
     drm_show_fb();
 

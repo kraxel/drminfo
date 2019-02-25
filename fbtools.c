@@ -135,6 +135,25 @@ void fb_fini(void)
 
 /* -------------------------------------------------------------------- */
 
+void fb_query(int cardno)
+{
+    char device[64];
+
+    snprintf(device, sizeof(device), "/dev/fb%d", cardno);
+    if (-1 == (fb = open(device,O_RDWR | O_CLOEXEC))) {
+	fprintf(stderr,"open %s: %s\n",device,strerror(errno));
+	exit(1);
+    }
+    if (-1 == ioctl(fb,FBIOGET_FSCREENINFO,&fb_fix)) {
+	perror("ioctl FBIOGET_FSCREENINFO");
+	exit(1);
+    }
+    if (-1 == ioctl(fb,FBIOGET_VSCREENINFO,&fb_var)) {
+	perror("ioctl FBIOGET_VSCREENINFO");
+	exit(1);
+    }
+}
+
 void fb_init(int cardno)
 {
     unsigned long page_mask;
