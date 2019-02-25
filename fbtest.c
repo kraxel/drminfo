@@ -60,7 +60,7 @@ static void usage(FILE *fp)
             "options:\n"
             "  -h         print this\n"
             "  -f <nr>    pick framebuffer\n"
-            "  -s <secs>  set sleep time\n"
+            "  -s <secs>  set sleep time (default: 60)\n"
             "  -i <file>  load and display image <file>\n"
             "\n");
 }

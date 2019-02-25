@@ -187,7 +187,7 @@ static void usage(FILE *fp)
             "  -p         pixman mode\n"
             "  -c <nr>    pick card\n"
             "  -o <name>  pick output\n"
-            "  -s <secs>  set sleep time\n"
+            "  -s <secs>  set sleep time (default: 60)\n"
             "  -i <file>  load and display image <file>\n"
             "  -f <fmt>   pick framebuffer format\n"
             "  -m <mode>  pick video mode format\n"
