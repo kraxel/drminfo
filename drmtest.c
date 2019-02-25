@@ -286,6 +286,16 @@ int main(int argc, char **argv)
         }
     }
 
+    if (fmt->cairo == CAIRO_FORMAT_INVALID) {
+        if (fmt->pixman) {
+            fprintf(stderr, "format not supported by cairo, enabling pixman mode\n");
+            pixman = true;
+        } else {
+            fprintf(stderr, "format not supported by cairo or pixman\n");
+            exit(1);
+        }
+    }
+
     drm_init_dumb_fb(pixman);
     drm_draw_dumb_fb();
     drm_show_fb();
