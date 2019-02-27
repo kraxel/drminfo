@@ -34,10 +34,10 @@ static void drm_list_properties(int fd, uint32_t id, uint32_t objtype)
    for (i = 0; i < props->count_props; i++) {
        prop = drmModeGetProperty(fd, props->props[i]);
        if (prop->count_values) {
-           fprintf(stderr, "    property: %s, value %" PRId64 "\n",
+           fprintf(stdout, "    property: %s, value %" PRId64 "\n",
                    prop->name, props->prop_values[i]);
        } else {
-           fprintf(stderr, "    property: %s\n", prop->name);
+           fprintf(stdout, "    property: %s\n", prop->name);
        }
        drmModeFreeProperty(prop);
    }
@@ -341,10 +341,10 @@ static void drm_info_misc(int fd)
     char *busid;
 
     version = drmGetVersion(fd);
-    fprintf(stderr, "name    : \"%s\"\n", version->name);
-    fprintf(stderr, "desc    : \"%s\"\n", version->desc);
-    fprintf(stderr, "date    : \"%s\"\n", version->date);
-    fprintf(stderr, "version : v%d.%d.%d\n",
+    fprintf(stdout, "name    : \"%s\"\n", version->name);
+    fprintf(stdout, "desc    : \"%s\"\n", version->desc);
+    fprintf(stdout, "date    : \"%s\"\n", version->date);
+    fprintf(stdout, "version : v%d.%d.%d\n",
             version->version_major, version->version_minor,
             version->version_patchlevel);
 
