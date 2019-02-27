@@ -274,7 +274,9 @@ int main(int argc, char **argv)
                 if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
                     continue;
             }
-            if (!drm_probe_format(fd, &fmts[i]))
+            if (!drm_probe_format_fb(fd, &fmts[i]))
+                continue;
+            if (!drm_probe_format_primary(&fmts[i]))
                 continue;
             fmt = &fmts[i];
             break;

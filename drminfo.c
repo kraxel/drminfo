@@ -7,6 +7,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
+#include <termios.h>
 
 #include <sys/ioctl.h>
 #include <libdrm/drm_fourcc.h>
@@ -23,7 +24,39 @@ static int ttycols = 80;
 
 /* ------------------------------------------------------------------ */
 
-static void drm_info_conn(int fd, drmModeConnector *conn)
+static void drm_list_properties(int fd, uint32_t id, uint32_t objtype)
+{
+   drmModeObjectProperties *props =
+       drmModeObjectGetProperties(fd, id, objtype);
+   drmModePropertyPtr prop;
+   uint32_t i;
+
+   for (i = 0; i < props->count_props; i++) {
+       prop = drmModeGetProperty(fd, props->props[i]);
+       if (prop->count_values) {
+           fprintf(stderr, "    property: %s, value %" PRId64 "\n",
+                   prop->name, props->prop_values[i]);
+       } else {
+           fprintf(stderr, "    property: %s\n", prop->name);
+       }
+       drmModeFreeProperty(prop);
+   }
+   drmModeFreeObjectProperties(props);
+}
+
+static drmModePropertyBlobRes *
+drm_get_property_blob(int fd, uint32_t id, uint32_t objtype, const char *name)
+{
+    uint64_t blob_id =
+        drm_get_property_value(fd, id, objtype, name);
+
+   if (!blob_id)
+       return NULL;
+   return drmModeGetPropertyBlob(fd, blob_id);
+}
+
+static void drm_info_conn(int fd, drmModeConnector *conn,
+                          bool print_properties)
 {
     drmModeEncoder *enc;
     drmModeCrtc *crtc;
@@ -62,6 +95,10 @@ static void drm_info_conn(int fd, drmModeConnector *conn)
         drmModeFreeEncoder(enc);
     }
 
+    if (print_properties)
+        drm_list_properties(fd, conn->connector_id,
+                            DRM_MODE_OBJECT_CONNECTOR);
+
     c = 1;
     for (m = 0; m < conn->count_modes; m++) {
         if (m+1 < conn->count_modes &&
@@ -81,7 +118,7 @@ static void drm_info_conn(int fd, drmModeConnector *conn)
     }
 }
 
-static void drm_info_conns(int fd)
+static void drm_info_conns(int fd, bool print_properties)
 {
     drmModeConnector *conn;
     drmModeRes *res;
@@ -98,7 +135,7 @@ static void drm_info_conns(int fd)
         if (!conn)
             continue;
 
-        drm_info_conn(fd, conn);
+        drm_info_conn(fd, conn, print_properties);
         drmModeFreeConnector(conn);
         fprintf(stdout, "\n");
     }
@@ -127,40 +164,13 @@ static size_t drm_modifiers_for_format(int fd, uint32_t plane_id,
                                        uint32_t drm_format,
                                        uint64_t **drm_modifiers)
 {
-   /* Get the properties of the plane */
-   drmModeObjectProperties *props =
-       drmModeObjectGetProperties(fd, plane_id, DRM_MODE_OBJECT_PLANE);
-   if (!props)
-       return 0;
-
-   /* Find the blob the contains the formats and their modifiers */
-   uint32_t blob_id = 0;
-   for (size_t i = 0; i< props->count_props; i++) {
-      const drmModePropertyPtr prop =
-          drmModeGetProperty(fd, props->props[i]);
-
-      if (!strcmp(prop->name, "IN_FORMATS")) {
-          blob_id = props->prop_values[i];
-          drmModeFreeProperty(prop);
-          break;
-      }
-
-      drmModeFreeProperty(prop);
-   }
-
-   /* Property not found, which means old kernel, so definitely no
-    * modifiers support */
-   if (blob_id == 0) {
-       drmModeFreeObjectProperties(props);
-       return 0;
-   }
-
    /* Grab the IN_FORMATS blob */
-   drmModePropertyBlobRes *blob = drmModeGetPropertyBlob(fd, blob_id);
-   if (!blob) {
-       drmModeFreeObjectProperties(props);
+    drmModePropertyBlobRes *blob =
+        drm_get_property_blob(fd, plane_id, DRM_MODE_OBJECT_PLANE,
+                              "IN_FORMATS");
+
+   if (!blob)
        return 0;
-   }
 
    /* Get the formats and modifiers out of the blob */
    struct drm_format_modifier_blob *fmt_mod_blob = blob->data;
@@ -197,19 +207,37 @@ static size_t drm_modifiers_for_format(int fd, uint32_t plane_id,
    }
 
    drmModeFreePropertyBlob(blob);
-   drmModeFreeObjectProperties(props);
 
    *drm_modifiers = modifiers;
    return modifiers_count;
 }
 
-static void drm_info_plane(int fd, drmModePlane *plane,
-                           bool print_modifiers)
+static const char *drm_info_plane_type_string(uint64_t type)
 {
+    switch (type) {
+    case 0:
+        return "overlay";
+    case 1:
+        return "primary";
+    case 2:
+        return "cursor";
+    default:
+        return "unknown";
+    }
+}
+
+static void drm_info_plane(int fd, drmModePlane *plane,
+                           bool print_modifiers, bool print_properties)
+{
+    uint64_t type = drm_get_property_value(fd, plane->plane_id,
+                                           DRM_MODE_OBJECT_PLANE, "type");
     int i;
 
-    fprintf(stdout, "plane: %d, crtc: %d, fb: %d\n",
-            plane->plane_id, plane->crtc_id, plane->fb_id);
+    fprintf(stdout, "plane: %d, crtc: %d, fb: %d, type: %s\n",
+            plane->plane_id, plane->crtc_id, plane->fb_id,
+            drm_info_plane_type_string(type));
+    if (print_properties)
+        drm_list_properties(fd, plane->plane_id, DRM_MODE_OBJECT_PLANE);
 
     if (!print_modifiers) {
         fprintf(stdout, "    formats:");
@@ -255,7 +283,7 @@ static void drm_info_plane(int fd, drmModePlane *plane,
     }
 }
 
-static void drm_info_planes(int fd, bool print_modifiers)
+static void drm_info_planes(int fd, bool print_modifiers, bool print_properties)
 {
     drmModePlaneRes *pres;
     drmModePlane *plane;
@@ -273,7 +301,7 @@ static void drm_info_planes(int fd, bool print_modifiers)
         if (!plane)
             continue;
 
-        drm_info_plane(fd, plane, print_modifiers);
+        drm_info_plane(fd, plane, print_modifiers, print_properties);
         drmModeFreePlane(plane);
         fprintf(stdout, "\n");
     }
@@ -283,10 +311,11 @@ static void drm_info_fmts(int fd)
 {
     int i;
 
+    drm_plane_init(fd);
     fprintf(stdout, "framebuffer formats\n");
     drm_print_format_hdr(stdout, 4, true);
     for (i = 0; i < fmtcnt; i++) {
-        if (!drm_probe_format(fd, &fmts[i]))
+        if (!drm_probe_format_fb(fd, &fmts[i]))
             continue;
         drm_print_format(stdout, &fmts[i], 4, true);
     }
@@ -351,11 +380,13 @@ static void usage(FILE *fp)
             "  -h         print this\n"
             "  -c <nr>    pick card\n"
             "  -a         print all card info\n"
+            "  -A         print all card info, with plane modifiers\n"
             "  -m         print misc card info (busid)\n"
             "  -o         print supported outputs (crtcs)\n"
             "  -p         print supported planes\n"
             "  -P         print supported planes, with modifiers\n"
             "  -f         print supported formats\n"
+            "  -r         list properties\n"
             "  -l         list all known formats\n"
             "\n");
 }
@@ -368,11 +399,12 @@ int main(int argc, char **argv)
     bool conn = false;
     bool plane = false;
     bool modifiers = false;
+    bool properties = false;
     bool format = false;
     char *columns;
 
     for (;;) {
-        c = getopt(argc, argv, "hlamopPfc:");
+        c = getopt(argc, argv, "hlaAmopPfrc:");
         if (c == -1)
             break;
         switch (c) {
@@ -382,12 +414,14 @@ int main(int argc, char **argv)
         case 'l':
             list_formats(stdout);
             exit(0);
+        case 'A':
+            modifiers = true;
+            /* fall through */
         case 'a':
             misc = true;
             conn = true;
             plane = true;
             format = true;
-            modifiers = true;
             break;
         case 'm':
             misc = true;
@@ -395,12 +429,14 @@ int main(int argc, char **argv)
         case 'o':
             conn = true;
             break;
+        case 'P':
+            modifiers = true;
+            /* fall through */
         case 'p':
             plane = true;
             break;
-        case 'P':
-            plane = true;
-            modifiers = true;
+        case 'r':
+            properties = true;
             break;
         case 'f':
             format = true;
@@ -415,16 +451,23 @@ int main(int argc, char **argv)
     }
 
     columns = getenv("COLUMNS");
-    if (columns)
+    if (columns) {
         ttycols = atoi(columns);
+    } else {
+        struct winsize win = { 0 };
+        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+            win.ws_col != 0) {
+            ttycols = win.ws_col;
+        }
+    }
 
     fd = drm_open(card);
     if (misc)
         drm_info_misc(fd);
     if (conn)
-        drm_info_conns(fd);
+        drm_info_conns(fd, properties);
     if (plane)
-        drm_info_planes(fd, modifiers);
+        drm_info_planes(fd, modifiers, properties);
     if (format)
         drm_info_fmts(fd);
     return 0;

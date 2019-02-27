@@ -524,7 +524,98 @@ void drm_conn_name(drmModeConnector *conn, char *dest, int dlen)
 
 /* ------------------------------------------------------------------ */
 
-bool drm_probe_format(int fd, const struct fbformat *fmt)
+static drmModePlane *primary;
+static drmModePlane *cursor;
+static drmModePlane *overlay;
+
+uint64_t drm_get_property_value(int fd, uint32_t id, uint32_t objtype,
+                                const char *name)
+{
+   drmModeObjectProperties *props =
+       drmModeObjectGetProperties(fd, id, objtype);
+   drmModePropertyPtr prop;
+   uint64_t value = 0;
+   uint32_t i;
+
+   for (i = 0; i < props->count_props; i++) {
+       prop = drmModeGetProperty(fd, props->props[i]);
+       if (!strcmp(prop->name, name))
+           value = props->prop_values[i];
+       drmModeFreeProperty(prop);
+   }
+   drmModeFreeObjectProperties(props);
+
+   return value;
+}
+
+static bool drm_probe_format_plane(const drmModePlane *plane,
+                                   const struct fbformat *fmt)
+{
+    int i;
+
+    if (!plane)
+        return false;
+    for (i = 0; i < plane->count_formats; i++)
+        if (plane->formats[i] == fmt->fourcc)
+            return true;
+    return false;
+}
+
+bool drm_probe_format_primary(const struct fbformat *fmt)
+{
+    return drm_probe_format_plane(primary, fmt);
+}
+
+bool drm_probe_format_cursor(const struct fbformat *fmt)
+{
+    return drm_probe_format_plane(cursor, fmt);
+}
+
+bool drm_probe_format_overlay(const struct fbformat *fmt)
+{
+    return drm_probe_format_plane(overlay, fmt);
+}
+
+void drm_plane_init(int fd)
+{
+    drmModePlaneRes *pres;
+    drmModePlane *plane;
+    uint64_t type;
+    int i;
+
+    drmSetClientCap(fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1);
+    pres = drmModeGetPlaneResources(fd);
+    if (pres == NULL) {
+        fprintf(stderr, "drmModeGetPlaneResources() failed\n");
+        exit(1);
+    }
+
+    /* find plane */
+    for (i = 0; i < pres->count_planes; i++) {
+        plane = drmModeGetPlane(fd, pres->planes[i]);
+        if (!plane)
+            continue;
+        type = drm_get_property_value(fd, plane->plane_id,
+                                      DRM_MODE_OBJECT_PLANE, "type");
+        if (type == 0 /* overlay */) {
+            if (!overlay)
+                overlay = drmModeGetPlane(fd, pres->planes[i]);
+        }
+        if (type == 1 /* primary */) {
+            if (!primary)
+                primary = drmModeGetPlane(fd, pres->planes[i]);
+        }
+        if (type == 2 /* cursor */) {
+            if (!cursor)
+                cursor = drmModeGetPlane(fd, pres->planes[i]);
+        }
+        drmModeFreePlane(plane);
+    }
+}
+
+/* ------------------------------------------------------------------ */
+
+bool drm_probe_format_fb(int fd, const struct fbformat *fmt)
 {
     struct drm_mode_create_dumb cd;
     struct drm_mode_destroy_dumb dd;
@@ -569,9 +660,12 @@ done:
 void drm_print_format(FILE *fp, const struct fbformat *fmt,
                       int indent, bool libs)
 {
-    fprintf(fp, "%*s%-8s:  [%2d:0]  %-14s %-11s %-16s",
+    fprintf(fp, "%*s%-8s:  [%2d:0]  %-14s %-11s %c %c %c  %-16s",
             indent, "",
             fmt->name, fmt->bpp - 1, fmt->fields, fmt->bits,
+            drm_probe_format_primary(fmt)  ? 'P' : '.',
+            drm_probe_format_overlay(fmt)  ? 'O' : '.',
+            drm_probe_format_cursor(fmt)   ? 'C' : '.',
             fmt->fourcc
             ? "fourcc  le"
             : "legacy  cpu " LE_BE("(le)", "(be)"));
@@ -585,9 +679,9 @@ void drm_print_format(FILE *fp, const struct fbformat *fmt,
 
 void drm_print_format_hdr(FILE *fp, int indent, bool libs)
 {
-    fprintf(fp, "%*s%-8s:  %-6s  %-14s %-11s %-16s",
+    fprintf(fp, "%*s%-8s:  %-6s  %-14s %-11s %-6s %-16s",
             indent, "",
-            "name", "bpp", "fields", "bits",
+            "name", "bpp", "fields", "bits", "plane",
             "type    endian");
     if (libs) {
         fprintf(fp, "  lib support");
@@ -697,6 +791,8 @@ void drm_init_dev(int devnr, const char *output,
         fprintf(stderr, "drmModeGetEncoder() failed\n");
         exit(1);
     }
+
+    drm_plane_init(fd);
 
     /* save crtc */
     scrtc = drmModeGetCrtc(fd, enc->crtc_id);

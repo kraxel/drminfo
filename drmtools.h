@@ -19,7 +19,14 @@ const char *drm_connector_type_name(int nr);
 const char *drm_connector_mode_name(int nr);
 const char *drm_encoder_type_name(int nr);
 void drm_conn_name(drmModeConnector *conn, char *dest, int dlen);
-bool drm_probe_format(int fd, const struct fbformat *fmt);
+
+uint64_t drm_get_property_value(int fd, uint32_t id, uint32_t objtype,
+                                const char *name);
+bool drm_probe_format_primary(const struct fbformat *fmt);
+bool drm_probe_format_cursor(const struct fbformat *fmt);
+void drm_plane_init(int fd);
+
+bool drm_probe_format_fb(int fd, const struct fbformat *fmt);
 void drm_print_format(FILE *fp, const struct fbformat *fmt,
                       int indent, bool libs);
 void drm_print_format_hdr(FILE *fp, int indent, bool libs);
