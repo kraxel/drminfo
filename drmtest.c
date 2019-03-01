@@ -43,40 +43,39 @@ static cairo_surface_t *image;
 
 /* ------------------------------------------------------------------ */
 
-static void drm_draw(void)
+static void drm_draw(bool autotest)
 {
     char name[64];
     char info1[80], info2[80], info3[80];
     cairo_t *cr;
 
-    snprintf(info1, sizeof(info1), "drm driver: %s, v%d.%d.%d (%s)",
-             version->name, version->version_major, version->version_minor,
-             version->version_patchlevel, version->desc);
-
-    drm_conn_name(conn, name, sizeof(name));
-    snprintf(info2, sizeof(info2), "%dx%d, output %.10s, %.10s mode",
-             mode->hdisplay, mode->vdisplay, name,
-             pxcs && pxfb ? "pixman" : "cairo");
+    snprintf(info1, sizeof(info1), "mode: %dx%d",
+             mode->hdisplay, mode->vdisplay);
 
     if (fmt->fourcc) {
-        snprintf(info3, sizeof(info3),
-                 "dumb drm buffer, bpp %d, fourcc %c%c%c%c (ADDFB2)",
+        snprintf(info2, sizeof(info2),
+                 "bpp %d, fourcc %c%c%c%c (ADDFB2)",
                  fmt->bpp,
                  (fmt->fourcc >>  0) & 0xff,
                  (fmt->fourcc >>  8) & 0xff,
                  (fmt->fourcc >> 16) & 0xff,
                  (fmt->fourcc >> 24) & 0xff);
     } else {
-        snprintf(info3, sizeof(info3),
-                 "dumb drm buffer, bpp %d, depth %d (legacy ADDFB)",
+        snprintf(info2, sizeof(info2),
+                 "bpp %d, depth %d (legacy ADDFB)",
                  fmt->bpp, fmt->depth);
     }
+
+    drm_conn_name(conn, name, sizeof(name));
+    snprintf(info3, sizeof(info3), "drm driver: %s, output %.10s",
+             version->name, name);
 
     cr = cairo_create(cs);
     if (image) {
         render_image(cr, mode->hdisplay, mode->vdisplay, image);
     } else {
-        render_test(cr, mode->hdisplay, mode->vdisplay, info1, info2, info3);
+        render_test(cr, mode->hdisplay, mode->vdisplay, info1, info2,
+                    autotest ? NULL : info3);
     }
     cairo_destroy(cr);
 
@@ -168,9 +167,9 @@ static void drm_init_dumb_fb(bool use_pixman)
     }
 }
 
-static void drm_draw_dumb_fb(void)
+static void drm_draw_dumb_fb(bool autotest)
 {
-    drm_draw();
+    drm_draw(autotest);
     drmModeDirtyFB(fd, fb_id, 0, 0);
 }
 
@@ -202,16 +201,20 @@ int main(int argc, char **argv)
     char *format = NULL;
     char *modename = NULL;
     char buf[32];
+    bool autotest = false;
     bool pixman = false;
     int c,i;
 
     for (;;) {
-        c = getopt(argc, argv, "hpc:s:o:i:f:m:");
+        c = getopt(argc, argv, "hpac:s:o:i:f:m:");
         if (c == -1)
             break;
         switch (c) {
         case 'p':
             pixman = true;
+            break;
+        case 'a':
+            autotest = true;
             break;
         case 'c':
             card = atoi(optarg);
@@ -290,16 +293,18 @@ int main(int argc, char **argv)
 
     if (fmt->cairo == CAIRO_FORMAT_INVALID) {
         if (fmt->pixman) {
-            fprintf(stderr, "format not supported by cairo, enabling pixman mode\n");
+            fprintf(stderr, "format %s not supported by cairo, enabling pixman mode\n",
+                    fmt->name);
             pixman = true;
         } else {
-            fprintf(stderr, "format not supported by cairo or pixman\n");
+            fprintf(stderr, "format %s not supported by cairo or pixman\n",
+                    fmt->name);
             exit(1);
         }
     }
 
     drm_init_dumb_fb(pixman);
-    drm_draw_dumb_fb();
+    drm_draw_dumb_fb(autotest);
     drm_show_fb();
 
     tty_raw();

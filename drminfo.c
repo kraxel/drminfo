@@ -307,19 +307,34 @@ static void drm_info_planes(int fd, bool print_modifiers, bool print_properties)
     }
 }
 
-static void drm_info_fmts(int fd)
+static void drm_info_fmts(int fd, bool listonly)
 {
+    bool first = true;
     int i;
 
     drm_plane_init(fd);
-    fprintf(stdout, "framebuffer formats\n");
-    drm_print_format_hdr(stdout, 4, true);
-    for (i = 0; i < fmtcnt; i++) {
-        if (!drm_probe_format_fb(fd, &fmts[i]))
-            continue;
-        drm_print_format(stdout, &fmts[i], 4, true);
+    if (listonly) {
+        for (i = 0; i < fmtcnt; i++) {
+            if (!drm_probe_format_fb(fd, &fmts[i]))
+                continue;
+            if (!drm_probe_format_primary(&fmts[i]))
+                continue;
+            if (!fmts[i].pixman)
+                continue;
+            fprintf(stdout, "%s%s", first ? "" : " ", fmts[i].name);
+            first = false;
+        }
+        fprintf(stdout, "\n");
+    } else {
+        fprintf(stdout, "framebuffer formats\n");
+        drm_print_format_hdr(stdout, 4, true);
+        for (i = 0; i < fmtcnt; i++) {
+            if (!drm_probe_format_fb(fd, &fmts[i]))
+                continue;
+            drm_print_format(stdout, &fmts[i], 4, true);
+        }
+        fprintf(stdout, "\n");
     }
-    fprintf(stdout, "\n");
 }
 
 static int drm_open(int devnr)
@@ -386,6 +401,7 @@ static void usage(FILE *fp)
             "  -p         print supported planes\n"
             "  -P         print supported planes, with modifiers\n"
             "  -f         print supported formats\n"
+            "  -F         print testable (drmtest) formats\n"
             "  -r         list properties\n"
             "  -l         list all known formats\n"
             "\n");
@@ -401,10 +417,11 @@ int main(int argc, char **argv)
     bool modifiers = false;
     bool properties = false;
     bool format = false;
+    bool listonly = false;
     char *columns;
 
     for (;;) {
-        c = getopt(argc, argv, "hlaAmopPfrc:");
+        c = getopt(argc, argv, "hlaAmopPfFrc:");
         if (c == -1)
             break;
         switch (c) {
@@ -438,6 +455,9 @@ int main(int argc, char **argv)
         case 'r':
             properties = true;
             break;
+        case 'F':
+            /* fall through */
+            listonly = true;
         case 'f':
             format = true;
             break;
@@ -469,6 +489,6 @@ int main(int argc, char **argv)
     if (plane)
         drm_info_planes(fd, modifiers, properties);
     if (format)
-        drm_info_fmts(fd);
+        drm_info_fmts(fd, listonly);
     return 0;
 }

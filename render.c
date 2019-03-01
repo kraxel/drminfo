@@ -12,6 +12,7 @@ static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
 {
     cairo_font_extents_t ext;
     cairo_pattern_t *gr;
+    int lines;
 
     gr = cairo_pattern_create_linear(x, y+h/2, w, y+h/2);
     cairo_pattern_add_color_stop_rgb(gr, 0, 0, 0, 0);
@@ -21,25 +22,30 @@ static void render_color_bar(cairo_t *cr, int x, int y, int w, int h,
     cairo_fill(cr);
     cairo_pattern_destroy(gr);
 
+    cairo_set_source_rgb(cr, r, g, b);
     cairo_select_font_face(cr, "Liberation Mono",
                            CAIRO_FONT_SLANT_NORMAL,
                            CAIRO_FONT_WEIGHT_NORMAL);
+
+    lines = 1;
     if (l2) {
         cairo_set_source_rgb(cr, 1, 1, 1);
-        cairo_set_font_size(cr, (h - 2*pad) / 3);
-        cairo_font_extents(cr, &ext);
-        cairo_move_to(cr, x + pad, y + pad + ext.ascent);
-        cairo_show_text(cr, l1);
+        lines++;
+        if (l3)
+            lines++;
+    }
+
+    cairo_set_font_size(cr, (h - 2*pad) / lines);
+    cairo_font_extents(cr, &ext);
+    cairo_move_to(cr, x + pad, y + pad + ext.ascent);
+    cairo_show_text(cr, l1);
+    if (l2) {
         cairo_move_to(cr, x + pad, y + pad + ext.ascent + ext.height);
         cairo_show_text(cr, l2);
-        cairo_move_to(cr, x + pad, y + pad + ext.ascent + ext.height * 2);
-        cairo_show_text(cr, l3);
-    } else {
-        cairo_set_source_rgb(cr, r, g, b);
-        cairo_set_font_size(cr, h - 2*pad);
-        cairo_font_extents(cr, &ext);
-        cairo_move_to(cr, x + pad, y + pad + ext.ascent);
-        cairo_show_text(cr, l1);
+        if (l3) {
+            cairo_move_to(cr, x + pad, y + pad + ext.ascent + ext.height * 2);
+            cairo_show_text(cr, l3);
+        }
     }
 }
 

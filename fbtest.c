@@ -28,23 +28,28 @@ static cairo_surface_t *image;
 
 /* ------------------------------------------------------------------ */
 
-static void fb_draw(void)
+static void fb_draw(bool autotest)
 {
     char info1[80];
     char info2[80];
     char info3[80];
     cairo_t *cr;
 
-    snprintf(info1, sizeof(info1), "fb driver: %s", fb_fix.id);
-    snprintf(info2, sizeof(info2), "%dx%d", fb_var.xres, fb_var.yres);
-    snprintf(info3, sizeof(info3), "fbdev, %d bpp",
-             fb_var.bits_per_pixel);
+    snprintf(info1, sizeof(info1), "mode: %dx%d", fb_var.xres, fb_var.yres);
+    snprintf(info2, sizeof(info2), "%d bpp, rgba %d,%d,%d,%d",
+             fb_var.bits_per_pixel,
+             fb_var.red.length,
+             fb_var.green.length,
+             fb_var.blue.length,
+             fb_var.transp.length);
+    snprintf(info3, sizeof(info3), "fb driver: %s", fb_fix.id);
 
     cr = cairo_create(cs);
     if (image) {
         render_image(cr, fb_var.xres, fb_var.yres, image);
     } else {
-        render_test(cr, fb_var.xres, fb_var.yres, info1, info2, info3);
+        render_test(cr, fb_var.xres, fb_var.yres, info1, info2,
+                    autotest ? NULL : info3);
     }
     cairo_destroy(cr);
 }
@@ -59,6 +64,7 @@ static void usage(FILE *fp)
             "\n"
             "options:\n"
             "  -h         print this\n"
+            "  -a         autotest mode (don't print hardware info)\n"
             "  -f <nr>    pick framebuffer\n"
             "  -s <secs>  set sleep time (default: 60)\n"
             "  -i <file>  load and display image <file>\n"
@@ -69,14 +75,18 @@ int main(int argc, char **argv)
 {
     int framebuffer = 0;
     int secs = 60;
+    bool autotest = false;
     char buf[32];
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "hs:i:f:");
+        c = getopt(argc, argv, "has:i:f:");
         if (c == -1)
             break;
         switch (c) {
+        case 'a':
+            autotest = true;
+            break;
         case 'f':
             framebuffer = atoi(optarg);
             break;
@@ -101,7 +111,7 @@ int main(int argc, char **argv)
                                              fb_var.xres,
                                              fb_var.yres,
                                              fb_fix.line_length);
-    fb_draw();
+    fb_draw(autotest);
 
     tty_raw();
     kbd_wait(secs);
