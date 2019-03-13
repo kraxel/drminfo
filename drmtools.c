@@ -513,7 +513,7 @@ void drm_conn_name(drmModeConnector *conn, char *dest, int dlen)
 {
     const char *type;
 
-    if (conn->connector_type_id < sizeof(conn_type)/sizeof(conn_type[0]) &&
+    if (conn->connector_type < sizeof(conn_type)/sizeof(conn_type[0]) &&
         conn_type[conn->connector_type]) {
         type = conn_type[conn->connector_type];
     } else {
