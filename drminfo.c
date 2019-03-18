@@ -392,7 +392,7 @@ static void usage(FILE *fp)
             "usage: drminfo [ options ]\n"
             "\n"
             "options:\n"
-            "  -h         print this\n"
+            "  -h         print this text\n"
             "  -c <nr>    pick card\n"
             "  -a         print all card info\n"
             "  -A         print all card info, with plane modifiers\n"
