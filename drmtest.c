@@ -307,6 +307,8 @@ int main(int argc, char **argv)
     drm_draw_dumb_fb(autotest);
     drm_show_fb();
 
+    if (autotest)
+        fprintf(stdout, "---ok---\n");
     tty_raw();
     kbd_wait(secs);
     read(0, buf, sizeof(buf));

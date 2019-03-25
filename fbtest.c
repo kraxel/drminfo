@@ -113,6 +113,8 @@ int main(int argc, char **argv)
                                              fb_fix.line_length);
     fb_draw(autotest);
 
+    if (autotest)
+        fprintf(stdout, "---ok---\n");
     tty_raw();
     kbd_wait(secs);
     read(0, buf, sizeof(buf));
