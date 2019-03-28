@@ -4,3 +4,4 @@ avocado framework tests for qemu display devices
 usage:
   export QEMU_BUILD_DIR=/path/to/qemu/build/tree
   avocado run .
+

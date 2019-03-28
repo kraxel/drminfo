@@ -77,6 +77,12 @@ class BaseDRM(TestDRM):
         self.wconsole.write('\n')
         self.wconsole.flush()
 
+    def write_text(self, device, name, content):
+        outfile = '%s/%s-%s.txt' % (self.outputdir, name, device)
+        f = open(outfile, "w")
+        f.write(content)
+        f.close()
+
     def run_one_test(self, device):
         version = os.uname()[2]
         kernel = "/boot/vmlinuz-%s" % version
@@ -104,7 +110,8 @@ class BaseDRM(TestDRM):
         self.console_wait('---root---')
 
         self.console_run('drminfo -a')
-        self.console_wait('---root---')
+        txt = self.console_wait('---root---')
+        self.write_text(device, "drminfo", txt)
 
         self.console_run('drminfo -F')
         formats = self.console_wait('---root---')
@@ -130,8 +137,9 @@ class BaseDRM(TestDRM):
             self.screen_dump(device, 'virtio')
             self.console_wait('---root---')
 
-        self.console_run('fbinfo -a')
-        self.console_wait('---root---')
+        self.console_run('fbinfo')
+        txt = self.console_wait('---root---')
+        self.write_text(device, "fbinfo", txt)
 
         self.console_run('fbtest -a -s 10')
         self.console_wait('---ok---', '---root---', 'fbtest failed')
