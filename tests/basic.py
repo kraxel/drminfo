@@ -25,19 +25,23 @@ class BaseDRM(TestDRM):
     def create_initrd(self, outfile, kversion):
         modules = "base systemd bash drm"
         drivers = "cirrus bochs-drm qxl virtio-pci virtio-gpu vgem vkms"
+        files = [
+            "/usr/bin/drminfo",
+            "/usr/bin/drmtest",
+            "/usr/bin/fbinfo",
+            "/usr/bin/fbtest",
+            "/usr/bin/virtiotest",
+            "/usr/bin/prime",
+            "/usr/share/fontconfig/conf.avail/59-liberation-mono.conf",
+            "/usr/share/fonts/liberation/LiberationMono-Regular.ttf",
+        ]
 
         cmdline = "dracut"
         cmdline += " --force"
         cmdline += " --modules \"%s\"" % modules
         cmdline += " --drivers \"%s\"" % drivers
-        cmdline += " --install /usr/bin/drminfo"
-        cmdline += " --install /usr/bin/drmtest"
-        cmdline += " --install /usr/bin/fbinfo"
-        cmdline += " --install /usr/bin/fbtest"
-        cmdline += " --install /usr/bin/virtiotest"
-        cmdline += " --install /usr/bin/prime"
-        cmdline += " --install /usr/share/fontconfig/conf.avail/59-liberation-mono.conf"
-        cmdline += " --install /usr/share/fonts/liberation/LiberationMono-Regular.ttf"
+        for item in files:
+            cmdline += " --install %s" % item
         cmdline += " \"%s\" \"%s\"" % (outfile, kversion)
         run(cmdline)
 
@@ -105,7 +109,6 @@ class BaseDRM(TestDRM):
         self.lcommand = logging.getLogger('command')
 
         self.console_wait('Entering emergency mode')
-
         self.console_run('PS1=---\\\\u---\\\\n')
         self.console_wait('---root---')
 
@@ -120,7 +123,7 @@ class BaseDRM(TestDRM):
         for format in formats.split():
             self.console_run('drmtest -a -s 10 -m 640x480 -f %s' % format)
             self.console_wait('---ok---', '---root---', 
-                              'drmtest failed (%s)' % format)
+                              'drmtest error (%s)' % format)
             self.screen_dump(device, "drm-%s" % format)
             self.console_wait('---root---')
             fcount += 1;
@@ -133,7 +136,7 @@ class BaseDRM(TestDRM):
             self.console_wait('---root---')
 
             self.console_run('virtiotest -a -s 10')
-            self.console_wait('---ok---', '---root---', 'virtiotest failed')
+            self.console_wait('---ok---', '---root---', 'virtiotest error')
             self.screen_dump(device, 'virtio')
             self.console_wait('---root---')
 
@@ -142,7 +145,7 @@ class BaseDRM(TestDRM):
         self.write_text(device, "fbinfo", txt)
 
         self.console_run('fbtest -a -s 10')
-        self.console_wait('---ok---', '---root---', 'fbtest failed')
+        self.console_wait('---ok---', '---root---', 'fbtest error')
         self.screen_dump(device, 'fbdev')
         self.console_wait('---root---')
 
