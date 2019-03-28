@@ -327,11 +327,11 @@ static void drm_info_fmts(int fd, bool listonly)
         fprintf(stdout, "\n");
     } else {
         fprintf(stdout, "framebuffer formats\n");
-        drm_print_format_hdr(stdout, 4, true);
+        drm_print_format_hdr(stdout, 4, true, false);
         for (i = 0; i < fmtcnt; i++) {
             if (!drm_probe_format_fb(fd, &fmts[i]))
                 continue;
-            drm_print_format(stdout, &fmts[i], 4, true);
+            drm_print_format(stdout, &fmts[i], 4, true, false);
         }
         fprintf(stdout, "\n");
     }
@@ -376,9 +376,9 @@ static void list_formats(FILE *fp)
     int i;
 
     fprintf(stdout, "all known framebuffer formats (rgb + packed yuv)\n");
-    drm_print_format_hdr(stdout, 0, true);
+    drm_print_format_hdr(stdout, 0, true, false);
     for (i = 0; i < fmtcnt; i++) {
-        drm_print_format(stdout, &fmts[i], 0, true);
+        drm_print_format(stdout, &fmts[i], 0, true, false);
     }
     fprintf(stdout, "\n");
 }

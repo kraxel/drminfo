@@ -658,7 +658,7 @@ done:
 }
 
 void drm_print_format(FILE *fp, const struct fbformat *fmt,
-                      int indent, bool libs)
+                      int indent, bool libs, bool virtio)
 {
     fprintf(fp, "%*s%-8s:  [%2d:0]  %-14s %-11s %c %c %c  %-16s",
             indent, "",
@@ -674,10 +674,14 @@ void drm_print_format(FILE *fp, const struct fbformat *fmt,
                 fmt->pixman                          ? "pixman" : "",
                 (fmt->cairo != CAIRO_FORMAT_INVALID) ? "cairo"  : "");
     }
+    if (virtio) {
+        if (fmt->virtio)
+            fprintf(fp, "  %-6d", fmt->virtio);
+    }
     fprintf(fp, "\n");
 }
 
-void drm_print_format_hdr(FILE *fp, int indent, bool libs)
+void drm_print_format_hdr(FILE *fp, int indent, bool libs, bool virtio)
 {
     fprintf(fp, "%*s%-8s:  %-6s  %-14s %-11s %-6s %-16s",
             indent, "",
@@ -685,6 +689,9 @@ void drm_print_format_hdr(FILE *fp, int indent, bool libs)
             "type    endian");
     if (libs) {
         fprintf(fp, "  lib support");
+    }
+    if (virtio) {
+        fprintf(fp, "  virtio");
     }
     fprintf(fp, "\n");
 }

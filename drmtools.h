@@ -28,8 +28,9 @@ void drm_plane_init(int fd);
 
 bool drm_probe_format_fb(int fd, const struct fbformat *fmt);
 void drm_print_format(FILE *fp, const struct fbformat *fmt,
-                      int indent, bool libs);
-void drm_print_format_hdr(FILE *fp, int indent, bool libs);
+                      int indent, bool libs, bool virtio);
+void drm_print_format_hdr(FILE *fp, int indent,
+                          bool libs, bool virtio);
 
 /* ------------------------------------------------------------------ */
 

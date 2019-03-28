@@ -259,7 +259,7 @@ int main(int argc, char **argv)
                     if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
                         continue;
                 }
-                drm_print_format(stderr, &fmts[i], 4, false);
+                drm_print_format(stderr, &fmts[i], 4, false, false);
             }
             exit(1);
         }

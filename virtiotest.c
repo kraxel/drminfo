@@ -77,6 +77,18 @@ static void virtio_print_caps(void)
     }
 }
 
+static void virtio_list_format(void)
+{
+    int i;
+
+    drm_print_format_hdr(stdout, 0, false, true);
+    for (i = 0; i < fmtcnt; i++) {
+        if (!fmts[i].virtio)
+            continue;
+        drm_print_format(stdout, fmts + i, 0, false, true);
+    }
+}
+
 static void virtio_check(int cardno)
 {
     char syspath[128];
@@ -219,6 +231,7 @@ static void usage(FILE *fp)
             "  -h         print this\n"
             "  -c <nr>    pick card\n"
             "  -i         print device info\n"
+            "  -l         list formats\n"
             "\n");
 }
 
@@ -229,11 +242,13 @@ int main(int argc, char **argv)
     char *output = NULL;
     char *modename = NULL;
     bool printinfo = false;
+    bool listformat = false;
+    bool autotest = false;
     char buf[32];
     int c, i;
 
     for (;;) {
-        c = getopt(argc, argv, "hic:s:");
+        c = getopt(argc, argv, "hailc:s:");
         if (c == -1)
             break;
         switch (c) {
@@ -243,8 +258,14 @@ int main(int argc, char **argv)
         case 's':
             secs = atoi(optarg);
             break;
+        case 'a':
+            autotest = true;
+            break;
         case 'i':
             printinfo = true;
+            break;
+        case 'l':
+            listformat = true;
             break;
         case 'h':
             usage(stdout);
@@ -258,12 +279,12 @@ int main(int argc, char **argv)
     virtio_check(card);
 
     for (i = 0; i < fmtcnt; i++) {
-        if (fmts[i].cairo == CAIRO_FORMAT_RGB24) {
+        if (fmts[i].cairo == CAIRO_FORMAT_RGB24 &&
+            fmts[i].virtio != 0) {
             fmt = &fmts[i];
         }
     }
     assert(fmt != NULL);
-    assert(fmt->virtio != 0);
 
     drm_init_dev(card, output, modename, false);
 
@@ -272,11 +293,18 @@ int main(int argc, char **argv)
         goto done;
     }
 
+    if (listformat) {
+        virtio_list_format();
+        goto done;
+    }
+
     virtio_init_fb();
     virtio_draw();
     virtio_transfer();
     drm_show_fb();
 
+    if (autotest)
+        fprintf(stdout, "---ok---\n");
     tty_raw();
     kbd_wait(secs);
     read(0, buf, sizeof(buf));
