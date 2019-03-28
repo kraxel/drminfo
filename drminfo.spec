@@ -33,6 +33,8 @@ ninja-build -C build-rpm
 %install
 export DESTDIR=%{buildroot}
 ninja-build -C build-rpm install
+mkdir -p %{buildroot}%{_datadir}
+cp -a tests %{buildroot}%{_datadir}
 
 %files
 %{_bindir}/drm*
@@ -40,3 +42,4 @@ ninja-build -C build-rpm install
 %{_bindir}/virtiotest
 %{_bindir}/fb*
 %{_mandir}/man1/drm*.1*
+%{_datadir}/tests

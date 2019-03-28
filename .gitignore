@@ -1,3 +1,5 @@
 build-meson-*
 *.o
 !.tito/
+*.pyc
+__pycache__
