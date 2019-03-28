@@ -230,6 +230,7 @@ static void usage(FILE *fp)
             "options:\n"
             "  -h         print this\n"
             "  -c <nr>    pick card\n"
+            "  -s <secs>  set sleep time (default: 60)\n"
             "  -i         print device info\n"
             "  -l         list formats\n"
             "\n");
