@@ -371,6 +371,52 @@ static void drm_info_misc(int fd)
     fprintf(stdout, "\n");
 }
 
+static void drm_info_caps(int fd)
+{
+    static const char *caps[] = {
+        [ DRM_CAP_DUMB_BUFFER          ] = "DUMB_BUFFER",
+        [ DRM_CAP_VBLANK_HIGH_CRTC     ] = "VBLANK_HIGH_CRTC",
+        [ DRM_CAP_DUMB_PREFERRED_DEPTH ] = "DUMB_PREFERRED_DEPTH",
+        [ DRM_CAP_DUMB_PREFER_SHADOW   ] = "DUMB_PREFER_SHADOW",
+        [ DRM_CAP_PRIME                ] = "PRIME",
+        [ DRM_CAP_TIMESTAMP_MONOTONIC  ] = "TIMESTAMP_MONOTONIC",
+        [ DRM_CAP_ASYNC_PAGE_FLIP      ] = "ASYNC_PAGE_FLIP",
+        [ DRM_CAP_CURSOR_WIDTH         ] = "CURSOR_WIDTH",
+        [ DRM_CAP_CURSOR_HEIGHT        ] = "CURSOR_HEIGHT",
+        [ DRM_CAP_ADDFB2_MODIFIERS     ] = "ADDFB2_MODIFIERS",
+        [ DRM_CAP_PAGE_FLIP_TARGET     ] = "PAGE_FLIP_TARGET",
+        [ DRM_CAP_CRTC_IN_VBLANK_EVENT ] = "CRTC_IN_VBLANK_EVENT",
+        [ DRM_CAP_SYNCOBJ              ] = "SYNCOBJ",
+    };
+    uint64_t value;
+    int i, rc;
+
+    fprintf(stdout, "capabilities\n");
+    for (i = 0; i < sizeof(caps)/sizeof(caps[0]); i++) {
+        if (!caps[i])
+            continue;
+        value = 0;
+        rc = drmGetCap(fd, i, &value);
+        if (rc < 0)
+            continue;
+        fprintf(stdout, "    %-22s: %3" PRId64, caps[i], value);
+        switch (i) {
+        case DRM_CAP_PRIME:
+            if (value) {
+                bool im = value & DRM_PRIME_CAP_IMPORT;
+                bool ex = value & DRM_PRIME_CAP_EXPORT;
+                fprintf(stdout, "  (%s%s%s)",
+                        im       ? "import" : "",
+                        im && ex ? " + "    : "",
+                        ex       ? "export" : "");
+            }
+            break;
+        }
+        fprintf(stdout, "\n");
+    }
+    fprintf(stdout, "\n");
+}
+
 static void list_formats(FILE *fp)
 {
     int i;
@@ -396,7 +442,8 @@ static void usage(FILE *fp)
             "  -c <nr>    pick card\n"
             "  -a         print all card info\n"
             "  -A         print all card info, with plane modifiers\n"
-            "  -m         print misc card info (busid)\n"
+            "  -m         print misc card info\n"
+            "  -s         print capabilities\n"
             "  -o         print supported outputs (crtcs)\n"
             "  -p         print supported planes\n"
             "  -P         print supported planes, with modifiers\n"
@@ -412,6 +459,7 @@ int main(int argc, char **argv)
     int card = 0;
     int c, fd;
     bool misc = false;
+    bool caps = false;
     bool conn = false;
     bool plane = false;
     bool modifiers = false;
@@ -421,7 +469,7 @@ int main(int argc, char **argv)
     char *columns;
 
     for (;;) {
-        c = getopt(argc, argv, "hlaAmopPfFrc:");
+        c = getopt(argc, argv, "hlaAmsopPfFrc:");
         if (c == -1)
             break;
         switch (c) {
@@ -436,12 +484,16 @@ int main(int argc, char **argv)
             /* fall through */
         case 'a':
             misc = true;
+            caps = true;
             conn = true;
             plane = true;
             format = true;
             break;
         case 'm':
             misc = true;
+            break;
+        case 's':
+            caps = true;
             break;
         case 'o':
             conn = true;
@@ -484,6 +536,8 @@ int main(int argc, char **argv)
     fd = drm_open(card);
     if (misc)
         drm_info_misc(fd);
+    if (caps)
+        drm_info_caps(fd);
     if (conn)
         drm_info_conns(fd, properties);
     if (plane)
