@@ -39,11 +39,8 @@ class EDID(TestDRM):
     @avocado.skipUnless(os.path.exists('/usr/bin/edid-decode'), "no edid-decode")
     def setUp(self):
         TestDRM.setUp(self);
-        version = os.uname()[2]
         if not os.path.isfile(self.initrd):
-            self.create_initrd(self.initrd, version)
-        if not os.path.isfile(self.kernel):
-            copyfile("/boot/vmlinuz-%s" % version, self.kernel)
+            self.prepare_kernel_initrd()
 
     def test_stdvga(self):
         self.run_one_test('VGA,edid=on')
