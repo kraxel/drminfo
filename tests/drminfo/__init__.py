@@ -112,6 +112,13 @@ class TestDRM(avocado.Test):
         self.rconsole.readline() # newline
         self.rconsole.readline() # command line echo
 
+    def console_trace(self, name):
+        while True:
+            msg = self.rconsole.readline()
+            self.lconsole.debug("%s: %s" % (name, msg.rstrip()))
+            if '--[ end trace' in msg:
+                break
+
     def console_wait(self, good, bad = None, errmsg = None):
         output = ""
         counter = 1
@@ -129,6 +136,7 @@ class TestDRM(avocado.Test):
             if 'Kernel panic - not syncing' in msg:
                 self.fail("kernel panic")
             if 'Oops: ' in msg:
+                self.console_trace("oops")
                 self.fail("kernel oops")
             output += msg
         return output
