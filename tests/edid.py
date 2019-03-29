@@ -33,7 +33,6 @@ class EDID(TestDRM):
             self.fail("edid not valid")
 
     @avocado.skipUnless(os.path.exists('/usr/bin/dracut'), "no dracut")
-    @avocado.skipUnless(os.path.exists('/usr/bin/drminfo'), "no drminfo")
     @avocado.skipUnless(os.path.exists('/usr/bin/edid-decode'), "no edid-decode")
     def setUp(self):
         TestDRM.setUp(self);

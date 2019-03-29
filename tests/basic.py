@@ -24,15 +24,15 @@ class BaseDRM(TestDRM):
         'BX24' : '0ab929a5c0ccd0123c6a64fe6fdcc24f',
         'RG16' : '0dcbe8573e0bf44bb7363cd22639f3b9',
     }
+    modes = [
+        "800x600",
+        "1024x768",
+        "1280x800",
+        "1280x1024",
+        "1920x1080",
+    ]
 
     def common_tests(self, vga, display = None):
-        modes = [
-            "800x600",
-            "1024x768",
-            "1280x800",
-            "1280x1024",
-            "1920x1080",
-        ]
 
         self.boot_gfx_vm(vga, display);
         self.console_prepare();
@@ -62,7 +62,7 @@ class BaseDRM(TestDRM):
             self.fail("no drm formats");
 
         mcount = 0
-        for mode in modes:
+        for mode in self.modes:
             if drminfo.find("mode: %s" % mode) < 0:
                 continue
             self.console_run('drmtest -a -s 10 -m %s' % mode)
@@ -100,7 +100,6 @@ class BaseDRM(TestDRM):
 
     @avocado.skipUnless(os.path.exists('/usr/bin/dracut'), "no dracut")
     @avocado.skipUnless(os.path.exists('/usr/bin/drminfo'), "no drminfo")
-    @avocado.skipUnless(os.path.exists('/usr/bin/edid-decode'), "no edid-decode")
     def setUp(self):
         TestDRM.setUp(self);
         if not os.path.isfile(self.initrd):
