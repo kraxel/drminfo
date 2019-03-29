@@ -144,14 +144,24 @@ class TestDRM(avocado.Test):
             output += msg
         return output
 
-    def screen_dump(self, vga, name):
+    def screen_dump(self, vga, name, expected = None):
         if vga == 'qxl-vga':
             self.vm.qmp('screendump', filename = '/dev/null');
             time.sleep(0.1)
-        outfile = '%s/%s-%s.ppm' % (self.outputdir, name, vga)
-        self.vm.qmp('screendump', filename = outfile);
+        out_ppm = '%s/%s-%s.ppm' % (self.outputdir, name, vga)
+        out_jpg = '%s/%s-%s.jpg' % (self.outputdir, name, vga)
+        self.vm.qmp('screendump', filename = out_ppm);
         self.wconsole.write('\n')
         self.wconsole.flush()
+        checksum = run("md5sum %s" % out_ppm).stdout.decode().split()[0]
+        self.log.debug("checksum: %s" % checksum)
+        if not expected is None:
+            self.log.debug("expected: %s" % expected)
+            if checksum != expected:
+                self.warn("checksum mismatch")
+        if os.path.isfile("/usr/bin/convert"):
+            run("/usr/bin/convert %s %s" % (out_ppm, out_jpg))
+            os.remove(out_ppm)
 
     def write_text(self, vga, name, content):
         outfile = '%s/%s-%s.txt' % (self.outputdir, name, vga)
