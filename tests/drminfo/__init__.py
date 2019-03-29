@@ -95,6 +95,11 @@ class TestDRM(avocado.Test):
         self.lconsole = logging.getLogger('console')
         self.lcommand = logging.getLogger('command')
 
+    def console_prepare(self):
+        self.console_wait('Entering emergency mode')
+        self.console_run('PS1=---\\\\u---\\\\n')
+        self.console_wait('---root---')
+
     def console_run(self, command):
         self.lcommand.debug(command)
         self.wconsole.write(command)

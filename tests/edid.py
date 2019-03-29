@@ -23,9 +23,7 @@ class EDID(TestDRM):
     def run_one_test(self, vga):
 
         self.boot_gfx_vm(vga);
-        self.console_wait('Entering emergency mode')
-        self.console_run('PS1=---\\\\u---\\\\n')
-        self.console_wait('---root---')
+        self.console_prepare();
 
         self.console_run('edid-decode /sys/class/drm/card0-Virtual-1/edid')
         edid = self.console_wait('---root---')

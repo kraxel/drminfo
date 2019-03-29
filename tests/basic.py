@@ -21,9 +21,7 @@ class BaseDRM(TestDRM):
     def run_one_test(self, vga):
 
         self.boot_gfx_vm(vga);
-        self.console_wait('Entering emergency mode')
-        self.console_run('PS1=---\\\\u---\\\\n')
-        self.console_wait('---root---')
+        self.console_prepare();
 
         self.console_run('drminfo -a')
         txt = self.console_wait('---root---')
