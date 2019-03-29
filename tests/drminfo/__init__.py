@@ -40,8 +40,9 @@ class TestDRM(avocado.Test):
 
     def prepare_kernel_initrd(self):
         if LINUX_BUILD_DIR is None:
+            kmoddir = None
             kversion = os.uname()[2]
-            copyfile("/boot/vmlinuz-%s" % version, self.kernel)
+            copyfile("/boot/vmlinuz-%s" % kversion, self.kernel)
         else:
             self.log.info("### install kernel modules (%s) for initrd"
                           % LINUX_BUILD_DIR)
