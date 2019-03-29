@@ -24,3 +24,4 @@ run the tests
 -------------
 
 avocado run *.py
+
