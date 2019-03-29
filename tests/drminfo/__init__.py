@@ -79,7 +79,7 @@ class TestDRM(avocado.Test):
         cmdline += " \"%s\" \"%s\"" % (self.initrd, kversion)
         run(cmdline)
 
-    def boot_gfx_vm(self, vga):
+    def boot_gfx_vm(self, vga, display = None):
         append = "console=ttyS0"
 
         self.log.info("### boot kernel with display device \"%s\"" % vga)
@@ -87,11 +87,12 @@ class TestDRM(avocado.Test):
         self.vm.set_console()
         self.vm.add_args('-enable-kvm')
         self.vm.add_args('-m', '1G')
-        self.vm.add_args('-vga', 'none')
-        self.vm.add_args('-device', vga)
         self.vm.add_args('-kernel', self.kernel)
         self.vm.add_args('-initrd', self.initrd)
         self.vm.add_args('-append', append)
+        self.vm.add_args('-device', vga)
+        if not display is None:
+            self.vm.add_args('-display', display)
         self.vm.launch()
 
         self.rconsole = self.vm.console_socket.makefile('r')
@@ -145,7 +146,7 @@ class TestDRM(avocado.Test):
         return output
 
     def screen_dump(self, vga, name, expected = None):
-        if vga == 'qxl-vga':
+        if vga == 'qxl-vga' or vga == 'qxl':
             self.vm.qmp('screendump', filename = '/dev/null');
             time.sleep(0.1)
         out_ppm = '%s/%s-%s.ppm' % (self.outputdir, name, vga)
@@ -158,7 +159,7 @@ class TestDRM(avocado.Test):
         if not expected is None:
             self.log.debug("expected: %s" % expected)
             if checksum != expected:
-                self.warn("checksum mismatch")
+                self.log.warning("checksum mismatch")
         if os.path.isfile("/usr/bin/convert"):
             run("/usr/bin/convert %s %s" % (out_ppm, out_jpg))
             os.remove(out_ppm)

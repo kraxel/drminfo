@@ -19,11 +19,13 @@ class BaseDRM(TestDRM):
     """
 
     checksums = {
+        'AR24' : 'adf315fe78e8f7e2947d65158545b4d3',
         'XR24' : '661a70b8dca5436443ce09014e6c326c',
+        'BX24' : '0ab929a5c0ccd0123c6a64fe6fdcc24f',
         'RG16' : '0dcbe8573e0bf44bb7363cd22639f3b9',
     }
 
-    def run_one_test(self, vga):
+    def common_tests(self, vga, display = None):
         modes = [
             "800x600",
             "1024x768",
@@ -32,7 +34,7 @@ class BaseDRM(TestDRM):
             "1920x1080",
         ]
 
-        self.boot_gfx_vm(vga);
+        self.boot_gfx_vm(vga, display);
         self.console_prepare();
 
         self.console_run('drminfo -a')
@@ -71,15 +73,6 @@ class BaseDRM(TestDRM):
         if mcount == 0:
             self.fail("no drm modes");
 
-        if vga == 'virtio-vga':
-            self.console_run('virtiotest -i')
-            self.console_wait('---root---')
-
-            self.console_run('virtiotest -a -s 10')
-            self.console_wait('---ok---', '---root---', 'virtiotest error')
-            self.screen_dump(vga, 'virtio')
-            self.console_wait('---root---')
-
         self.console_run('fbinfo')
         fbinfo = self.console_wait('---root---')
         self.write_text(vga, "fbinfo", fbinfo)
@@ -87,6 +80,16 @@ class BaseDRM(TestDRM):
         self.console_run('fbtest -a -s 10')
         self.console_wait('---ok---', '---root---', 'fbtest error')
         self.screen_dump(vga, 'fbdev')
+        self.console_wait('---root---')
+
+    def virtio_tests(self, vga):
+        self.console_run('virtiotest -i')
+        virtinfo = self.console_wait('---root---')
+        self.write_text(vga, "virtio", virtinfo)
+
+        self.console_run('virtiotest -a -s 10')
+        self.console_wait('---ok---', '---root---', 'virtiotest error')
+        self.screen_dump(vga, 'virtio')
         self.console_wait('---root---')
 
     @avocado.skipUnless(os.path.exists('/usr/bin/dracut'), "no dracut")
@@ -98,13 +101,25 @@ class BaseDRM(TestDRM):
             self.prepare_kernel_initrd()
 
     def test_stdvga(self):
-        self.run_one_test('VGA')
+        self.common_tests('VGA')
 
     def test_cirrus(self):
-        self.run_one_test('cirrus-vga')
+        self.common_tests('cirrus-vga')
+
+    def test_qxl_vga(self):
+        self.common_tests('qxl-vga')
 
     def test_qxl(self):
-        self.run_one_test('qxl-vga')
+        self.common_tests('qxl')
 
-    def test_virtio(self):
-        self.run_one_test('virtio-vga')
+    def test_virtio_vga(self):
+        self.common_tests('virtio-vga')
+        self.virtio_tests('virtio-vga')
+
+    def test_virtio_gpu(self):
+        self.common_tests('virtio-gpu-pci')
+        self.virtio_tests('virtio-gpu-pci')
+
+    def test_virgl(self):
+        self.common_tests('virtio-vga', 'egl-headless')
+        self.virtio_tests('virtio-vga')

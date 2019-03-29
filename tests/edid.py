@@ -20,7 +20,7 @@ class EDID(TestDRM):
     :avocado: tags=x86_64
     """
 
-    def run_one_test(self, vga):
+    def run_edid_test(self, vga):
 
         self.boot_gfx_vm(vga);
         self.console_prepare();
@@ -41,7 +41,10 @@ class EDID(TestDRM):
             self.prepare_kernel_initrd()
 
     def test_stdvga(self):
-        self.run_one_test('VGA,edid=on')
+        self.run_edid_test('VGA,edid=on')
 
-    def test_virtio(self):
-        self.run_one_test('virtio-vga,edid=on')
+    def test_virtio_vga(self):
+        self.run_edid_test('virtio-vga,edid=on')
+
+    def test_virtio_gpu(self):
+        self.run_edid_test('virtio-gpu-pci,edid=on')
