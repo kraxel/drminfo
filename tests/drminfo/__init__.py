@@ -138,6 +138,9 @@ class TestDRM(avocado.Test):
             if 'Oops: ' in msg:
                 self.console_trace("oops")
                 self.fail("kernel oops")
+            if 'WARNING: ' in msg:
+                self.console_trace("warn")
+                self.fail("kernel warn")
             output += msg
         return output
 
