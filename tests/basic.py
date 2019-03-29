@@ -92,6 +92,10 @@ class BaseDRM(TestDRM):
         self.screen_dump(vga, 'virtio')
         self.console_wait('---root---')
 
+    def prime_tests(self, vga):
+        self.console_run('prime')
+        self.console_wait('---root---')
+
     @avocado.skipUnless(os.path.exists('/usr/bin/dracut'), "no dracut")
     @avocado.skipUnless(os.path.exists('/usr/bin/drminfo'), "no drminfo")
     @avocado.skipUnless(os.path.exists('/usr/bin/edid-decode'), "no edid-decode")
@@ -101,25 +105,37 @@ class BaseDRM(TestDRM):
             self.prepare_kernel_initrd()
 
     def test_stdvga(self):
-        self.common_tests('VGA')
+        vga = 'VGA'
+        self.common_tests(vga)
 
     def test_cirrus(self):
-        self.common_tests('cirrus-vga')
+        vga = 'cirrus-vga'
+        self.common_tests(vga)
 
     def test_qxl_vga(self):
-        self.common_tests('qxl-vga')
+        vga = 'qxl-vga'
+        self.common_tests(vga)
+        self.prime_tests(vga)
 
     def test_qxl(self):
-        self.common_tests('qxl')
+        vga = 'qxl'
+        self.common_tests(vga)
+        self.prime_tests(vga)
 
     def test_virtio_vga(self):
-        self.common_tests('virtio-vga')
-        self.virtio_tests('virtio-vga')
+        vga = 'virtio-vga'
+        self.common_tests(vga)
+        self.virtio_tests(vga)
+        self.prime_tests(vga)
 
     def test_virtio_gpu(self):
-        self.common_tests('virtio-gpu-pci')
-        self.virtio_tests('virtio-gpu-pci')
+        vga = 'virtio-gpu-pci'
+        self.common_tests(vga)
+        self.virtio_tests(vga)
+        self.prime_tests(vga)
 
     def test_virgl(self):
-        self.common_tests('virtio-vga', 'egl-headless')
-        self.virtio_tests('virtio-vga')
+        vga = 'virtio-vga'
+        self.common_tests(vga, 'egl-headless')
+        self.virtio_tests(vga)
+        self.prime_tests(vga)

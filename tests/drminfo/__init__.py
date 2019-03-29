@@ -63,8 +63,12 @@ class TestDRM(avocado.Test):
             "/usr/bin/virtiotest",
             "/usr/bin/prime",
             "/usr/bin/edid-decode",
+
             "/usr/share/fontconfig/conf.avail/59-liberation-mono.conf",
             "/usr/share/fonts/liberation/LiberationMono-Regular.ttf",
+
+            "/usr/lib64/dri/kms_swrast_dri.so",
+            "/usr/lib64/dri/virtio_gpu_dri.so",
         ]
 
         self.log.info("### create initrd for %s" % kversion)
