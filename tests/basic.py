@@ -40,6 +40,8 @@ class BaseDRM(TestDRM):
         self.console_run('drminfo -a')
         drminfo = self.console_wait('---root---')
         self.write_text(vga, "drminfo", drminfo)
+        if not "framebuffer formats" in drminfo:
+            self.fail("device not present");
 
         self.console_run('drminfo -F')
         formats = self.console_wait('---root---')
