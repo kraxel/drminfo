@@ -178,7 +178,9 @@ class TestDRM(avocado.Test):
         self.jobdir = os.path.dirname(self.workdir)
         self.kernel = os.path.join(self.jobdir, "drminfo.kernel");
         self.initrd = os.path.join(self.jobdir, "drminfo.initrd");
-        self.vm = QEMUMachine(self.find_qemu_binary())
+        self.qemu_binary = self.find_qemu_binary()
+        self.log.info("### using qemu binary: %s", self.qemu_binary)
+        self.vm = QEMUMachine(self.qemu_binary)
 
     def tearDown(self):
         self.vm.shutdown()
