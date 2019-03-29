@@ -83,9 +83,9 @@ class BaseDRM(TestDRM):
         self.console_wait('---root---')
 
     def virtio_tests(self, vga):
-        self.console_run('virtiotest -i')
-        virtinfo = self.console_wait('---root---')
-        self.write_text(vga, "virtio", virtinfo)
+        self.console_run('virtiotest -i -l')
+        virtcaps = self.console_wait('---root---')
+        self.write_text(vga, "virtcaps", virtcaps)
 
         self.console_run('virtiotest -a -s 10')
         self.console_wait('---ok---', '---root---', 'virtiotest error')

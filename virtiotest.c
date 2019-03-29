@@ -289,15 +289,12 @@ int main(int argc, char **argv)
 
     drm_init_dev(card, output, modename, false);
 
-    if (printinfo) {
+    if (printinfo)
         virtio_print_caps();
-        goto done;
-    }
-
-    if (listformat) {
+    if (listformat)
         virtio_list_format();
+    if (printinfo || listformat)
         goto done;
-    }
 
     virtio_init_fb();
     virtio_draw();
