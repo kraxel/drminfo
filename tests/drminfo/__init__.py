@@ -43,6 +43,8 @@ class TestDRM(avocado.Test):
             kversion = os.uname()[2]
             copyfile("/boot/vmlinuz-%s" % version, self.kernel)
         else:
+            self.log.info("### install kernel modules (%s) for initrd"
+                          % LINUX_BUILD_DIR)
             cmdline = "make -C %s" % LINUX_BUILD_DIR
             cmdline += " INSTALL_MOD_PATH=%s" % self.workdir
             cmdline += " modules_install"
@@ -65,6 +67,7 @@ class TestDRM(avocado.Test):
             "/usr/share/fonts/liberation/LiberationMono-Regular.ttf",
         ]
 
+        self.log.info("### create initrd for %s" % kversion)
         cmdline = "dracut"
         cmdline += " --force"
         if not kmoddir is None:
@@ -79,6 +82,7 @@ class TestDRM(avocado.Test):
     def boot_gfx_vm(self, vga):
         append = "console=ttyS0"
 
+        self.log.info("### boot kernel with display device \"%s\"" % vga)
         self.vm.set_machine('pc')
         self.vm.set_console()
         self.vm.add_args('-enable-kvm')
