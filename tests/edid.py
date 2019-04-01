@@ -22,13 +22,12 @@ class EDID(TestDRM):
 
     def run_edid_test(self, vga):
 
-        self.boot_gfx_vm(vga);
+        self.boot_gfx_vm("%s,edid=on" % vga);
         self.console_prepare();
 
         self.console_run('edid-decode /sys/class/drm/card0-Virtual-1/edid')
         edid = self.console_wait('---root---')
-        vganame = vga.split(",")[0];
-        self.write_text(vganame, "edid", edid)
+        self.write_text(vga, "edid", edid)
         if edid.find("QEMU Monitor") < 0:
             self.fail("edid not valid")
 
@@ -40,10 +39,17 @@ class EDID(TestDRM):
             self.prepare_kernel_initrd()
 
     def test_stdvga(self):
-        self.run_edid_test('VGA,edid=on')
+        vga = "VGA"
+        self.run_edid_test(vga)
+
+    def test_bochs_dpy(self):
+        vga = 'bochs-display'
+        self.run_edid_test(vga)
 
     def test_virtio_vga(self):
-        self.run_edid_test('virtio-vga,edid=on')
+        vga = 'virtio-vga'
+        self.run_edid_test(vga)
 
     def test_virtio_gpu(self):
-        self.run_edid_test('virtio-gpu-pci,edid=on')
+        vga = 'virtio-gpu-pci'
+        self.run_edid_test(vga)

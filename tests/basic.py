@@ -41,7 +41,7 @@ class BaseDRM(TestDRM):
         drminfo = self.console_wait('---root---')
         self.write_text(vga, "drminfo", drminfo)
         if not "framebuffer formats" in drminfo:
-            self.fail("device not present");
+            self.fail("drm device missing");
 
         self.console_run('drminfo -F')
         formats = self.console_wait('---root---')
@@ -53,7 +53,7 @@ class BaseDRM(TestDRM):
                 expected = self.checksums[format]
             self.console_run('drmtest -a -s 10 -m 640x480 -f %s' % format)
             self.console_wait('---ok---', '---root---', 
-                              'drm format error (%s)' % format)
+                              'drm format (%s)' % format)
             self.screen_dump(vga, "format-%s" % format, expected)
             self.console_wait('---root---')
             fcount += 1;
@@ -67,7 +67,7 @@ class BaseDRM(TestDRM):
                 continue
             self.console_run('drmtest -a -s 10 -m %s' % mode)
             self.console_wait('---ok---', '---root---', 
-                              'drm mode error (%s)' % mode)
+                              'drm mode (%s)' % mode)
             self.screen_dump(vga, "mode-%s" % mode)
             self.console_wait('---root---')
             mcount += 1;
@@ -80,7 +80,7 @@ class BaseDRM(TestDRM):
         self.write_text(vga, "fbinfo", fbinfo)
 
         self.console_run('fbtest -a -s 10')
-        self.console_wait('---ok---', '---root---', 'fbtest error')
+        self.console_wait('---ok---', '---root---', 'fbtest')
         self.screen_dump(vga, 'fbdev')
         self.console_wait('---root---')
 
@@ -90,7 +90,7 @@ class BaseDRM(TestDRM):
         self.write_text(vga, "virtcaps", virtcaps)
 
         self.console_run('virtiotest -a -s 10')
-        self.console_wait('---ok---', '---root---', 'virtiotest error')
+        self.console_wait('---ok---', '---root---', 'virtiotest')
         self.screen_dump(vga, 'virtio')
         self.console_wait('---root---')
 
@@ -107,6 +107,10 @@ class BaseDRM(TestDRM):
 
     def test_stdvga(self):
         vga = 'VGA'
+        self.common_tests(vga)
+
+    def test_bochs_dpy(self):
+        vga = 'bochs-display'
         self.common_tests(vga)
 
     def test_cirrus(self):
