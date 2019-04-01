@@ -15,7 +15,7 @@ from drminfo import TestDRM
 
 class EDID(TestDRM):
     """
-    basic qemu display device tests
+    edid test
 
     :avocado: tags=x86_64
     """
