@@ -11,10 +11,11 @@ import avocado
 from avocado.utils.process import run
 
 # qemu
+from qemu import QEMUMachine
+
+# configuration
 QEMU_BUILD_DIR = os.environ.get("QEMU_BUILD_DIR");
 LINUX_BUILD_DIR = os.environ.get("LINUX_BUILD_DIR");
-sys.path.append(os.path.join(QEMU_BUILD_DIR, 'python'))
-from qemu import QEMUMachine
 
 class TestDRM(avocado.Test):
     def find_qemu_binary(self):
@@ -23,16 +24,18 @@ class TestDRM(avocado.Test):
         directory or in the source tree root directory.
         """
         arch = os.uname()[4]
-        qemu_build = os.path.join(QEMU_BUILD_DIR,
-                                  "%s-softmmu" % arch,
-                                  "qemu-system-%s" % arch)
         qemu_path = [
-            qemu_build,
             "/usr/local/bin/qemu-system-%s" % arch,
             "/usr/bin/qemu-system-%s" % arch,
             "/usr/bin/qemu-kvm",
             "/usr/libexec/qemu-kvm",
         ]
+        if not QEMU_BUILD_DIR is None:
+            qemu_build = os.path.join(QEMU_BUILD_DIR,
+                                      "%s-softmmu" % arch,
+                                      "qemu-system-%s" % arch)
+            qemu_path.insert(0, qemu_build)
+
         for item in qemu_path:
             if os.path.isfile(item):
                 return item;

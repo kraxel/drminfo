@@ -2,26 +2,23 @@
 avocado framework tests for qemu display devices
 ================================================
 
-configuration
--------------
-
-Uses environment variables.
-
-QEMU_BUILD_DIR (required)
-
-    Should points to a qemu build tree.  The python module and qemu
-    binaries are used.
-
-    Pointing to a qemu source tree works too.  In that case only the
-    python module is used.
-
-LINUX_BUILD_DIR (optional)
-
-    Points to a linux kernel build tree.  Uses that kernel (instead of
-    the host kernel) for testing.
 
 run the tests
 -------------
 
 avocado run *.py
+
+
+configuration
+-------------
+
+Tests can be configured using two environment variables.
+
+QEMU_BUILD_DIR (optional)
+    Points to a qemu build tree.  Uses the qemu binaries there for
+    testing (instead of the installed version).
+
+LINUX_BUILD_DIR (optional)
+    Points to a linux kernel build tree.  Uses that kernel (instead of
+    the host kernel) for testing.
 
