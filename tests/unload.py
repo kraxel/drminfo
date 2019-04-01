@@ -48,6 +48,7 @@ class unload(TestDRM):
         mod = "cirrus"
         self.run_unload_test(vga, mod)
 
+    @avocado.skip("known broken")
     def test_qxl_vga(self):
         vga = "qxl-vga"
         mod = "qxl"
