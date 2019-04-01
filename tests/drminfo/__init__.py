@@ -14,6 +14,7 @@ from avocado.utils.process import run
 from qemu import QEMUMachine
 
 # configuration
+QEMU_BINARY =  os.environ.get("QEMU_BUILD_DIR");
 QEMU_BUILD_DIR = os.environ.get("QEMU_BUILD_DIR");
 LINUX_BUILD_DIR = os.environ.get("LINUX_BUILD_DIR");
 
@@ -35,6 +36,8 @@ class TestDRM(avocado.Test):
                                       "%s-softmmu" % arch,
                                       "qemu-system-%s" % arch)
             qemu_path.insert(0, qemu_build)
+        if not QEMU_BINARY is None:
+            qemu_path.insert(0, QEMU_BINARY)
 
         for item in qemu_path:
             if os.path.isfile(item):

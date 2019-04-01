@@ -14,6 +14,9 @@ configuration
 
 Tests can be configured using two environment variables.
 
+QEMU_BINARY (optional)
+    Points to a qemu binary to use.
+
 QEMU_BUILD_DIR (optional)
     Points to a qemu build tree.  Uses the qemu binaries there for
     testing (instead of the installed version).
