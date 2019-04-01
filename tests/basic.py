@@ -18,6 +18,8 @@ class BaseDRM(TestDRM):
     :avocado: tags=x86_64
     """
 
+    timeout = 60
+
     checksums = {
         'AR24' : 'adf315fe78e8f7e2947d65158545b4d3',
         'XR24' : '661a70b8dca5436443ce09014e6c326c',

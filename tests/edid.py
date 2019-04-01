@@ -20,6 +20,8 @@ class EDID(TestDRM):
     :avocado: tags=x86_64
     """
 
+    timeout = 60
+
     def run_edid_test(self, vga):
 
         self.boot_gfx_vm("%s,edid=on" % vga);

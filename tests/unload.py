@@ -20,6 +20,8 @@ class unload(TestDRM):
     :avocado: tags=x86_64
     """
 
+    timeout = 60
+
     def run_unload_test(self, vga, module):
 
         self.boot_gfx_vm(vga);
@@ -28,7 +30,7 @@ class unload(TestDRM):
         self.console_run('for vt in /sys/class/vtconsole/vtcon*; do echo 0 > $vt/bind; done')
         self.console_wait('---root---')
         self.console_run('rmmod %s' % module)
-        self.console_wait('---root---', 'ERROR', 'rmmod')
+        self.console_wait('---root---', 'rmmod: ERROR: ', 'rmmod')
 
     @avocado.skipUnless(os.path.exists('/usr/bin/dracut'), "no dracut")
     def setUp(self):
