@@ -86,6 +86,10 @@ class BaseDRM(TestDRM):
         self.screen_dump(vga, 'fbdev')
         self.console_wait('---root---')
 
+    def prime_tests(self, vga):
+        self.console_run('prime')
+        self.console_wait('---root---')
+
     def virtio_tests(self, vga):
         self.console_run('virtiotest -i -l')
         virtcaps = self.console_wait('---root---')
@@ -96,9 +100,10 @@ class BaseDRM(TestDRM):
         self.screen_dump(vga, 'virtio')
         self.console_wait('---root---')
 
-    def prime_tests(self, vga):
-        self.console_run('prime')
-        self.console_wait('---root---')
+    def virgl_tests(self, vga):
+        self.console_run('egltest -i')
+        eglinfo = self.console_wait('---root---')
+        self.write_text(vga, "eglinfo", eglinfo)
 
     @avocado.skipUnless(os.path.exists('/usr/bin/dracut'), "no dracut")
     @avocado.skipUnless(os.path.exists('/usr/bin/drminfo'), "no drminfo")
@@ -132,17 +137,18 @@ class BaseDRM(TestDRM):
     def test_virtio_vga(self):
         vga = 'virtio-vga'
         self.common_tests(vga)
-        self.virtio_tests(vga)
         self.prime_tests(vga)
+        self.virtio_tests(vga)
 
     def test_virtio_gpu(self):
         vga = 'virtio-gpu-pci'
         self.common_tests(vga)
-        self.virtio_tests(vga)
         self.prime_tests(vga)
+        self.virtio_tests(vga)
 
     def test_virgl(self):
         vga = 'virtio-vga'
         self.common_tests(vga, 'egl-headless')
-        self.virtio_tests(vga)
         self.prime_tests(vga)
+        self.virtio_tests(vga)
+        self.virgl_tests(vga)
