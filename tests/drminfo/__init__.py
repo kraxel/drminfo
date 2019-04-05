@@ -68,6 +68,7 @@ class TestDRM(avocado.Test):
             "/usr/bin/fbinfo",
             "/usr/bin/fbtest",
             "/usr/bin/virtiotest",
+            "/usr/bin/egltest",
             "/usr/bin/prime",
             "/usr/bin/edid-decode",
 
@@ -157,7 +158,7 @@ class TestDRM(avocado.Test):
         return output
 
     def html_append(self, html):
-        outfile = '%s/view.html' % self.outputdir
+        outfile = '%s/_checkdata.html' % self.outputdir
         f = open(outfile, "a")
         f.write(html)
         f.close()
