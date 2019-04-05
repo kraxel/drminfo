@@ -75,6 +75,7 @@ static void virtio_print_caps(void)
             printf("    %-12s: %d\n", virtio_caps[i].name, value);
         }
     }
+    fprintf(stdout, "\n");
 }
 
 static void virtio_list_format(void)
@@ -87,6 +88,7 @@ static void virtio_list_format(void)
             continue;
         drm_print_format(stdout, fmts + i, 0, false, true);
     }
+    fprintf(stdout, "\n");
 }
 
 static void virtio_check(int cardno)

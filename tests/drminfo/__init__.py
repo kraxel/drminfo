@@ -71,13 +71,21 @@ class TestDRM(avocado.Test):
             "/usr/bin/egltest",
             "/usr/bin/prime",
             "/usr/bin/edid-decode",
+            "/usr/bin/strace",
 
             "/usr/share/fontconfig/conf.avail/59-liberation-mono.conf",
             "/usr/share/fonts/liberation/LiberationMono-Regular.ttf",
-
-            "/usr/lib64/dri/kms_swrast_dri.so",
-            "/usr/lib64/dri/virtio_gpu_dri.so",
         ]
+        rpms = [
+            "mesa-libGL",
+            "mesa-libEGL",
+            "mesa-dri-drivers",
+        ]
+
+        for rpm in rpms:
+            rpmfiles = run("rpm -ql %s" % rpm)
+            for item in rpmfiles.stdout.decode().split():
+                files.append(item)
 
         self.log.info("### create initrd for %s" % kversion)
         cmdline = "dracut"

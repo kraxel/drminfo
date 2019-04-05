@@ -4,6 +4,7 @@
 
 # stdlib
 import os
+import time
 
 # avocado
 import avocado
@@ -24,6 +25,7 @@ class BaseDRM(TestDRM):
         'AR24' : 'adf315fe78e8f7e2947d65158545b4d3',
         'XR24' : '661a70b8dca5436443ce09014e6c326c',
         'BX24' : '0ab929a5c0ccd0123c6a64fe6fdcc24f',
+        'RG24' : 'a250b72b15cbb53306ed9e101aac3600',
         'RG16' : '0dcbe8573e0bf44bb7363cd22639f3b9',
     }
     modes = [
@@ -83,6 +85,7 @@ class BaseDRM(TestDRM):
 
         self.console_run('fbtest -a -s 10')
         self.console_wait('---ok---', '---root---', 'fbtest')
+        time.sleep(0.1)
         self.screen_dump(vga, 'fbdev')
         self.console_wait('---root---')
 
