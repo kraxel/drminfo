@@ -168,6 +168,7 @@ class TestDRM(avocado.Test):
     def html_append(self, html):
         outfile = '%s/_checkdata.html' % self.outputdir
         f = open(outfile, "a")
+        f.write("<hr>\n")
         f.write(html)
         f.close()
 

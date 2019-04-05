@@ -110,6 +110,11 @@ class BaseDRM(TestDRM):
         if not "virgl" in eglinfo:
             self.fail("virgl not available");
 
+        self.console_run('egltest -a -s 10')
+        self.console_wait('---ok---', '---root---', 'egltest')
+        self.screen_dump(vga, 'egl')
+        self.console_wait('---root---')
+
     @avocado.skipUnless(os.path.exists('/usr/bin/dracut'), "no dracut")
     @avocado.skipUnless(os.path.exists('/usr/bin/drminfo'), "no drminfo")
     def setUp(self):
