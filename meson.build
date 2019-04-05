@@ -21,6 +21,7 @@ fbinfo_srcs   = [ 'fbinfo.c', 'fbtools.c' ]
 fbtest_srcs   = [ 'fbtest.c', 'fbtools.c', 'ttytools.c', 'render.c', 'image.c' ]
 prime_srcs    = [ 'prime.c' ]
 viotest_srcs  = [ 'virtiotest.c', 'drmtools.c', 'ttytools.c', 'render.c' ]
+egltest_srcs  = [ 'egltest.c', 'drmtools.c', 'drmtools-egl.c', 'ttytools.c' ]
 gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c' ]
 
 drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep ]
@@ -31,6 +32,8 @@ fbtest_deps   = [ cairo_dep, pixman_dep, jpeg_dep ]
 prime_deps    = [ libdrm_dep, gbm_dep ]
 viotest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
                   cairo_dep, pixman_dep, jpeg_dep ]
+egltest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
+                  cairo_dep, pixman_dep ]
 gtktest_deps  = [ gtk3_dep,
                   cairo_dep, pixman_dep, jpeg_dep ]
 
@@ -57,6 +60,10 @@ executable('prime',
 executable('virtiotest',
            sources      : viotest_srcs,
            dependencies : viotest_deps,
+           install      : true)
+executable('egltest',
+           sources      : egltest_srcs,
+           dependencies : egltest_deps,
            install      : true)
 executable('gtktest',
            sources      : gtktest_srcs,

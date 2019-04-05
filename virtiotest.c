@@ -49,7 +49,7 @@ static int virtio_get_cap(uint64_t cap, int *value)
 
     args.param = cap;
     args.value = (intptr_t)(value);
-    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_GETPARAM, &args);
+    rc = drmIoctl(drm_fd, DRM_IOCTL_VIRTGPU_GETPARAM, &args);
     if (rc != 0) {
         if (errno == EINVAL) {
             return -1;
@@ -125,8 +125,8 @@ static void virtio_init_fb(void)
     /* create framebuffer */
     memset(&create, 0, sizeof(create));
     create.format = fmt->virtio;
-    create.width  = mode->hdisplay;
-    create.height = mode->vdisplay;
+    create.width  = drm_mode->hdisplay;
+    create.height = drm_mode->vdisplay;
 
     create.target = 2;       /* ??? */
     create.bind = (1 << 1);  /* ??? */
@@ -135,7 +135,7 @@ static void virtio_init_fb(void)
 
     stride = create.width * fmt->bpp / 8;
     create.size   = stride * create.height;
-    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE, &create);
+    rc = drmIoctl(drm_fd, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE, &create);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_VIRTGPU_RESOURCE_CREATE: %s\n",
                 strerror(errno));
@@ -144,7 +144,7 @@ static void virtio_init_fb(void)
 
     memset(&info, 0, sizeof(info));
     info.bo_handle = create.bo_handle;
-    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_RESOURCE_INFO, &info);
+    rc = drmIoctl(drm_fd, DRM_IOCTL_VIRTGPU_RESOURCE_INFO, &info);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_VIRTGPU_RESOURCE_INFO: %s\n",
                 strerror(errno));
@@ -153,14 +153,14 @@ static void virtio_init_fb(void)
 
     memset(&map, 0, sizeof(map));
     map.handle = create.bo_handle;
-    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_MAP, &map);
+    rc = drmIoctl(drm_fd, DRM_IOCTL_VIRTGPU_MAP, &map);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_VIRTGPU_MAP: %s\n", strerror(errno));
         exit(1);
     }
 
     fbmem = mmap(0, info.size, PROT_READ | PROT_WRITE,
-                 MAP_SHARED, fd, map.offset);
+                 MAP_SHARED, drm_fd, map.offset);
     if (fbmem == MAP_FAILED) {
         fprintf(stderr, "framebuffer mmap: %s\n", strerror(errno));
         exit(1);
@@ -168,7 +168,7 @@ static void virtio_init_fb(void)
 
     if (info.stride)
         stride = info.stride;
-    rc = drmModeAddFB2(fd, create.width, create.height, fmt->fourcc,
+    rc = drmModeAddFB2(drm_fd, create.width, create.height, fmt->fourcc,
                        &create.bo_handle, &stride, &zero, &fb_id, 0);
     if (rc < 0) {
         fprintf(stderr, "drmModeAddFB2() failed: %s\n", strerror(errno));
@@ -189,7 +189,7 @@ static void virtio_draw(void)
 
     snprintf(info1, sizeof(info1), "virtio-gpu");
     snprintf(info2, sizeof(info2), "%dx%d",
-             mode->hdisplay, mode->vdisplay);
+             drm_mode->hdisplay, drm_mode->vdisplay);
     snprintf(info3, sizeof(info3), "fourcc %c%c%c%c",
              (fmt->fourcc >>  0) & 0xff,
              (fmt->fourcc >>  8) & 0xff,
@@ -197,7 +197,7 @@ static void virtio_draw(void)
              (fmt->fourcc >> 24) & 0xff);
 
     cr = cairo_create(cs);
-    render_test(cr, mode->hdisplay, mode->vdisplay, info1, info2, info3);
+    render_test(cr, drm_mode->hdisplay, drm_mode->vdisplay, info1, info2, info3);
     cairo_destroy(cr);
 }
 
@@ -208,10 +208,10 @@ static void virtio_transfer(void)
 
     memset(&xfer, 0, sizeof(xfer));
     xfer.bo_handle = create.bo_handle;
-    xfer.box.w = mode->hdisplay;
-    xfer.box.h = mode->vdisplay;
+    xfer.box.w = drm_mode->hdisplay;
+    xfer.box.h = drm_mode->vdisplay;
     xfer.box.d = 1;
-    rc = drmIoctl(fd, DRM_IOCTL_VIRTGPU_TRANSFER_TO_HOST, &xfer);
+    rc = drmIoctl(drm_fd, DRM_IOCTL_VIRTGPU_TRANSFER_TO_HOST, &xfer);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_VIRTGPU_TRANSFER_TO_HOST: %s\n",
                 strerror(errno));
@@ -229,6 +229,7 @@ static void usage(FILE *fp)
             "\n"
             "options:\n"
             "  -h         print this\n"
+            "  -a         autotest mode\n"
             "  -c <nr>    pick card\n"
             "  -s <secs>  set sleep time (default: 60)\n"
             "  -i         print device info\n"

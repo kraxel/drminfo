@@ -40,6 +40,7 @@ cp -a tests %{buildroot}%{_datadir}/%{name}
 %{_bindir}/drm*
 %{_bindir}/prime
 %{_bindir}/virtiotest
+%{_bindir}/egltest
 %{_bindir}/fb*
 %{_mandir}/man1/drm*.1*
 %{_datadir}/%{name}/tests

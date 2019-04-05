@@ -34,13 +34,18 @@ void drm_print_format_hdr(FILE *fp, int indent,
 
 /* ------------------------------------------------------------------ */
 
-extern int fd;
+extern int drm_fd;
 extern uint32_t fb_id;
-extern drmModeConnector *conn;
-extern drmModeModeInfo *mode;
+extern drmModeConnector *drm_conn;
+extern drmModeModeInfo *drm_mode;
+extern drmModeEncoder *drm_enc;
 extern drmVersion *version;
 
 void drm_init_dev(int devnr, const char *output,
                   const char *modename, bool need_dumb);
 void drm_fini_dev(void);
 void drm_show_fb(void);
+
+/* drmtools-egl.c */
+int drm_setup_egl(void);
+void drm_egl_flush_display(void);

@@ -698,13 +698,13 @@ void drm_print_format_hdr(FILE *fp, int indent, bool libs, bool virtio)
 
 /* ------------------------------------------------------------------ */
 
-int fd;
+int drm_fd;
 uint32_t fb_id;
-drmModeConnector *conn = NULL;
-drmModeModeInfo *mode = NULL;
+drmModeConnector *drm_conn = NULL;
+drmModeModeInfo *drm_mode = NULL;
+drmModeEncoder *drm_enc = NULL;
 drmVersion *version = NULL;
 
-static drmModeEncoder *enc = NULL;
 static drmModeCrtc *scrtc = NULL;
 
 void drm_init_dev(int devnr, const char *output,
@@ -719,15 +719,15 @@ void drm_init_dev(int devnr, const char *output,
 
     /* open device */
     snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
-    fd = open(dev, O_RDWR);
-    if (fd < 0) {
+    drm_fd = open(dev, O_RDWR);
+    if (drm_fd < 0) {
         fprintf(stderr, "open %s: %s\n", dev, strerror(errno));
         exit(1);
     }
-    version = drmGetVersion(fd);
+    version = drmGetVersion(drm_fd);
 
     if (need_dumb) {
-        rc = drmGetCap(fd, DRM_CAP_DUMB_BUFFER, &has_dumb);
+        rc = drmGetCap(drm_fd, DRM_CAP_DUMB_BUFFER, &has_dumb);
         if (rc < 0 || !has_dumb) {
             fprintf(stderr, "no dumb buffer support\n");
             exit(1);
@@ -735,7 +735,7 @@ void drm_init_dev(int devnr, const char *output,
     }
 #if 0
     if (need_master) {
-        rc = drmSetMaster(fd);
+        rc = drmSetMaster(drm_fd);
         if (rc < 0) {
             fprintf(stderr, "drmSetMaster() failed: %s\n",
                     strerror(errno));
@@ -745,18 +745,18 @@ void drm_init_dev(int devnr, const char *output,
 #endif
 
     /* find connector */
-    res = drmModeGetResources(fd);
+    res = drmModeGetResources(drm_fd);
     if (res == NULL) {
         fprintf(stderr, "drmModeGetResources() failed\n");
         exit(1);
     }
     for (i = 0; i < res->count_connectors; i++) {
-        conn = drmModeGetConnector(fd, res->connectors[i]);
-        if (conn &&
-            (conn->connection == DRM_MODE_CONNECTED) &&
-            conn->count_modes) {
+        drm_conn = drmModeGetConnector(drm_fd, res->connectors[i]);
+        if (drm_conn &&
+            (drm_conn->connection == DRM_MODE_CONNECTED) &&
+            drm_conn->count_modes) {
             if (output) {
-                drm_conn_name(conn, name, sizeof(name));
+                drm_conn_name(drm_conn, name, sizeof(name));
                 if (strcmp(name, output) == 0) {
                     break;
                 }
@@ -764,10 +764,10 @@ void drm_init_dev(int devnr, const char *output,
                 break;
             }
         }
-        drmModeFreeConnector(conn);
-        conn = NULL;
+        drmModeFreeConnector(drm_conn);
+        drm_conn = NULL;
     }
-    if (!conn) {
+    if (!drm_conn) {
         if (output) {
             fprintf(stderr, "drm: output %s not found or disconnected\n",
                     output);
@@ -778,39 +778,39 @@ void drm_init_dev(int devnr, const char *output,
     }
 
     if (modename) {
-        for (i = 0; i < conn->count_modes; i++) {
+        for (i = 0; i < drm_conn->count_modes; i++) {
             snprintf(m, sizeof(m), "%dx%d",
-                     conn->modes[i].hdisplay,
-                     conn->modes[i].vdisplay);
+                     drm_conn->modes[i].hdisplay,
+                     drm_conn->modes[i].vdisplay);
             if (strcmp(m, modename) == 0) {
                 fprintf(stderr, "Using mode %s\n", modename);
-                mode = &conn->modes[i];
+                drm_mode = &drm_conn->modes[i];
                 break;
             }
         }
     }
-    if (!mode) {
-        mode = &conn->modes[0];
+    if (!drm_mode) {
+        drm_mode = &drm_conn->modes[0];
     }
 
-    enc = drmModeGetEncoder(fd, conn->encoder_id);
-    if (enc == NULL) {
+    drm_enc = drmModeGetEncoder(drm_fd, drm_conn->encoder_id);
+    if (drm_enc == NULL) {
         fprintf(stderr, "drmModeGetEncoder() failed\n");
         exit(1);
     }
 
-    drm_plane_init(fd);
+    drm_plane_init(drm_fd);
 
     /* save crtc */
-    scrtc = drmModeGetCrtc(fd, enc->crtc_id);
+    scrtc = drmModeGetCrtc(drm_fd, drm_enc->crtc_id);
 }
 
 void drm_fini_dev(void)
 {
     /* restore crtc */
     if (scrtc) {
-        drmModeSetCrtc(fd, scrtc->crtc_id, scrtc->buffer_id, scrtc->x, scrtc->y,
-                       &conn->connector_id, 1, &scrtc->mode);
+        drmModeSetCrtc(drm_fd, scrtc->crtc_id, scrtc->buffer_id, scrtc->x, scrtc->y,
+                       &drm_conn->connector_id, 1, &scrtc->mode);
     }
 }
 
@@ -818,9 +818,9 @@ void drm_show_fb(void)
 {
     int rc;
 
-    rc = drmModeSetCrtc(fd, enc->crtc_id, fb_id, 0, 0,
-                        &conn->connector_id, 1,
-                        mode);
+    rc = drmModeSetCrtc(drm_fd, drm_enc->crtc_id, fb_id, 0, 0,
+                        &drm_conn->connector_id, 1,
+                        drm_mode);
     if (rc < 0) {
         fprintf(stderr, "drmModeSetCrtc() failed: %s\n", strerror(errno));
         exit (1);

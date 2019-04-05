@@ -50,7 +50,7 @@ static void drm_draw(bool autotest)
     cairo_t *cr;
 
     snprintf(info1, sizeof(info1), "mode: %dx%d",
-             mode->hdisplay, mode->vdisplay);
+             drm_mode->hdisplay, drm_mode->vdisplay);
 
     if (fmt->fourcc) {
         snprintf(info2, sizeof(info2),
@@ -66,15 +66,15 @@ static void drm_draw(bool autotest)
                  fmt->bpp, fmt->depth);
     }
 
-    drm_conn_name(conn, name, sizeof(name));
+    drm_conn_name(drm_conn, name, sizeof(name));
     snprintf(info3, sizeof(info3), "drm driver: %s, output %.10s",
              version->name, name);
 
     cr = cairo_create(cs);
     if (image) {
-        render_image(cr, mode->hdisplay, mode->vdisplay, image);
+        render_image(cr, drm_mode->hdisplay, drm_mode->vdisplay, image);
     } else {
-        render_test(cr, mode->hdisplay, mode->vdisplay, info1, info2,
+        render_test(cr, drm_mode->hdisplay, drm_mode->vdisplay, info1, info2,
                     autotest ? NULL : info3);
     }
     cairo_destroy(cr);
@@ -84,7 +84,7 @@ static void drm_draw(bool autotest)
                                0, 0,
                                0, 0,
                                0, 0,
-                               mode->hdisplay, mode->vdisplay);
+                               drm_mode->hdisplay, drm_mode->vdisplay);
     }
 }
 
@@ -98,17 +98,17 @@ static void drm_init_dumb_fb(bool use_pixman)
 
     /* create framebuffer */
     memset(&creq, 0, sizeof(creq));
-    creq.width = mode->hdisplay;
-    creq.height = mode->vdisplay;
+    creq.width = drm_mode->hdisplay;
+    creq.height = drm_mode->vdisplay;
     creq.bpp = fmt->bpp;
-    rc = drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &creq);
+    rc = drmIoctl(drm_fd, DRM_IOCTL_MODE_CREATE_DUMB, &creq);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_MODE_CREATE_DUMB: %s\n", strerror(errno));
         exit(1);
     }
 
     if (fmt->fourcc) {
-        rc = drmModeAddFB2(fd, creq.width, creq.height, fmt->fourcc,
+        rc = drmModeAddFB2(drm_fd, creq.width, creq.height, fmt->fourcc,
                            &creq.handle, &creq.pitch, &zero,
                            &fb_id, 0);
         if (rc < 0) {
@@ -120,7 +120,7 @@ static void drm_init_dumb_fb(bool use_pixman)
             exit(1);
         }
     } else {
-        rc = drmModeAddFB(fd, creq.width, creq.height, fmt->depth, fmt->bpp,
+        rc = drmModeAddFB(drm_fd, creq.width, creq.height, fmt->depth, fmt->bpp,
                           creq.pitch, creq.handle, &fb_id);
         if (rc < 0) {
             fprintf(stderr, "drmModeAddFB() failed (bpp %d, depth %d)\n",
@@ -132,12 +132,12 @@ static void drm_init_dumb_fb(bool use_pixman)
     /* map framebuffer */
     memset(&mreq, 0, sizeof(mreq));
     mreq.handle = creq.handle;
-    rc = drmIoctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &mreq);
+    rc = drmIoctl(drm_fd, DRM_IOCTL_MODE_MAP_DUMB, &mreq);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_MODE_MAP_DUMB: %s\n", strerror(errno));
         exit(1);
     }
-    fbmem = mmap(0, creq.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, mreq.offset);
+    fbmem = mmap(0, creq.size, PROT_READ | PROT_WRITE, MAP_SHARED, drm_fd, mreq.offset);
     if (fbmem == MAP_FAILED) {
         fprintf(stderr, "framebuffer mmap: %s\n", strerror(errno));
         exit(1);
@@ -170,7 +170,7 @@ static void drm_init_dumb_fb(bool use_pixman)
 static void drm_draw_dumb_fb(bool autotest)
 {
     drm_draw(autotest);
-    drmModeDirtyFB(fd, fb_id, 0, 0);
+    drmModeDirtyFB(drm_fd, fb_id, 0, 0);
 }
 
 /* ------------------------------------------------------------------ */
@@ -184,6 +184,7 @@ static void usage(FILE *fp)
             "options:\n"
             "  -h         print this\n"
             "  -p         pixman mode\n"
+            "  -a         autotest mode (don't print hardware info)\n"
             "  -c <nr>    pick card\n"
             "  -o <name>  pick output\n"
             "  -s <secs>  set sleep time (default: 60)\n"
@@ -277,7 +278,7 @@ int main(int argc, char **argv)
                 if (fmts[i].cairo == CAIRO_FORMAT_INVALID)
                     continue;
             }
-            if (!drm_probe_format_fb(fd, &fmts[i]))
+            if (!drm_probe_format_fb(drm_fd, &fmts[i]))
                 continue;
             if (!drm_probe_format_primary(&fmts[i]))
                 continue;
