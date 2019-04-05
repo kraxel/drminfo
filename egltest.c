@@ -32,9 +32,21 @@ static void egl_print_info(void)
 
 static void egl_draw(void)
 {
-    /* green background */
-    glClearColor(0.0, 0.6, 0.0, 1.0);
+    /* dark gray background */
+    glClearColor(0.2, 0.2, 0.2, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    /* draw rectangle */
+    glBegin(GL_TRIANGLES);
+    glColor3f(0.0, 0.0, 1.0);  /* blue */
+    glVertex2f(-0.9, -0.9);
+    glColor3f(0.0, 1.0, 0.0);  /* green */
+    glVertex2f(0.9, 0.9);
+    glColor3f(1.0, 0.0, 0.0);  /* red */
+    glVertex2f(0.9, -0.9);
+    glEnd();
+
+    /* done */
     glFlush();
 }
 
