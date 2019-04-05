@@ -156,6 +156,12 @@ class TestDRM(avocado.Test):
             output += msg
         return output
 
+    def html_append(self, html):
+        outfile = '%s/view.html' % self.outputdir
+        f = open(outfile, "a")
+        f.write(html)
+        f.close()
+
     def screen_dump(self, vga, name, expected = None):
         if vga == 'qxl-vga' or vga == 'qxl':
             self.vm.qmp('screendump', filename = '/dev/null');
@@ -174,12 +180,18 @@ class TestDRM(avocado.Test):
         if os.path.isfile("/usr/bin/convert"):
             run("/usr/bin/convert %s %s" % (out_ppm, out_jpg))
             os.remove(out_ppm)
+        img = "<h3>%s-%s</h3>\n" % (name, vga)
+        img += "<img src='%s-%s.jpg'>\n" % (name, vga)
+        self.html_append(img)
 
     def write_text(self, vga, name, content):
         outfile = '%s/%s-%s.txt' % (self.outputdir, name, vga)
         f = open(outfile, "w")
         f.write(content)
         f.close()
+        div = "<h3>%s-%s</h3>\n" % (name, vga)
+        div += "<pre>%s</pre>" % content
+        self.html_append(div)
 
     def setUp(self):
         self.jobdir = os.path.dirname(self.workdir)
