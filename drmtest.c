@@ -22,6 +22,7 @@
 #include <pixman.h>
 
 #include "ttytools.h"
+#include "logind.h"
 #include "drmtools.h"
 #include "render.h"
 #include "image.h"
@@ -266,6 +267,7 @@ int main(int argc, char **argv)
         }
     }
 
+    logind_init();
     drm_init_dev(card, output, modename, false);
 
     if (!fmt) {
@@ -316,5 +318,7 @@ int main(int argc, char **argv)
     tty_restore();
 
     drm_fini_dev();
+    logind_fini();
+
     return 0;
 }

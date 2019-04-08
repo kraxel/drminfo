@@ -16,6 +16,8 @@
 
 #include <gbm.h>
 
+#include "logind.h"
+
 #define TEST_WIDTH  640
 #define TEST_HEIGHT 480
 #define TEST_SIZE   (TEST_WIDTH * TEST_HEIGHT * 4)
@@ -53,13 +55,17 @@ static int drm_init_dev(const char *devname, bool *import, bool *export)
 {
     drmVersion *ver;
     uint64_t prime;
-    int fd, rc;
+    int fd, rc, err;
 
     /* open device */
     fd = open(devname, O_RDWR);
     if (fd < 0) {
-        fprintf(stderr, "open %s: %s\n", devname, strerror(errno));
-        exit(1);
+        err = errno;
+        fd = logind_open(devname);
+        if (fd < 0) {
+            fprintf(stderr, "open %s: %s\n", devname, strerror(err));
+            exit(1);
+        }
     }
 
     ver = drmGetVersion(fd);
@@ -251,6 +257,8 @@ int main(int argc, char **argv)
         }
     }
 
+    logind_init();
+
     for (i = 0;; i++) {
         snprintf(devname, sizeof(devname), DRM_DEV_NAME, DRM_DIR_NAME, i);
         if (access(devname, R_OK | W_OK) != 0)
@@ -297,5 +305,6 @@ int main(int argc, char **argv)
     if (!list && gbm_ex && gbm_im)
         gbm_export_import(gbm_ex, gbm_im, ex, im);
 
+    logind_fini();
     return 0;
 }

@@ -19,6 +19,7 @@
 #include <pixman.h>
 
 #include "drmtools.h"
+#include "logind.h"
 
 static int ttycols = 80;
 
@@ -533,6 +534,8 @@ int main(int argc, char **argv)
         }
     }
 
+    logind_init();
+
     fd = drm_open(card);
     if (misc)
         drm_info_misc(fd);
@@ -544,5 +547,8 @@ int main(int argc, char **argv)
         drm_info_planes(fd, modifiers, properties);
     if (format)
         drm_info_fmts(fd, listonly);
+
+    logind_fini();
+
     return 0;
 }

@@ -14,6 +14,7 @@
 #include <pixman.h>
 
 #include "fbtools.h"
+#include "logind.h"
 #include "ttytools.h"
 #include "render.h"
 #include "image.h"
@@ -105,6 +106,7 @@ int main(int argc, char **argv)
         }
     }
 
+    logind_init();
     fb_init(framebuffer);
     cs = cairo_image_surface_create_for_data(fb_mem + fb_mem_offset,
                                              fb_format,
@@ -121,5 +123,6 @@ int main(int argc, char **argv)
     tty_restore();
 
     fb_fini();
+    logind_fini();
     return 0;
 }

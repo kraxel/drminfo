@@ -13,6 +13,7 @@
 #include <cairo.h>
 
 #include "fbtools.h"
+#include "logind.h"
 
 /* ------------------------------------------------------------------ */
 
@@ -50,7 +51,9 @@ int main(int argc, char **argv)
         }
     }
 
+    logind_init();
     fb_query(framebuffer);
+    logind_fini();
 
     fprintf(stderr, "fb%d: %s, %dx%d, %d bpp, r/g/b/a %d/%d/%d/%d\n",
             framebuffer,

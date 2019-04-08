@@ -19,6 +19,7 @@
 #include <pixman.h>
 
 #include "drmtools.h"
+#include "logind.h"
 #include "ttytools.h"
 
 /* ------------------------------------------------------------------ */
@@ -104,6 +105,7 @@ int main(int argc, char **argv)
         }
     }
 
+    logind_init();
     drm_init_dev(card, output, modename, false);
     drm_setup_egl();
 
@@ -125,5 +127,6 @@ int main(int argc, char **argv)
 
 done:
     drm_fini_dev();
+    logind_fini();
     return 0;
 }
