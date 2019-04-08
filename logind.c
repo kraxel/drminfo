@@ -200,9 +200,34 @@ void logind_fini(void)
 
 int logind_open(const char *path)
 {
+    const char *session_id, *seat;
+
+    seat = getenv("XDG_SEAT");
+    session_id = getenv("XDG_SESSION_ID");
+    if (!seat || !session_id)
+        return -1;
+
     fprintf(stderr, "%s(%s): compiled without logind support.\n",
             __func__, path);
     return -1;
 }
 
 #endif
+
+/* ---------------------------------------------------------------------- */
+
+int device_open(const char *device)
+{
+    int saved_errno, fd;
+
+    fd = open(device, O_RDWR | O_CLOEXEC);
+    if (fd < 0) {
+        saved_errno = errno;
+        fd = logind_open(device);
+        if (fd < 0) {
+            fprintf(stderr,"open %s: %s\n", device, strerror(saved_errno));
+            exit(1);
+        }
+    }
+    return fd;
+}

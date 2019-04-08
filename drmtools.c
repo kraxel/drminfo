@@ -715,20 +715,12 @@ void drm_init_dev(int devnr, const char *output,
     char dev[64];
     char name[64];
     char m[64];
-    int i, rc, err;
+    int i, rc;
     uint64_t has_dumb;
 
     /* open device */
     snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
-    drm_fd = open(dev, O_RDWR);
-    if (drm_fd < 0) {
-        err = errno;
-        drm_fd = logind_open(dev);
-        if (drm_fd < 0) {
-            fprintf(stderr, "open %s: %s\n", dev, strerror(err));
-            exit(1);
-        }
-    }
+    drm_fd = device_open(dev);
     version = drmGetVersion(drm_fd);
 
     if (need_dumb) {

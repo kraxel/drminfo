@@ -55,18 +55,10 @@ static int drm_init_dev(const char *devname, bool *import, bool *export)
 {
     drmVersion *ver;
     uint64_t prime;
-    int fd, rc, err;
+    int fd, rc;
 
     /* open device */
-    fd = open(devname, O_RDWR);
-    if (fd < 0) {
-        err = errno;
-        fd = logind_open(devname);
-        if (fd < 0) {
-            fprintf(stderr, "open %s: %s\n", devname, strerror(err));
-            exit(1);
-        }
-    }
+    fd = device_open(devname);
 
     ver = drmGetVersion(fd);
     fprintf(stderr, "%s:\n", devname);

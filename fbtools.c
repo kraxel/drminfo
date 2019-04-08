@@ -139,16 +139,9 @@ void fb_fini(void)
 void fb_query(int cardno)
 {
     char device[64];
-    int err;
 
     snprintf(device, sizeof(device), "/dev/fb%d", cardno);
-    if (-1 == (fb = open(device,O_RDWR | O_CLOEXEC))) {
-        err = errno;
-        if (-1 == (fb = logind_open(device))) {
-            fprintf(stderr,"open %s: %s\n",device,strerror(err));
-            exit(1);
-        }
-    }
+    fb = device_open(device);
     if (-1 == ioctl(fb,FBIOGET_FSCREENINFO,&fb_fix)) {
 	perror("ioctl FBIOGET_FSCREENINFO");
 	exit(1);
@@ -163,7 +156,6 @@ void fb_init(int cardno)
 {
     unsigned long page_mask;
     char device[64];
-    int err;
 
     snprintf(device, sizeof(device), "/dev/fb%d", cardno);
 
@@ -174,13 +166,7 @@ void fb_init(int cardno)
     }
 
     /* get current settings (which we have to restore) */
-    if (-1 == (fb = open(device,O_RDWR | O_CLOEXEC))) {
-        err = errno;
-        if (-1 == (fb = logind_open(device))) {
-            fprintf(stderr,"open %s: %s\n",device,strerror(err));
-            exit(1);
-        }
-    }
+    fb = device_open(device);
     if (-1 == ioctl(fb,FBIOGET_VSCREENINFO,&fb_ovar)) {
 	perror("ioctl FBIOGET_VSCREENINFO");
 	exit(1);
