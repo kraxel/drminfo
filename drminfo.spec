@@ -1,6 +1,6 @@
 Name:         drminfo
 License:      GPLv2+
-Version:      6
+Version:      7
 Release:      1%{?dist}
 Summary:      drminfo
 Group:        FIXME
