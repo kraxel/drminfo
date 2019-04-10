@@ -26,9 +26,22 @@
 
 static void egl_print_info(void)
 {
-    printf("version:  %s\n", glGetString(GL_VERSION));
-    printf("vendor:   %s\n", glGetString(GL_VENDOR));
-    printf("renderer: %s\n", glGetString(GL_RENDERER));
+    printf("opengl version:  %s\n", glGetString(GL_VERSION));
+    printf("shader version:  %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    printf("vendor:          %s\n", glGetString(GL_VENDOR));
+    printf("renderer:        %s\n", glGetString(GL_RENDERER));
+}
+
+static void egl_print_ext(void)
+{
+    char *ext = strdup((char*)glGetString(GL_EXTENSIONS));
+    int i, len = strlen(ext);
+
+    for (i = 0; i < len; i++)
+        if (ext[i] == ' ')
+            ext[i] = '\n';
+    printf("%s", ext);
+    free(ext);
 }
 
 static void egl_draw(void)
@@ -65,6 +78,7 @@ static void usage(FILE *fp)
             "  -c <nr>    pick card\n"
             "  -s <secs>  set sleep time (default: 60)\n"
             "  -i         print device info\n"
+            "  -x         print extensions\n"
             "\n");
 }
 
@@ -75,12 +89,13 @@ int main(int argc, char **argv)
     char *output = NULL;
     char *modename = NULL;
     bool printinfo = false;
+    bool printext = false;
     bool autotest = false;
     char buf[32];
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "haic:s:");
+        c = getopt(argc, argv, "haixc:s:");
         if (c == -1)
             break;
         switch (c) {
@@ -92,6 +107,9 @@ int main(int argc, char **argv)
             break;
         case 'i':
             printinfo = true;
+            break;
+        case 'x':
+            printext = true;
             break;
         case 'a':
             autotest = true;
@@ -109,10 +127,12 @@ int main(int argc, char **argv)
     drm_init_dev(card, output, modename, false);
     drm_setup_egl();
 
-    if (printinfo) {
+    if (printinfo)
         egl_print_info();
+    if (printext)
+        egl_print_ext();
+    if (printinfo || printext)
         goto done;
-    }
 
     egl_draw();
     drm_egl_flush_display();
