@@ -19,6 +19,10 @@ QEMU_BUILD_DIR = os.environ.get("QEMU_BUILD_DIR");
 LINUX_BUILD_DIR = os.environ.get("LINUX_BUILD_DIR");
 
 class TestDRM(avocado.Test):
+
+    rconsole = None
+    wconsole = None
+
     def find_qemu_binary(self):
         """
         Picks the path of a QEMU binary, starting either in the current working
@@ -99,28 +103,35 @@ class TestDRM(avocado.Test):
         cmdline += " \"%s\" \"%s\"" % (self.initrd, kversion)
         run(cmdline)
 
-    def boot_gfx_vm(self, vga, display = None):
+    def boot_gfx_vm(self, vga, display = None, vm = None, incoming = None):
         append = "console=ttyS0"
 
         self.log.info("### boot kernel with display device \"%s\"" % vga)
-        self.vm.set_machine('pc')
-        self.vm.set_console()
-        self.vm.add_args('-enable-kvm')
-        self.vm.add_args('-m', '1G')
-        self.vm.add_args('-kernel', self.kernel)
-        self.vm.add_args('-initrd', self.initrd)
-        self.vm.add_args('-append', append)
-        self.vm.add_args('-device', vga)
+        if vm is None:
+            vm = self.vm
+        vm.set_machine('pc')
+        vm.set_console()
+        vm.add_args('-enable-kvm')
+        vm.add_args('-m', '1G')
+        vm.add_args('-kernel', self.kernel)
+        vm.add_args('-initrd', self.initrd)
+        vm.add_args('-append', append)
+        vm.add_args('-device', vga)
         if not display is None:
-            self.vm.add_args('-display', display)
-        self.vm.launch()
+            vm.add_args('-display', display)
+        if not incoming is None:
+            vm.add_args('-incoming', incoming)
+        vm.launch()
 
-        self.rconsole = self.vm.console_socket.makefile('r')
-        self.wconsole = self.vm.console_socket.makefile('w')
+        if self.rconsole is None:
+            self.rconsole = vm.console_socket.makefile('r')
+        if self.wconsole is None:
+            self.wconsole = vm.console_socket.makefile('w')
+
+    def console_prepare(self):
         self.lconsole = logging.getLogger('console')
         self.lcommand = logging.getLogger('command')
 
-    def console_prepare(self):
         self.console_wait('Entering emergency mode')
         self.console_run('PS1=---\\\\u---\\\\n')
         self.console_wait('---root---')
@@ -162,6 +173,13 @@ class TestDRM(avocado.Test):
             if 'WARNING: ' in msg:
                 self.console_trace("warn")
                 self.fail("kernel warn")
+            if len(msg) == 0:
+                if not self.vm.is_running():
+                    self.fail("unexpected qemu exit %d" % self.vm.exitcode())
+                else:
+                    self.fail("unexpected console eof")
+            if counter > 1000:
+                self.fail("too much output")
             output += msg
         return output
 
