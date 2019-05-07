@@ -22,6 +22,20 @@
 #define TEST_HEIGHT 480
 #define TEST_SIZE   (TEST_WIDTH * TEST_HEIGHT * 4)
 
+#define DEV_COUNT 16
+
+struct dev {
+    int index, fd;
+    char devname[64];
+    drmVersion *ver;
+    uint64_t prime;
+    bool import;
+    bool export;
+    struct gbm_device *gbm;
+};
+
+/* ------------------------------------------------------------------ */
+
 #define INDENT_WIDTH  4
 #define NAME_WIDTH   16
 
@@ -51,35 +65,44 @@ static void print_test(const char *name, bool failed, int err)
 
 /* ------------------------------------------------------------------ */
 
-static int drm_init_dev(const char *devname, bool *import, bool *export)
+static struct dev *drm_init_dev(int card)
 {
-    drmVersion *ver;
-    uint64_t prime;
-    int fd, rc;
+    struct dev *dev;
+    int rc;
+
+    dev = malloc(sizeof(*dev));
+    memset(dev, 0, sizeof(*dev));
+    dev->index = card;
 
     /* open device */
-    fd = device_open(devname);
+    snprintf(dev->devname, sizeof(dev->devname),
+             DRM_DEV_NAME, DRM_DIR_NAME, dev->index);
+    if (access(dev->devname, F_OK) < 0)
+        return NULL;
+    dev->fd = device_open(dev->devname);
+    if (dev->fd < 0)
+        return NULL;
 
-    ver = drmGetVersion(fd);
-    fprintf(stderr, "%s:\n", devname);
+    dev->ver = drmGetVersion(dev->fd);
+    fprintf(stderr, "%s:\n", dev->devname);
     fprintf(stderr, "%*sdriver: %s, v%d.%d.%d\n",
-            INDENT_WIDTH, "", ver->name,
-            ver->version_major, ver->version_minor,
-            ver->version_patchlevel);
+            INDENT_WIDTH, "", dev->ver->name,
+            dev->ver->version_major, dev->ver->version_minor,
+            dev->ver->version_patchlevel);
 
-    rc = drmGetCap(fd, DRM_CAP_PRIME, &prime);
+    rc = drmGetCap(dev->fd, DRM_CAP_PRIME, &dev->prime);
     if (rc < 0) {
         fprintf(stderr, "drmGetCap(DRM_CAP_PRIME): %s\n", strerror(errno));
         exit(1);
     }
-    *import = prime & DRM_PRIME_CAP_IMPORT;
-    *export = prime & DRM_PRIME_CAP_EXPORT;
+    dev->import = dev->prime & DRM_PRIME_CAP_IMPORT;
+    dev->export = dev->prime & DRM_PRIME_CAP_EXPORT;
 
     print_head("device capabilities");
-    print_caps("prime import", *import);
-    print_caps("prime export", *export);
+    print_caps("prime import", dev->import);
+    print_caps("prime export", dev->export);
 
-    return fd;
+    return dev;
 }
 
 static int drm_dumb_buf(int fd)
@@ -164,38 +187,48 @@ done_bo:
     gbm_bo_destroy(bo);
 }
 
-static void gbm_export_import(struct gbm_device *gbm_ex,
-                              struct gbm_device *gbm_im,
-                              int ex, int im)
+static void gbm_export_import(struct dev *ex,
+                              struct dev *im)
 {
     struct gbm_bo *bo_ex, *bo_im;
     struct gbm_import_fd_data import;
+    bool failed = true;
     int dmabuf;
 
-    fprintf(stderr, "test export/import: card %d -> card %d\n", ex, im);
+    fprintf(stderr, "    %s (%d) -> %s (%d)\n",
+            ex->ver->name, ex->index,
+            im->ver->name, im->index);
 
-    bo_ex = gbm_bo_create(gbm_ex, TEST_WIDTH, TEST_HEIGHT,
+    bo_ex = gbm_bo_create(ex->gbm, TEST_WIDTH, TEST_HEIGHT,
                           GBM_FORMAT_XRGB8888,
                           0);
-    print_test("create gbm bo", !bo_ex, 0);
     if (!bo_ex)
-        exit(1);
+        return;
 
     dmabuf = gbm_bo_get_fd(bo_ex);
-    print_test("export gbm bo", dmabuf < 0, 0);
     if (dmabuf < 0)
-        exit(1);
+        goto done1;
 
     import.fd = dmabuf;
     import.width = TEST_WIDTH;
     import.height = TEST_HEIGHT;
     import.stride = TEST_WIDTH * 4;
     import.format = GBM_FORMAT_XRGB8888;
-    bo_im = gbm_bo_import(gbm_im, GBM_BO_IMPORT_FD, &import, 0);
-    print_test("import gbm bo", !bo_im, 0);
-    if (!bo_im) {
-        exit(1);
-    }
+    bo_im = gbm_bo_import(im->gbm, GBM_BO_IMPORT_FD, &import, 0);
+    if (!bo_im)
+        goto done2;
+
+    /* passed */
+    failed = false;
+
+    /* cleanup */
+    gbm_bo_destroy(bo_im);
+done2:
+    close(dmabuf);
+done1:
+    gbm_bo_destroy(bo_ex);
+
+    print_test("transfer dmabuf", failed, 0);
 }
 
 /* ------------------------------------------------------------------ */
@@ -209,36 +242,22 @@ static void usage(FILE *fp)
             "options:\n"
             "  -h         print this\n"
             "  -l         list cards\n"
-            "  -e <nr>    export from this card\n"
-            "  -i <nr>    import into this card\n"
             "\n");
 }
 
 int main(int argc, char **argv)
 {
-    struct gbm_device *gbm;
-    struct gbm_device *gbm_ex = NULL;
-    struct gbm_device *gbm_im = NULL;
-    char devname[64];
-    bool import, export;
-    int card, handle, dmabuf, c, i;
-    int ex = -1;
-    int im = -1;
+    struct dev *devs[DEV_COUNT] = {};
+    int handle, dmabuf, c, i, e;
     bool list = false;
 
     for (;;) {
-        c = getopt(argc, argv, "hle:i:");
+        c = getopt(argc, argv, "hl");
         if (c == -1)
             break;
         switch (c) {
         case 'l':
             list = true;
-            break;
-        case 'e':
-            ex = atoi(optarg);
-            break;
-        case 'i':
-            im = atoi(optarg);
             break;
         case 'h':
             usage(stdout);
@@ -251,26 +270,19 @@ int main(int argc, char **argv)
 
     logind_init();
 
-    for (i = 0;; i++) {
-        snprintf(devname, sizeof(devname), DRM_DEV_NAME, DRM_DIR_NAME, i);
-        if (access(devname, R_OK | W_OK) != 0)
+    for (i = 0; i < DEV_COUNT; i++) {
+        devs[i] = drm_init_dev(i);
+        if (!devs[i])
             break;
-        card = drm_init_dev(devname, &import, &export);
         if (list) {
-            close(card);
+            close(devs[i]->fd);
             continue;
         }
 
-        if (export && ex == -1 && i != im) {
-            ex = i;
-        } else if (import && im == -1 && i != ex) {
-            im = i;
-        }
-
         print_head("test dumb buffer (ioctl)");
-        handle = drm_dumb_buf(card);
-        if (handle >= 0 && export) {
-            dmabuf = drm_export_buf(card, handle);
+        handle = drm_dumb_buf(devs[i]->fd);
+        if (handle >= 0 && devs[i]->export) {
+            dmabuf = drm_export_buf(devs[i]->fd, handle);
             if (dmabuf >= 0) {
                 dmabuf_mmap(dmabuf);
                 close(dmabuf);
@@ -278,24 +290,29 @@ int main(int argc, char **argv)
         }
 
         print_head("test gdm buffer (mesa-libgbm)");
-        gbm = gbm_init(card);
-        if (gbm) {
-            gbm_test(gbm, export);
-            if (i == ex) {
-                gbm_ex = gbm;
-            } else if (i == im) {
-                gbm_im = gbm;
-            } else {
-                gbm_device_destroy(gbm);
-            }
-        }
+        devs[i]->gbm = gbm_init(devs[i]->fd);
+        if (devs[i]->gbm)
+            gbm_test(devs[i]->gbm, devs[i]->export);
 
-        close(card);
         fprintf(stderr, "\n");
     }
 
-    if (!list && gbm_ex && gbm_im)
-        gbm_export_import(gbm_ex, gbm_im, ex, im);
+    fprintf(stderr, "dma-buf transfer tests\n");
+    if (!list) {
+        for (e = 0; e < DEV_COUNT; e++) {
+            if (!devs[e] ||
+                !devs[e]->gbm ||
+                !devs[e]->export)
+                continue;
+            for (i = 0; i < DEV_COUNT; i++) {
+                if (!devs[i] ||
+                    !devs[i]->gbm ||
+                    !devs[i]->import)
+                continue;
+                gbm_export_import(devs[e], devs[i]);
+            }
+        }
+    }
 
     logind_fini();
     return 0;
