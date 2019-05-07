@@ -93,7 +93,7 @@ class TestDRM(avocado.Test):
             "/usr/bin/edid-decode",
             "/usr/bin/strace",
 
-            "/etc/fonts/fonts.conf"
+            "/etc/fonts/fonts.conf",
             "/etc/fonts/conf.d/59-liberation-mono.conf",
             "/usr/share/fontconfig/conf.avail/59-liberation-mono.conf",
             "/usr/share/fonts/liberation/LiberationMono-Regular.ttf",
