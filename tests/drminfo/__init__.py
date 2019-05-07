@@ -64,8 +64,24 @@ class TestDRM(avocado.Test):
             kversion = os.path.basename(kmoddir)
             copyfile("%s/arch/x86/boot/bzImage" % LINUX_BUILD_DIR, self.kernel)
 
-        modules = "base systemd bash drm"
-        drivers = "cirrus bochs-drm qxl virtio-pci virtio-gpu vgem vkms"
+        drivers = [
+            "cirrus",
+            "bochs-drm",
+            "qxl",
+            "virtio-pci",
+            "virtio-gpu",
+            "vgem",
+            "vkms",
+        ]
+        modules = [
+            "base",
+            "systemd",
+            "systemd-initrd",
+            "dracut-systemd",
+            "bash",
+            "drm",
+            "rootfs-block",
+        ]
         files = [
             "/usr/bin/drminfo",
             "/usr/bin/drmtest",
@@ -77,6 +93,8 @@ class TestDRM(avocado.Test):
             "/usr/bin/edid-decode",
             "/usr/bin/strace",
 
+            "/etc/fonts/fonts.conf"
+            "/etc/fonts/conf.d/59-liberation-mono.conf",
             "/usr/share/fontconfig/conf.avail/59-liberation-mono.conf",
             "/usr/share/fonts/liberation/LiberationMono-Regular.ttf",
         ]
@@ -86,6 +104,14 @@ class TestDRM(avocado.Test):
             "mesa-dri-drivers",
         ]
 
+        # drop non-existing modules
+        all_modules = run("dracut --list-modules").stdout.decode().split()
+        module_list = []
+        for module in modules:
+            if module in all_modules:
+                module_list.append(module)
+
+        # add files from rpms
         for rpm in rpms:
             rpmfiles = run("rpm -ql %s" % rpm)
             for item in rpmfiles.stdout.decode().split():
@@ -96,15 +122,15 @@ class TestDRM(avocado.Test):
         cmdline += " --force"
         if not kmoddir is None:
             cmdline += " --kmoddir \"%s\"" % kmoddir
-        cmdline += " --modules \"%s\"" % modules
-        cmdline += " --drivers \"%s\"" % drivers
+        cmdline += " --modules \"%s\"" % " ".join(module_list)
+        cmdline += " --drivers \"%s\"" % " ".join(drivers)
         for item in files:
             cmdline += " --install %s" % item
         cmdline += " \"%s\" \"%s\"" % (self.initrd, kversion)
         run(cmdline)
 
     def boot_gfx_vm(self, vga, display = None, vm = None, incoming = None):
-        append = "console=ttyS0"
+        append = "console=ttyS0 rd.shell"
 
         self.log.info("### boot kernel with display device \"%s\"" % vga)
         if vm is None:
