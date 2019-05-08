@@ -25,3 +25,11 @@ LINUX_BUILD_DIR (optional)
     Points to a linux kernel build tree.  Uses that kernel (instead of
     the host kernel) for testing.
 
+
+vgpu test
+---------
+
+If a intel vgpu mdev with uuid 656527d9-c2c9-4745-b16a-00419a5bc32e is
+present it will be used to run the tests.  So, just create one and
+make sure the device permissions (/dev/vfio/$nr) allow the user
+running the tests access it.
