@@ -449,24 +449,30 @@ const uint32_t fmtcnt = sizeof(fmts)/sizeof(fmts[0]);
 /* ------------------------------------------------------------------ */
 
 static const char *conn_type[] = {
-    [ DRM_MODE_CONNECTOR_Unknown      ] = "Unknown",
-    [ DRM_MODE_CONNECTOR_VGA          ] = "VGA",
-    [ DRM_MODE_CONNECTOR_DVII         ] = "DVII",
-    [ DRM_MODE_CONNECTOR_DVID         ] = "DVID",
-    [ DRM_MODE_CONNECTOR_DVIA         ] = "DVIA",
-    [ DRM_MODE_CONNECTOR_Composite    ] = "Composite",
-    [ DRM_MODE_CONNECTOR_SVIDEO       ] = "SVIDEO",
-    [ DRM_MODE_CONNECTOR_LVDS         ] = "LVDS",
-    [ DRM_MODE_CONNECTOR_Component    ] = "Component",
-    [ DRM_MODE_CONNECTOR_9PinDIN      ] = "9PinDIN",
-    [ DRM_MODE_CONNECTOR_DisplayPort  ] = "DisplayPort",
-    [ DRM_MODE_CONNECTOR_HDMIA        ] = "HDMIA",
-    [ DRM_MODE_CONNECTOR_HDMIB        ] = "HDMIB",
-    [ DRM_MODE_CONNECTOR_TV           ] = "TV",
-    [ DRM_MODE_CONNECTOR_eDP          ] = "eDP",
-    [ DRM_MODE_CONNECTOR_VIRTUAL      ] = "VIRTUAL",
-    [ DRM_MODE_CONNECTOR_DSI          ] = "DSI",
+    /*
+     * Names are taken from the xorg modesetting driver, so the output
+     * names are matching the ones ypu can see with xrandr.
+     */
+    [DRM_MODE_CONNECTOR_Unknown]     = "None",
+    [DRM_MODE_CONNECTOR_VGA]         = "VGA",
+    [DRM_MODE_CONNECTOR_DVII]        = "DVI-I",
+    [DRM_MODE_CONNECTOR_DVID]        = "DVI-D",
+    [DRM_MODE_CONNECTOR_DVIA]        = "DVI-A",
+    [DRM_MODE_CONNECTOR_Composite]   = "Composite",
+    [DRM_MODE_CONNECTOR_SVIDEO]      = "SVIDEO",
+    [DRM_MODE_CONNECTOR_LVDS]        = "LVDS",
+    [DRM_MODE_CONNECTOR_Component]   = "Component",
+    [DRM_MODE_CONNECTOR_9PinDIN]     = "DIN",
+    [DRM_MODE_CONNECTOR_DisplayPort] = "DP",
+    [DRM_MODE_CONNECTOR_HDMIA]       = "HDMI",
+    [DRM_MODE_CONNECTOR_HDMIB]       = "HDMI-B",
+    [DRM_MODE_CONNECTOR_TV]          = "TV",
+    [DRM_MODE_CONNECTOR_eDP]         = "eDP",
+    [DRM_MODE_CONNECTOR_VIRTUAL]     = "Virtual",
+    [DRM_MODE_CONNECTOR_DSI]         = "DSI",
+    [DRM_MODE_CONNECTOR_DPI]         = "DPI",
 };
+
 
 static const char *conn_mode[] = {
     [ DRM_MODE_CONNECTED              ] = "connected",
