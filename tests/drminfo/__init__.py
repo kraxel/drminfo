@@ -1,5 +1,6 @@
 # stdlib
 import os
+import re
 import sys
 import time
 import logging
@@ -199,6 +200,8 @@ class TestDRM(avocado.Test):
             if 'WARNING: ' in msg:
                 self.console_trace("warn")
                 self.fail("kernel warn")
+            if re.search('drm:.*ERROR', msg):
+                self.fail("kernel drm error")
             if len(msg) == 0:
                 if not self.vm.is_running():
                     self.fail("unexpected qemu exit %d" % self.vm.exitcode())
