@@ -12,6 +12,7 @@ addons:
       - meson
       - libdrm-dev
       - libgbm-dev
+      - libepoxy-dev
       - libcairo2-dev
       - libpixman-1-dev
       - libsystemd-dev
