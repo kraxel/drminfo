@@ -1,0 +1,22 @@
+os: linux
+dist: xenial
+language: c
+compiler: gcc
+
+addons:
+  apt:
+    update: true
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - meson
+      - libdrm-dev
+      - libgbm-dev
+      - libcairo2-dev
+      - libpixman-1-dev
+      - libsystemd-dev
+
+script:
+  - mkdir build-travis
+  - meson build-travis
+  - ninja -C build-travis
