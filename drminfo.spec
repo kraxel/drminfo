@@ -18,6 +18,8 @@ BuildRequires: pkgconfig(cairo)
 BuildRequires: pkgconfig(pixman-1)
 BuildRequires: pkgconfig(gtk+-3.0)
 BuildRequires: pkgconfig(libsystemd)
+BuildRequires: pkgconfig(xcb)
+BuildRequires: pkgconfig(xcb-randr)
 
 %description
 drminfo - print drm device props

@@ -124,7 +124,7 @@ int main(int argc, char **argv)
     }
 
     logind_init();
-    drm_init_dev(card, output, modename, false);
+    drm_init_dev(card, output, modename, false, -1);
     drm_setup_egl();
 
     if (printinfo)

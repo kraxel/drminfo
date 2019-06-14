@@ -24,6 +24,7 @@
 #include "ttytools.h"
 #include "logind.h"
 #include "drmtools.h"
+#include "drm-lease.h"
 #include "render.h"
 #include "image.h"
 
@@ -183,15 +184,16 @@ static void usage(FILE *fp)
             "usage: drmtest [ options ]\n"
             "\n"
             "options:\n"
-            "  -h         print this\n"
-            "  -p         pixman mode\n"
-            "  -a         autotest mode (don't print hardware info)\n"
-            "  -c <nr>    pick card\n"
-            "  -o <name>  pick output\n"
-            "  -s <secs>  set sleep time (default: 60)\n"
-            "  -i <file>  load and display image <file>\n"
-            "  -f <fmt>   pick framebuffer format\n"
-            "  -m <mode>  pick video mode format\n"
+            "  -h           print this\n"
+            "  -p           pixman mode\n"
+            "  -a           autotest mode (don't print hardware info)\n"
+            "  -c <nr>      pick card\n"
+            "  -o <name>    pick output\n"
+            "  -s <secs>    set sleep time (default: 60)\n"
+            "  -i <file>    load and display image <file>\n"
+            "  -f <fmt>     pick framebuffer format\n"
+            "  -m <mode>    pick video mode format\n"
+            "  -L <output>  get a drm lease for output\n"
             "\n");
 }
 
@@ -199,6 +201,7 @@ int main(int argc, char **argv)
 {
     int card = 0;
     int secs = 60;
+    int lease_fd = -1;
     char *output = NULL;
     char *format = NULL;
     char *modename = NULL;
@@ -208,7 +211,7 @@ int main(int argc, char **argv)
     int c,i;
 
     for (;;) {
-        c = getopt(argc, argv, "hpac:s:o:i:f:m:");
+        c = getopt(argc, argv, "hpaL:c:s:o:i:f:m:");
         if (c == -1)
             break;
         switch (c) {
@@ -235,6 +238,9 @@ int main(int argc, char **argv)
             break;
         case 'm':
             modename = optarg;
+            break;
+        case 'L':
+            lease_fd = drm_lease(optarg);
             break;
         case 'h':
             usage(stdout);
@@ -268,7 +274,7 @@ int main(int argc, char **argv)
     }
 
     logind_init();
-    drm_init_dev(card, output, modename, false);
+    drm_init_dev(card, output, modename, false, lease_fd);
 
     if (!fmt) {
         /* find first supported in list */

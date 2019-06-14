@@ -715,7 +715,8 @@ drmVersion *version = NULL;
 static drmModeCrtc *scrtc = NULL;
 
 void drm_init_dev(int devnr, const char *output,
-                  const char *modename, bool need_dumb)
+                  const char *modename, bool need_dumb,
+                  int lease_fd)
 {
     drmModeRes *res;
     char dev[64];
@@ -724,9 +725,13 @@ void drm_init_dev(int devnr, const char *output,
     int i, rc;
     uint64_t has_dumb;
 
-    /* open device */
-    snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
-    drm_fd = device_open(dev);
+    if (lease_fd >= 0) {
+        drm_fd = lease_fd;
+    } else {
+        /* open device */
+        snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
+        drm_fd = device_open(dev);
+    }
     version = drmGetVersion(drm_fd);
 
     if (need_dumb) {

@@ -42,7 +42,8 @@ extern drmModeEncoder *drm_enc;
 extern drmVersion *version;
 
 void drm_init_dev(int devnr, const char *output,
-                  const char *modename, bool need_dumb);
+                  const char *modename, bool need_dumb,
+                  int lease_fd);
 void drm_fini_dev(void);
 void drm_show_fb(void);
 

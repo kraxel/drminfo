@@ -292,7 +292,7 @@ int main(int argc, char **argv)
     assert(fmt != NULL);
 
     logind_init();
-    drm_init_dev(card, output, modename, false);
+    drm_init_dev(card, output, modename, false, -1);
 
     if (printinfo)
         virtio_print_caps();
