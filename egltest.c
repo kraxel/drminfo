@@ -19,6 +19,7 @@
 #include <pixman.h>
 
 #include "drmtools.h"
+#include "drm-lease.h"
 #include "logind.h"
 #include "ttytools.h"
 
@@ -73,12 +74,13 @@ static void usage(FILE *fp)
             "usage: egltest [ options ]\n"
             "\n"
             "options:\n"
-            "  -h         print this\n"
-            "  -a         autotest mode\n"
-            "  -c <nr>    pick card\n"
-            "  -s <secs>  set sleep time (default: 60)\n"
-            "  -i         print device info\n"
-            "  -x         print extensions\n"
+            "  -h           print this\n"
+            "  -a           autotest mode\n"
+            "  -c <nr>      pick card\n"
+            "  -s <secs>    set sleep time (default: 60)\n"
+            "  -i           print device info\n"
+            "  -x           print extensions\n"
+            "  -L <output>  get a drm lease for output\n"
             "\n");
 }
 
@@ -86,6 +88,7 @@ int main(int argc, char **argv)
 {
     int card = 0;
     int secs = 60;
+    int lease_fd = -1;
     char *output = NULL;
     char *modename = NULL;
     bool printinfo = false;
@@ -114,6 +117,9 @@ int main(int argc, char **argv)
         case 'a':
             autotest = true;
             break;
+        case 'L':
+            lease_fd = drm_lease(optarg);
+            break;
         case 'h':
             usage(stdout);
             exit(0);
@@ -124,7 +130,7 @@ int main(int argc, char **argv)
     }
 
     logind_init();
-    drm_init_dev(card, output, modename, false, -1);
+    drm_init_dev(card, output, modename, false, lease_fd);
     drm_setup_egl();
 
     if (printinfo)

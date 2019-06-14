@@ -150,7 +150,7 @@ void drm_egl_flush_display(void)
                         &drm_conn->modes[0]);
     if (rc < 0) {
         fprintf(stderr, "egl: drmModeSetCrtc() failed\n");
-        return;
+        exit(1);
     }
 
     if (fbid) {
