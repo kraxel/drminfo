@@ -28,20 +28,22 @@ configure_file(output : 'config.h', configuration : config)
 # libjpeg dep
 jpeg_dep      = declare_dependency(link_args : '-ljpeg')
 
-drminfo_srcs  = [ 'drminfo.c', 'drmtools.c', 'logind.c' ]
+drminfo_srcs  = [ 'drminfo.c', 'drmtools.c', 'drm-lease.c', 'drm-lease-x11.c',
+                  'logind.c' ]
 drmtest_srcs  = [ 'drmtest.c', 'drmtools.c', 'drm-lease.c', 'drm-lease-x11.c',
-	      	   'logind.c', 'ttytools.c', 'render.c', 'image.c' ]
+                  'logind.c', 'ttytools.c', 'render.c', 'image.c' ]
 fbinfo_srcs   = [ 'fbinfo.c', 'fbtools.c', 'logind.c'  ]
 fbtest_srcs   = [ 'fbtest.c', 'fbtools.c', 'logind.c',
-	      	  'ttytools.c', 'render.c', 'image.c' ]
+                  'ttytools.c', 'render.c', 'image.c' ]
 prime_srcs    = [ 'prime.c', 'logind.c' ]
 viotest_srcs  = [ 'virtiotest.c', 'drmtools.c', 'logind.c', 'ttytools.c', 'render.c' ]
 egltest_srcs  = [ 'egltest.c', 'drmtools.c', 'drmtools-egl.c', 'logind.c', 'ttytools.c' ]
 gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c' ]
 
-drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep, systemd_dep ]
+drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep, systemd_dep,
+                  xcb_dep, randr_dep ]
 drmtest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
-	      	  xcb_dep, randr_dep,
+                  xcb_dep, randr_dep,
                   cairo_dep, pixman_dep, jpeg_dep, systemd_dep ]
 fbinfo_deps   = [ cairo_dep, systemd_dep ]
 fbtest_deps   = [ cairo_dep, pixman_dep, jpeg_dep, systemd_dep ]

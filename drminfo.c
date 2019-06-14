@@ -19,6 +19,7 @@
 #include <pixman.h>
 
 #include "drmtools.h"
+#include "drm-lease.h"
 #include "logind.h"
 
 static int ttycols = 80;
@@ -439,25 +440,27 @@ static void usage(FILE *fp)
             "usage: drminfo [ options ]\n"
             "\n"
             "options:\n"
-            "  -h         print this text\n"
-            "  -c <nr>    pick card\n"
-            "  -a         print all card info\n"
-            "  -A         print all card info, with plane modifiers\n"
-            "  -m         print misc card info\n"
-            "  -s         print capabilities\n"
-            "  -o         print supported outputs (crtcs)\n"
-            "  -p         print supported planes\n"
-            "  -P         print supported planes, with modifiers\n"
-            "  -f         print supported formats\n"
-            "  -F         print testable (drmtest) formats\n"
-            "  -r         list properties\n"
-            "  -l         list all known formats\n"
+            "  -h           print this text\n"
+            "  -c <nr>      pick card\n"
+            "  -a           print all card info\n"
+            "  -A           print all card info, with plane modifiers\n"
+            "  -m           print misc card info\n"
+            "  -s           print capabilities\n"
+            "  -o           print supported outputs (crtcs)\n"
+            "  -p           print supported planes\n"
+            "  -P           print supported planes, with modifiers\n"
+            "  -f           print supported formats\n"
+            "  -F           print testable (drmtest) formats\n"
+            "  -r           list properties\n"
+            "  -l           list all known formats\n"
+            "  -L <output>  get a drm lease for output\n"
             "\n");
 }
 
 int main(int argc, char **argv)
 {
     int card = 0;
+    int lease_fd = -1;
     int c, fd;
     bool misc = false;
     bool caps = false;
@@ -470,7 +473,7 @@ int main(int argc, char **argv)
     char *columns;
 
     for (;;) {
-        c = getopt(argc, argv, "hlaAmsopPfFrc:");
+        c = getopt(argc, argv, "hlaAmsopPfFrL:c:");
         if (c == -1)
             break;
         switch (c) {
@@ -514,6 +517,9 @@ int main(int argc, char **argv)
         case 'f':
             format = true;
             break;
+        case 'L':
+            lease_fd = drm_lease(optarg);
+            break;
         case 'h':
             usage(stdout);
             exit(0);
@@ -536,7 +542,12 @@ int main(int argc, char **argv)
 
     logind_init();
 
-    fd = drm_open(card);
+    if (lease_fd >= 0) {
+        fd = lease_fd;
+    } else {
+        fd = drm_open(card);
+    }
+
     if (misc)
         drm_info_misc(fd);
     if (caps)
