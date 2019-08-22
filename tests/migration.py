@@ -89,6 +89,10 @@ class Migration(TestDRM):
         vga = 'VGA'
         self.migration_test(vga)
 
+    def test_bochs_dpy(self):
+        vga = 'bochs-display'
+        self.migration_test(vga)
+
     def test_cirrus(self):
         vga = "cirrus-vga"
         self.migration_test(vga)

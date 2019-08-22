@@ -164,7 +164,7 @@ class BaseDRM(TestDRM):
         self.common_tests(vga, 'egl-headless')
         self.prime_tests(vga)
         self.virtio_tests(vga)
-        self.virgl_tests(vga)
+#        self.virgl_tests(vga)
 
     @avocado.skipUnless(os.path.exists(igd_vgpu_path), "no vgpu")
     def test_vgpu_igd(self):
