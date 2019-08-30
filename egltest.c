@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "haixc:s:");
+        c = getopt(argc, argv, "haixc:s:L:");
         if (c == -1)
             break;
         switch (c) {
