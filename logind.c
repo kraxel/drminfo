@@ -95,6 +95,12 @@ void logind_init(void)
     const char *session_id, *seat;
     int r;
 
+#if 1
+    /* Disable for now.  TakeControl kills input via tty, only evdev works. */
+    if (1)
+        return;
+#endif
+
     if (logind_dbus)
         return;
 
