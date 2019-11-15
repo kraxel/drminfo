@@ -30,20 +30,88 @@
 
 /* ------------------------------------------------------------------ */
 
+/* device caps */
+bool have_export;
+
 /* dumb fb */
 static struct drm_mode_create_dumb creq;
 static const struct fbformat *fmt = NULL;
 static uint8_t *fbmem;
+static int dmabuf_fd;
+static uint8_t *dmabuf_mem;
 
 /* cairo + pixman */
 static cairo_surface_t *cs;
 static pixman_image_t *pxcs;
 static pixman_image_t *pxfb;
+static pixman_image_t *pxref;
+static pixman_image_t *pxdma;
 
 /* user options */
 static cairo_surface_t *image;
 
 /* ------------------------------------------------------------------ */
+
+#define INDENT_WIDTH  4
+#define NAME_WIDTH 16
+
+static int test_passed = 0;
+static int test_failed = 0;
+
+static void print_head(const char *name)
+{
+    fprintf(stderr, "%*s%s\n",
+            INDENT_WIDTH * 0, "",
+            name);
+}
+
+static void print_test(const char *name, bool failed, const char *errmsg)
+{
+    fprintf(stderr, "%*s%-*s: %s",
+            INDENT_WIDTH * 1, "",
+            NAME_WIDTH, name,
+            !failed ? "OK" : "FAILED");
+    if (failed && errmsg)
+        fprintf(stderr, " (%s)", errmsg);
+    fprintf(stderr, "\n");
+
+    if (failed)
+        test_failed++;
+    else
+        test_passed++;
+}
+
+static void print_test_errno(const char *name, bool failed, int err)
+{
+    print_test(name, failed, strerror(err));
+}
+
+static void print_test_summary_and_exit()
+{
+    if (test_failed + test_passed) {
+        fprintf(stderr, "%-*s: %d/%d passed\n",
+                NAME_WIDTH, "test summary",
+                test_passed, test_passed + test_failed);
+    }
+    if (test_failed)
+        exit(1);
+    exit(0);
+}
+
+/* ------------------------------------------------------------------ */
+
+static void drm_get_caps(void)
+{
+    uint64_t prime = 0;
+    int rc;
+
+    rc = drmGetCap(drm_fd, DRM_CAP_PRIME, &prime);
+    if (rc < 0) {
+        fprintf(stderr, "drmGetCap(DRM_CAP_PRIME): %s\n", strerror(errno));
+        exit(1);
+    }
+    have_export = prime & DRM_PRIME_CAP_EXPORT;
+}
 
 static void drm_draw(bool autotest)
 {
@@ -88,11 +156,57 @@ static void drm_draw(bool autotest)
                                0, 0,
                                drm_mode->hdisplay, drm_mode->vdisplay);
     }
+    if (pxcs && pxref) {
+        pixman_image_composite(PIXMAN_OP_SRC, pxcs, NULL, pxref,
+                               0, 0,
+                               0, 0,
+                               0, 0,
+                               drm_mode->hdisplay, drm_mode->vdisplay);
+    }
+}
+
+static bool pixman_compare(pixman_image_t *p1,
+                           pixman_image_t *p2)
+{
+    uint8_t *d1, *d2;
+    int line, bpp, length;
+
+    d1 = (void*)pixman_image_get_data(p1);
+    d2 = (void*)pixman_image_get_data(p2);
+    bpp = PIXMAN_FORMAT_BPP(pixman_image_get_format(p1));
+    length = pixman_image_get_width(p1) * bpp / 8;
+    for (line = 0; line < pixman_image_get_height(p1); line++) {
+        if (memcmp(d1, d2, length) != 0) {
+            fprintf(stderr, "mismatch line %d\n", line);
+            return false;
+        }
+        d1 += pixman_image_get_stride(p1);
+        d2 += pixman_image_get_stride(p2);
+    }
+    return true;
+}
+
+static void drm_check_content(const char *grp)
+{
+    bool fail;
+
+    if (!pxref)
+        return;
+
+    print_head(grp);
+    if (pxfb) {
+        fail = pixman_compare(pxref, pxfb);
+        print_test("check mmap", !fail, 0);
+    }
+    if (pxdma) {
+        fail = pixman_compare(pxref, pxdma);
+        print_test("check dma-buf", !fail, 0);
+    }
 }
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dumb_fb(bool use_pixman)
+static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
 {
     struct drm_mode_map_dumb mreq;
     uint32_t zero = 0;
@@ -145,12 +259,35 @@ static void drm_init_dumb_fb(bool use_pixman)
         exit(1);
     }
 
+    if (have_export && create_dmabuf) {
+        print_head("create dma-buf");
+        rc = drmPrimeHandleToFD(drm_fd, creq.handle, 0, &dmabuf_fd);
+        print_test_errno("dma-buf export", rc < 0, errno);
+        if (rc == 0) {
+            dmabuf_mem = mmap(NULL, creq.size, PROT_READ, MAP_SHARED, dmabuf_fd, 0);
+            print_test_errno("dma-buf mmap", dmabuf_mem == MAP_FAILED, errno);
+            if (dmabuf_mem != MAP_FAILED) {
+                pxdma = pixman_image_create_bits(fmt->pixman,
+                                                 creq.width,
+                                                 creq.height,
+                                                 (void*)dmabuf_mem,
+                                                 creq.pitch);
+            } else {
+                dmabuf_mem = NULL;
+            }
+        }
+    }
+
     if (use_pixman) {
         pxfb = pixman_image_create_bits(fmt->pixman,
                                         creq.width,
                                         creq.height,
                                         (void*)fbmem,
                                         creq.pitch);
+        pxref = pixman_image_create_bits(fmt->pixman,
+                                         creq.width,
+                                         creq.height,
+                                         NULL, 0);
         pxcs = pixman_image_create_bits(PIXMAN_x2r10g10b10,
                                         creq.width,
                                         creq.height,
@@ -187,6 +324,7 @@ static void usage(FILE *fp)
             "  -h           print this\n"
             "  -p           pixman mode\n"
             "  -a           autotest mode (don't print hardware info)\n"
+            "  -d           run dma-buf tests\n"
             "  -c <nr>      pick card\n"
             "  -o <name>    pick output\n"
             "  -s <secs>    set sleep time (default: 60)\n"
@@ -206,15 +344,20 @@ int main(int argc, char **argv)
     char *format = NULL;
     char *modename = NULL;
     char buf[32];
+    bool dmabuf = false;
     bool autotest = false;
     bool pixman = false;
     int c,i;
 
     for (;;) {
-        c = getopt(argc, argv, "hpaL:c:s:o:i:f:m:");
+        c = getopt(argc, argv, "hpdaL:c:s:o:i:f:m:");
         if (c == -1)
             break;
         switch (c) {
+        case 'd':
+            dmabuf = true;
+            pixman = true;
+            break;
         case 'p':
             pixman = true;
             break;
@@ -275,6 +418,7 @@ int main(int argc, char **argv)
 
     logind_init();
     drm_init_dev(card, output, modename, false, lease_fd);
+    drm_get_caps();
 
     if (!fmt) {
         /* find first supported in list */
@@ -312,9 +456,11 @@ int main(int argc, char **argv)
         }
     }
 
-    drm_init_dumb_fb(pixman);
+    drm_init_dumb_fb(pixman, dmabuf);
     drm_draw_dumb_fb(autotest);
+    drm_check_content("pre-show content");
     drm_show_fb();
+    drm_check_content("post-show content");
 
     if (autotest)
         fprintf(stdout, "---ok---\n");
@@ -326,5 +472,5 @@ int main(int argc, char **argv)
     drm_fini_dev();
     logind_fini();
 
-    return 0;
+    print_test_summary_and_exit();
 }
