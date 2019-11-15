@@ -90,7 +90,7 @@ static void print_test_summary_and_exit()
 {
     if (test_failed + test_passed) {
         fprintf(stderr, "%-*s: %d/%d passed\n",
-                NAME_WIDTH, "test summary",
+                NAME_WIDTH + INDENT_WIDTH, "test summary",
                 test_passed, test_passed + test_failed);
     }
     if (test_failed)
