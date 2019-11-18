@@ -114,7 +114,7 @@ static void drm_get_caps(void)
     have_export = prime & DRM_PRIME_CAP_EXPORT;
 }
 
-static void drm_draw(bool autotest)
+static void drm_draw(bool autotest, int updatetest)
 {
     char name[64];
     char info1[80], info2[80], info3[80];
@@ -142,7 +142,11 @@ static void drm_draw(bool autotest)
              version->name, name);
 
     cr = cairo_create(cs);
-    if (image) {
+    if (updatetest) {
+        snprintf(info2, sizeof(info2), "test #%d", updatetest);
+        render_test(cr, drm_mode->hdisplay, drm_mode->vdisplay,
+                    "display update", info2, NULL);
+    } else if (image) {
         render_image(cr, drm_mode->hdisplay, drm_mode->vdisplay, image);
     } else {
         render_test(cr, drm_mode->hdisplay, drm_mode->vdisplay, info1, info2,
@@ -307,9 +311,9 @@ static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
     }
 }
 
-static void drm_draw_dumb_fb(bool autotest)
+static void drm_draw_dumb_fb(bool autotest, int updatetest)
 {
-    drm_draw(autotest);
+    drm_draw(autotest, updatetest);
     drmModeDirtyFB(drm_fd, fb_id, 0, 0);
 }
 
@@ -348,10 +352,11 @@ int main(int argc, char **argv)
     bool dmabuf = false;
     bool autotest = false;
     bool pixman = false;
+    int updatetest = 0;
     int c,i,pid,rc;
 
     for (;;) {
-        c = getopt(argc, argv, "hpdaL:c:s:o:i:f:m:");
+        c = getopt(argc, argv, "hpdau:L:c:s:o:i:f:m:");
         if (c == -1)
             break;
         switch (c) {
@@ -364,6 +369,9 @@ int main(int argc, char **argv)
             break;
         case 'a':
             autotest = true;
+            break;
+        case 'u':
+            updatetest = atoi(optarg);
             break;
         case 'c':
             card = atoi(optarg);
@@ -458,7 +466,7 @@ int main(int argc, char **argv)
     }
 
     drm_init_dumb_fb(pixman, dmabuf);
-    drm_draw_dumb_fb(autotest);
+    drm_draw_dumb_fb(autotest, 0);
     drm_check_content("pre-show content");
     drm_show_fb();
     drm_check_content("post-show content");
@@ -480,6 +488,14 @@ int main(int argc, char **argv)
             test_failed += (rc >> 4) & 0x0f;
         } else {
             test_failed++;
+        }
+    }
+
+    if (updatetest) {
+        for (i = 1; i <= updatetest; i++) {
+            sleep(secs);
+            drm_draw_dumb_fb(autotest, i);
+            drm_check_content("post-update content");
         }
     }
 
