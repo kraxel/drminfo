@@ -209,6 +209,12 @@ static void drm_check_content(const char *grp)
     }
 }
 
+static void drm_zap_mappings(void)
+{
+    madvise(fbmem, creq.size, MADV_DONTNEED);
+    madvise(dmabuf_mem, creq.size, MADV_DONTNEED);
+}
+
 /* ------------------------------------------------------------------ */
 
 static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
@@ -471,6 +477,8 @@ int main(int argc, char **argv)
     drm_check_content("pre-show content");
     drm_show_fb();
     drm_check_content("post-show content");
+    drm_zap_mappings();
+    drm_check_content("post-zap content");
 
     pid = fork();
     if (pid == 0) {
