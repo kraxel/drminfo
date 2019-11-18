@@ -333,6 +333,7 @@ static void usage(FILE *fp)
             "  -c <nr>      pick card\n"
             "  -o <name>    pick output\n"
             "  -s <secs>    set sleep time (default: 60)\n"
+            "  -u <count>   try <count> display updates, with <secs> delay\n"
             "  -i <file>    load and display image <file>\n"
             "  -f <fmt>     pick framebuffer format\n"
             "  -m <mode>    pick video mode format\n"
