@@ -9,6 +9,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <libdrm/drm_fourcc.h>
 
 #include <xf86drm.h>
@@ -347,7 +348,7 @@ int main(int argc, char **argv)
     bool dmabuf = false;
     bool autotest = false;
     bool pixman = false;
-    int c,i;
+    int c,i,pid,rc;
 
     for (;;) {
         c = getopt(argc, argv, "hpdaL:c:s:o:i:f:m:");
@@ -461,6 +462,26 @@ int main(int argc, char **argv)
     drm_check_content("pre-show content");
     drm_show_fb();
     drm_check_content("post-show content");
+
+    pid = fork();
+    if (pid == 0) {
+        test_passed = 0;
+        test_failed = 0;
+        drm_check_content("post-fork content");
+        rc = (test_failed << 4) |
+            (test_passed << 0);
+        exit(rc);
+    } else {
+        int status = 0;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) {
+            rc = WEXITSTATUS(status);
+            test_passed += (rc >> 0) & 0x0f;
+            test_failed += (rc >> 4) & 0x0f;
+        } else {
+            test_failed++;
+        }
+    }
 
     if (autotest)
         fprintf(stdout, "---ok---\n");
