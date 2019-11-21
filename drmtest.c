@@ -355,7 +355,6 @@ int main(int argc, char **argv)
     char *output = NULL;
     char *format = NULL;
     char *modename = NULL;
-    char buf[32];
     bool dmabuf = false;
     bool autotest = false;
     bool pixman = false;
@@ -512,7 +511,7 @@ int main(int argc, char **argv)
         fprintf(stdout, "---ok---\n");
     tty_raw();
     kbd_wait(secs);
-    read(0, buf, sizeof(buf));
+    kbd_read();
     tty_restore();
 
     drm_fini_dev();

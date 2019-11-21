@@ -249,7 +249,6 @@ int main(int argc, char **argv)
     bool printinfo = false;
     bool listformat = false;
     bool autotest = false;
-    char buf[32];
     int c, i;
 
     for (;;) {
@@ -310,7 +309,7 @@ int main(int argc, char **argv)
         fprintf(stdout, "---ok---\n");
     tty_raw();
     kbd_wait(secs);
-    read(0, buf, sizeof(buf));
+    kbd_read();
     tty_restore();
 
 done:

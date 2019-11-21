@@ -95,12 +95,6 @@ void logind_init(void)
     const char *session_id, *seat;
     int r;
 
-#if 1
-    /* Disable for now.  TakeControl kills input via tty, only evdev works. */
-    if (1)
-        return;
-#endif
-
     if (logind_dbus)
         return;
 
@@ -136,7 +130,7 @@ void logind_fini(void)
     logind_dbus = NULL;
 }
 
-int logind_open(const char *path)
+int logind_open(const char *path, int flags, void *user_data)
 {
     sd_bus_error error = SD_BUS_ERROR_NULL;
     sd_bus_message *m = NULL;
@@ -184,12 +178,24 @@ int logind_open(const char *path)
                 strerror(-r));
     } else {
         fd = fcntl(handle, F_DUPFD_CLOEXEC, 0);
+#if 0
         fprintf(stderr, "open %s: got fd %d via logind.\n",
                 path, fd);
+#endif
     }
     sd_bus_message_unref(m);
 
     return fd;
+}
+
+void logind_close(int fd, void *user_data)
+{
+    /* FIXME */
+}
+
+bool have_logind(void)
+{
+    return logind_dbus != NULL;
 }
 
 #else
@@ -204,7 +210,7 @@ void logind_fini(void)
 {
 }
 
-int logind_open(const char *path)
+int logind_open(const char *path, int flags, void *user_data)
 {
     const char *session_id, *seat;
 
@@ -218,20 +224,33 @@ int logind_open(const char *path)
     return -1;
 }
 
+void logind_close(int fd, void *user_data)
+{
+}
+
+bool have_logind(void)
+{
+    return false;
+}
+
 #endif
 
 /* ---------------------------------------------------------------------- */
 
 int device_open(const char *device)
 {
-    int saved_errno, fd;
+    int fd;
 
-    fd = open(device, O_RDWR | O_CLOEXEC);
-    if (fd < 0) {
-        saved_errno = errno;
-        fd = logind_open(device);
+    if (have_logind()) {
+        fd = logind_open(device, O_RDWR, NULL);
         if (fd < 0) {
-            fprintf(stderr,"open %s: %s\n", device, strerror(saved_errno));
+            fprintf(stderr,"logind: can't get handle for %s\n", device);
+            exit(1);
+        }
+    } else {
+        fd = open(device, O_RDWR | O_CLOEXEC);
+        if (fd < 0) {
+            fprintf(stderr,"open %s: %s\n", device, strerror(errno));
             exit(1);
         }
     }

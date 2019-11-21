@@ -94,7 +94,6 @@ int main(int argc, char **argv)
     bool printinfo = false;
     bool printext = false;
     bool autotest = false;
-    char buf[32];
     int c;
 
     for (;;) {
@@ -148,7 +147,7 @@ int main(int argc, char **argv)
 
     tty_raw();
     kbd_wait(secs);
-    read(0, buf, sizeof(buf));
+    kbd_read();
     tty_restore();
 
 done:

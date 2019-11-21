@@ -11,6 +11,8 @@ epoxy_dep     = dependency('epoxy')
 cairo_dep     = dependency('cairo')
 pixman_dep    = dependency('pixman-1')
 gtk3_dep      = dependency('gtk+-3.0')
+udev_dep      = dependency('libudev')
+input_dep     = dependency('libinput')
 xcb_dep       = dependency('xcb', required : false)
 randr_dep     = dependency('xcb-randr', required : false, version : '>=1.13')
 systemd_dep   = dependency('libsystemd', required : false, version : '>=221')
@@ -46,15 +48,19 @@ drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep, systemd_dep,
                   xcb_dep, randr_dep ]
 drmtest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
                   xcb_dep, randr_dep,
-                  cairo_dep, pixman_dep, jpeg_dep, systemd_dep ]
+                  cairo_dep, pixman_dep, jpeg_dep,
+		  udev_dep, input_dep,  systemd_dep ]
 fbinfo_deps   = [ cairo_dep, systemd_dep ]
-fbtest_deps   = [ cairo_dep, pixman_dep, jpeg_dep, systemd_dep ]
+fbtest_deps   = [ cairo_dep, pixman_dep, jpeg_dep,
+		  udev_dep, input_dep, systemd_dep ]
 prime_deps    = [ libdrm_dep, gbm_dep, systemd_dep ]
 viotest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
-                  cairo_dep, pixman_dep, jpeg_dep, systemd_dep ]
+                  cairo_dep, pixman_dep, jpeg_dep,
+		  udev_dep, input_dep, systemd_dep ]
 egltest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
                   xcb_dep, randr_dep,
-                  cairo_dep, pixman_dep, systemd_dep ]
+                  cairo_dep, pixman_dep,
+		  udev_dep, input_dep, systemd_dep ]
 gtktest_deps  = [ gtk3_dep,
                   cairo_dep, pixman_dep, jpeg_dep ]
 

@@ -77,7 +77,6 @@ int main(int argc, char **argv)
     int framebuffer = 0;
     int secs = 60;
     bool autotest = false;
-    char buf[32];
     int c;
 
     for (;;) {
@@ -106,7 +105,10 @@ int main(int argc, char **argv)
         }
     }
 
+#if 0
+    /* logind doesn't support framebuffers it seems ... */
     logind_init();
+#endif
     fb_init(framebuffer);
     cs = cairo_image_surface_create_for_data(fb_mem + fb_mem_offset,
                                              fb_format,
@@ -119,7 +121,7 @@ int main(int argc, char **argv)
         fprintf(stdout, "---ok---\n");
     tty_raw();
     kbd_wait(secs);
-    read(0, buf, sizeof(buf));
+    kbd_read();
     tty_restore();
 
     fb_fini();
