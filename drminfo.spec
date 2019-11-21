@@ -20,6 +20,8 @@ BuildRequires: pkgconfig(gtk+-3.0)
 BuildRequires: pkgconfig(libsystemd)
 BuildRequires: pkgconfig(xcb)
 BuildRequires: pkgconfig(xcb-randr)
+BuildRequires: pkgconfig(libudev)
+BuildRequires: pkgconfig(libinput)
 
 %description
 drminfo - print drm device props

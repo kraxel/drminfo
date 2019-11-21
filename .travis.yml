@@ -26,6 +26,8 @@ addons:
       - libsystemd-dev
       - libgtk-3-dev
       - libxcb-randr0-dev
+      - libudev-dev
+      - libinput-dev
 
 script:
   - mkdir build-travis
