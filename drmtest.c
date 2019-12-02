@@ -238,12 +238,12 @@ static void drm_init_dumb_obj(int fd, bool use_pixman, bool create_dmabuf)
     /* map gem object */
     memset(&mreq, 0, sizeof(mreq));
     mreq.handle = creq.handle;
-    rc = drmIoctl(drm_fd, DRM_IOCTL_MODE_MAP_DUMB, &mreq);
+    rc = drmIoctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &mreq);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_MODE_MAP_DUMB: %s\n", strerror(errno));
         exit(1);
     }
-    fbmem = mmap(0, creq.size, PROT_READ | PROT_WRITE, MAP_SHARED, drm_fd, mreq.offset);
+    fbmem = mmap(0, creq.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, mreq.offset);
     if (fbmem == MAP_FAILED) {
         fprintf(stderr, "framebuffer mmap: %s\n", strerror(errno));
         exit(1);
@@ -251,7 +251,7 @@ static void drm_init_dumb_obj(int fd, bool use_pixman, bool create_dmabuf)
 
     if (create_dmabuf) {
         print_head("create dma-buf");
-        rc = drmPrimeHandleToFD(drm_fd, creq.handle, 0, &dmabuf_fd);
+        rc = drmPrimeHandleToFD(fd, creq.handle, 0, &dmabuf_fd);
         print_test_errno("dma-buf export", rc < 0, errno);
         if (rc == 0) {
             dmabuf_mem = mmap(NULL, creq.size, PROT_READ, MAP_SHARED, dmabuf_fd, 0);
@@ -296,12 +296,10 @@ static void drm_init_dumb_obj(int fd, bool use_pixman, bool create_dmabuf)
     }
 }
 
-static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
+static void drm_init_dumb_fb(void)
 {
     uint32_t zero = 0;
     int rc;
-
-    drm_init_dumb_obj(drm_fd, use_pixman, create_dmabuf);
 
     if (fmt->fourcc) {
         rc = drmModeAddFB2(drm_fd, creq.width, creq.height, fmt->fourcc,
@@ -500,7 +498,18 @@ int main(int argc, char **argv)
         }
     }
 
-    drm_init_dumb_fb(pixman, dmabuf);
+    if (vgem) {
+        drm_init_dumb_obj(vgem_fd, pixman, true);
+        rc = drmPrimeFDToHandle(drm_fd, dmabuf_fd, &creq.handle);
+        if (rc < 0) {
+            fprintf(stderr, "import vgem dmabuf failed\n");
+            exit(1);
+        }
+        drm_init_dumb_fb();
+    } else {
+        drm_init_dumb_obj(drm_fd, pixman, dmabuf);
+        drm_init_dumb_fb();
+    }
     drm_draw_dumb_fb(autotest, 0);
     drm_check_content("pre-show content");
     drm_show_fb();
