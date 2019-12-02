@@ -44,6 +44,7 @@ extern drmVersion *version;
 void drm_init_dev(int devnr, const char *output,
                   const char *modename, bool need_dumb,
                   int lease_fd);
+int drm_init_vgem(void);
 void drm_fini_dev(void);
 void drm_show_fb(void);
 

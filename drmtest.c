@@ -336,6 +336,7 @@ static void usage(FILE *fp)
             "  -p           pixman mode\n"
             "  -a           autotest mode (don't print hardware info)\n"
             "  -d           run dma-buf tests\n"
+            "  -v           vgem dma-buf import test\n"
             "  -c <nr>      pick card\n"
             "  -o <name>    pick output\n"
             "  -s <secs>    set sleep time (default: 60)\n"
@@ -352,17 +353,19 @@ int main(int argc, char **argv)
     int card = 0;
     int secs = 60;
     int lease_fd = -1;
+    int vgem_fd = -1;
     char *output = NULL;
     char *format = NULL;
     char *modename = NULL;
     bool dmabuf = false;
     bool autotest = false;
     bool pixman = false;
+    bool vgem = false;
     int updatetest = 0;
     int c,i,pid,rc;
 
     for (;;) {
-        c = getopt(argc, argv, "hpdau:L:c:s:o:i:f:m:");
+        c = getopt(argc, argv, "hpdavu:L:c:s:o:i:f:m:");
         if (c == -1)
             break;
         switch (c) {
@@ -375,6 +378,9 @@ int main(int argc, char **argv)
             break;
         case 'a':
             autotest = true;
+            break;
+        case 'v':
+            vgem = true;
             break;
         case 'u':
             updatetest = atoi(optarg);
@@ -434,6 +440,10 @@ int main(int argc, char **argv)
     logind_init();
     drm_init_dev(card, output, modename, false, lease_fd);
     drm_get_caps();
+
+    if (vgem) {
+        vgem_fd = drm_init_vgem();
+    }
 
     if (!fmt) {
         /* find first supported in list */

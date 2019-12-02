@@ -813,6 +813,29 @@ void drm_init_dev(int devnr, const char *output,
     scrtc = drmModeGetCrtc(drm_fd, drm_enc->crtc_id);
 }
 
+int drm_init_vgem(void)
+{
+    char dev[64];
+    drmVersion *ver;
+    int fd, i;
+
+    for (i = 0; i < 128; i++) {
+        snprintf(dev, sizeof(dev), "/dev/dri/renderD%d", i + 128);
+        fd = device_open(dev);
+        if (fd < 0)
+            goto out;
+        ver = drmGetVersion(fd);
+        fprintf(stderr, "%d: %s\n", i, ver->name);
+        if (strcmp(ver->name, "vgem") == 0)
+            return fd;
+        close(fd);
+    }
+
+out:
+    fprintf(stderr, "vgem not found, driver not loaded?\n");
+    exit(1);
+}
+
 void drm_fini_dev(void)
 {
     /* restore crtc */
