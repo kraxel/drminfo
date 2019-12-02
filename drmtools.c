@@ -705,6 +705,7 @@ void drm_print_format_hdr(FILE *fp, int indent, bool libs, bool virtio)
 
 /* ------------------------------------------------------------------ */
 
+int drm_nr;
 int drm_fd;
 uint32_t fb_id;
 drmModeConnector *drm_conn = NULL;
@@ -732,6 +733,7 @@ void drm_init_dev(int devnr, const char *output,
         snprintf(dev, sizeof(dev), DRM_DEV_NAME, DRM_DIR_NAME, devnr);
         drm_fd = device_open(dev);
     }
+    drm_nr = devnr;
     version = drmGetVersion(drm_fd);
 
     if (need_dumb) {
@@ -820,7 +822,13 @@ int drm_init_vgem(void)
     int fd, i;
 
     for (i = 0; i < 128; i++) {
+        if (i == drm_nr)
+            continue;
+#if 1
         snprintf(dev, sizeof(dev), "/dev/dri/card%d", i);
+#else
+        snprintf(dev, sizeof(dev), "/dev/dri/renderD%d", i + 128);
+#endif
         fd = device_open(dev);
         if (fd < 0)
             goto out;

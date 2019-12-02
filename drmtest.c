@@ -219,7 +219,7 @@ static void drm_zap_mappings(void)
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dumb_obj(int fd)
+static void drm_init_dumb_obj(int fd, bool create_dmabuf)
 {
     struct drm_mode_map_dumb mreq;
     int rc;
@@ -248,6 +248,25 @@ static void drm_init_dumb_obj(int fd)
         fprintf(stderr, "framebuffer mmap: %s\n", strerror(errno));
         exit(1);
     }
+
+    if (create_dmabuf) {
+        print_head("create dma-buf");
+        rc = drmPrimeHandleToFD(drm_fd, creq.handle, 0, &dmabuf_fd);
+        print_test_errno("dma-buf export", rc < 0, errno);
+        if (rc == 0) {
+            dmabuf_mem = mmap(NULL, creq.size, PROT_READ, MAP_SHARED, dmabuf_fd, 0);
+            print_test_errno("dma-buf mmap", dmabuf_mem == MAP_FAILED, errno);
+            if (dmabuf_mem != MAP_FAILED) {
+                pxdma = pixman_image_create_bits(fmt->pixman,
+                                                 creq.width,
+                                                 creq.height,
+                                                 (void*)dmabuf_mem,
+                                                 creq.pitch);
+            } else {
+                dmabuf_mem = NULL;
+            }
+        }
+    }
 }
 
 static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
@@ -255,7 +274,7 @@ static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
     uint32_t zero = 0;
     int rc;
 
-    drm_init_dumb_obj(drm_fd);
+    drm_init_dumb_obj(drm_fd, create_dmabuf);
 
     if (fmt->fourcc) {
         rc = drmModeAddFB2(drm_fd, creq.width, creq.height, fmt->fourcc,
@@ -276,25 +295,6 @@ static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
             fprintf(stderr, "drmModeAddFB() failed (bpp %d, depth %d)\n",
                     fmt->bpp, fmt->depth);
             exit(1);
-        }
-    }
-
-    if (create_dmabuf) {
-        print_head("create dma-buf");
-        rc = drmPrimeHandleToFD(drm_fd, creq.handle, 0, &dmabuf_fd);
-        print_test_errno("dma-buf export", rc < 0, errno);
-        if (rc == 0) {
-            dmabuf_mem = mmap(NULL, creq.size, PROT_READ, MAP_SHARED, dmabuf_fd, 0);
-            print_test_errno("dma-buf mmap", dmabuf_mem == MAP_FAILED, errno);
-            if (dmabuf_mem != MAP_FAILED) {
-                pxdma = pixman_image_create_bits(fmt->pixman,
-                                                 creq.width,
-                                                 creq.height,
-                                                 (void*)dmabuf_mem,
-                                                 creq.pitch);
-            } else {
-                dmabuf_mem = NULL;
-            }
         }
     }
 
