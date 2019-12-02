@@ -219,7 +219,7 @@ static void drm_zap_mappings(void)
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dumb_obj(int fd, bool create_dmabuf)
+static void drm_init_dumb_obj(int fd, bool use_pixman, bool create_dmabuf)
 {
     struct drm_mode_map_dumb mreq;
     int rc;
@@ -267,36 +267,6 @@ static void drm_init_dumb_obj(int fd, bool create_dmabuf)
             }
         }
     }
-}
-
-static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
-{
-    uint32_t zero = 0;
-    int rc;
-
-    drm_init_dumb_obj(drm_fd, create_dmabuf);
-
-    if (fmt->fourcc) {
-        rc = drmModeAddFB2(drm_fd, creq.width, creq.height, fmt->fourcc,
-                           &creq.handle, &creq.pitch, &zero,
-                           &fb_id, 0);
-        if (rc < 0) {
-            fprintf(stderr, "drmModeAddFB2() failed (fourcc %c%c%c%c)\n",
-                    (fmt->fourcc >>  0) & 0xff,
-                    (fmt->fourcc >>  8) & 0xff,
-                    (fmt->fourcc >> 16) & 0xff,
-                    (fmt->fourcc >> 24) & 0xff);
-            exit(1);
-        }
-    } else {
-        rc = drmModeAddFB(drm_fd, creq.width, creq.height, fmt->depth, fmt->bpp,
-                          creq.pitch, creq.handle, &fb_id);
-        if (rc < 0) {
-            fprintf(stderr, "drmModeAddFB() failed (bpp %d, depth %d)\n",
-                    fmt->bpp, fmt->depth);
-            exit(1);
-        }
-    }
 
     if (use_pixman) {
         pxfb = pixman_image_create_bits(fmt->pixman,
@@ -323,6 +293,36 @@ static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
                                                  creq.width,
                                                  creq.height,
                                                  creq.pitch);
+    }
+}
+
+static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
+{
+    uint32_t zero = 0;
+    int rc;
+
+    drm_init_dumb_obj(drm_fd, use_pixman, create_dmabuf);
+
+    if (fmt->fourcc) {
+        rc = drmModeAddFB2(drm_fd, creq.width, creq.height, fmt->fourcc,
+                           &creq.handle, &creq.pitch, &zero,
+                           &fb_id, 0);
+        if (rc < 0) {
+            fprintf(stderr, "drmModeAddFB2() failed (fourcc %c%c%c%c)\n",
+                    (fmt->fourcc >>  0) & 0xff,
+                    (fmt->fourcc >>  8) & 0xff,
+                    (fmt->fourcc >> 16) & 0xff,
+                    (fmt->fourcc >> 24) & 0xff);
+            exit(1);
+        }
+    } else {
+        rc = drmModeAddFB(drm_fd, creq.width, creq.height, fmt->depth, fmt->bpp,
+                          creq.pitch, creq.handle, &fb_id);
+        if (rc < 0) {
+            fprintf(stderr, "drmModeAddFB() failed (bpp %d, depth %d)\n",
+                    fmt->bpp, fmt->depth);
+            exit(1);
+        }
     }
 }
 
