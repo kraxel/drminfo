@@ -33,6 +33,7 @@
 
 /* device caps */
 bool have_export;
+bool have_import;
 
 /* dumb fb */
 static struct drm_mode_create_dumb creq;
@@ -112,6 +113,7 @@ static void drm_get_caps(void)
         exit(1);
     }
     have_export = prime & DRM_PRIME_CAP_EXPORT;
+    have_import = prime & DRM_PRIME_CAP_IMPORT;
 }
 
 static void drm_draw(bool autotest, int updatetest)
@@ -217,22 +219,43 @@ static void drm_zap_mappings(void)
 
 /* ------------------------------------------------------------------ */
 
-static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
+static void drm_init_dumb_obj(int fd)
 {
     struct drm_mode_map_dumb mreq;
-    uint32_t zero = 0;
     int rc;
 
-    /* create framebuffer */
+    /* create gem object */
     memset(&creq, 0, sizeof(creq));
     creq.width = drm_mode->hdisplay;
     creq.height = drm_mode->vdisplay;
     creq.bpp = fmt->bpp;
-    rc = drmIoctl(drm_fd, DRM_IOCTL_MODE_CREATE_DUMB, &creq);
+    rc = drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &creq);
     if (rc < 0) {
         fprintf(stderr, "DRM_IOCTL_MODE_CREATE_DUMB: %s\n", strerror(errno));
         exit(1);
     }
+
+    /* map gem object */
+    memset(&mreq, 0, sizeof(mreq));
+    mreq.handle = creq.handle;
+    rc = drmIoctl(drm_fd, DRM_IOCTL_MODE_MAP_DUMB, &mreq);
+    if (rc < 0) {
+        fprintf(stderr, "DRM_IOCTL_MODE_MAP_DUMB: %s\n", strerror(errno));
+        exit(1);
+    }
+    fbmem = mmap(0, creq.size, PROT_READ | PROT_WRITE, MAP_SHARED, drm_fd, mreq.offset);
+    if (fbmem == MAP_FAILED) {
+        fprintf(stderr, "framebuffer mmap: %s\n", strerror(errno));
+        exit(1);
+    }
+}
+
+static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
+{
+    uint32_t zero = 0;
+    int rc;
+
+    drm_init_dumb_obj(drm_fd);
 
     if (fmt->fourcc) {
         rc = drmModeAddFB2(drm_fd, creq.width, creq.height, fmt->fourcc,
@@ -256,21 +279,7 @@ static void drm_init_dumb_fb(bool use_pixman, bool create_dmabuf)
         }
     }
 
-    /* map framebuffer */
-    memset(&mreq, 0, sizeof(mreq));
-    mreq.handle = creq.handle;
-    rc = drmIoctl(drm_fd, DRM_IOCTL_MODE_MAP_DUMB, &mreq);
-    if (rc < 0) {
-        fprintf(stderr, "DRM_IOCTL_MODE_MAP_DUMB: %s\n", strerror(errno));
-        exit(1);
-    }
-    fbmem = mmap(0, creq.size, PROT_READ | PROT_WRITE, MAP_SHARED, drm_fd, mreq.offset);
-    if (fbmem == MAP_FAILED) {
-        fprintf(stderr, "framebuffer mmap: %s\n", strerror(errno));
-        exit(1);
-    }
-
-    if (have_export && create_dmabuf) {
+    if (create_dmabuf) {
         print_head("create dma-buf");
         rc = drmPrimeHandleToFD(drm_fd, creq.handle, 0, &dmabuf_fd);
         print_test_errno("dma-buf export", rc < 0, errno);
@@ -440,6 +449,16 @@ int main(int argc, char **argv)
     logind_init();
     drm_init_dev(card, output, modename, false, lease_fd);
     drm_get_caps();
+
+    if (dmabuf && !have_export) {
+        fprintf(stderr, "dambuf export not supported by %s\n", version->name);
+        exit(1);
+    }
+
+    if (vgem && !have_import) {
+        fprintf(stderr, "dambuf import not supported by %s\n", version->name);
+        exit(1);
+    }
 
     if (vgem) {
         vgem_fd = drm_init_vgem();

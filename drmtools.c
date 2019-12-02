@@ -820,7 +820,7 @@ int drm_init_vgem(void)
     int fd, i;
 
     for (i = 0; i < 128; i++) {
-        snprintf(dev, sizeof(dev), "/dev/dri/renderD%d", i + 128);
+        snprintf(dev, sizeof(dev), "/dev/dri/card%d", i);
         fd = device_open(dev);
         if (fd < 0)
             goto out;
