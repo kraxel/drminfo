@@ -213,8 +213,10 @@ static void drm_check_content(const char *grp)
 
 static void drm_zap_mappings(void)
 {
-    madvise(fbmem, creq.size, MADV_DONTNEED);
-    madvise(dmabuf_mem, creq.size, MADV_DONTNEED);
+    if (fbmem)
+        madvise(fbmem, creq.size, MADV_DONTNEED);
+    if (dmabuf_mem)
+        madvise(dmabuf_mem, creq.size, MADV_DONTNEED);
 }
 
 /* ------------------------------------------------------------------ */
