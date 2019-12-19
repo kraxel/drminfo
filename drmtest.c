@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <getopt.h>
 
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
@@ -334,6 +335,34 @@ static void drm_draw_dumb_fb(bool autotest, int updatetest)
 
 /* ------------------------------------------------------------------ */
 
+static int try_unbind(int card)
+{
+    char path[256];
+    char *device, *name;
+    int fd;
+
+    snprintf(path, sizeof(path), "/sys/class/drm/card%d/device", card);
+    device = realpath(path, NULL);
+    if (device == NULL) {
+        fprintf(stderr, "%s: can't resolve sysfs device path\n", __func__);
+        return -1;
+    }
+
+    snprintf(path, sizeof(path), "%s/driver/unbind", device);
+    fd = open(path, O_WRONLY);
+    if (fd < 0) {
+        fprintf(stderr, "open %s: %s\n", path, strerror(errno));
+        return -1;
+    }
+
+    name = strrchr(device, '/') + 1;
+    write(fd, name, strlen(name));
+    close(fd);
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
+
 static void usage(FILE *fp)
 {
     fprintf(fp,
@@ -346,6 +375,7 @@ static void usage(FILE *fp)
             "  -a | --autotest         autotest mode (don't print hardware info)\n"
             "       --dmabuf           run dma-buf tests\n"
             "       --vgem             vgem dma-buf import test\n"
+            "       --unbind           driver unbind test\n"
             "  -c | --card   <nr>      pick card\n"
             "  -o | --output <name>    pick output\n"
             "  -s | --sleep  <secs>    set sleep time (default: 60)\n"
@@ -360,6 +390,7 @@ static void usage(FILE *fp)
 enum {
     OPT_LONG_DMABUF = 0x100,
     OPT_LONG_VGEM,
+    OPT_LONG_UNBIND,
     OPT_LONG_LEASE,
 };
 
@@ -385,6 +416,10 @@ struct option long_opts[] = {
         .name    = "vgem",
         .has_arg = false,
         .val     = OPT_LONG_VGEM,
+    },{
+        .name    = "unbind",
+        .has_arg = false,
+        .val     = OPT_LONG_UNBIND,
     },{
 
         /* --- with argument --- */
@@ -437,6 +472,7 @@ int main(int argc, char **argv)
     bool autotest = false;
     bool pixman = false;
     bool vgem = false;
+    bool unbind = false;
     int updatetest = 0;
     int c,i,pid,rc;
 
@@ -457,6 +493,9 @@ int main(int argc, char **argv)
             break;
         case OPT_LONG_VGEM:
             vgem = true;
+            break;
+        case OPT_LONG_UNBIND:
+            unbind = true;
             break;
         case 'u':
             updatetest = atoi(optarg);
@@ -612,6 +651,10 @@ int main(int argc, char **argv)
             drm_draw_dumb_fb(autotest, i);
             drm_check_content("post-update content");
         }
+    }
+
+    if (unbind) {
+        try_unbind(card);
     }
 
     if (autotest)
