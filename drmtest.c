@@ -341,21 +341,82 @@ static void usage(FILE *fp)
             "usage: drmtest [ options ]\n"
             "\n"
             "options:\n"
-            "  -h           print this\n"
-            "  -p           pixman mode\n"
-            "  -a           autotest mode (don't print hardware info)\n"
-            "  -d           run dma-buf tests\n"
-            "  -v           vgem dma-buf import test\n"
-            "  -c <nr>      pick card\n"
-            "  -o <name>    pick output\n"
-            "  -s <secs>    set sleep time (default: 60)\n"
-            "  -u <count>   try <count> display updates, with <secs> delay\n"
-            "  -i <file>    load and display image <file>\n"
-            "  -f <fmt>     pick framebuffer format\n"
-            "  -m <mode>    pick video mode format\n"
-            "  -L <output>  get a drm lease for output\n"
+            "  -h | --help             print this\n"
+            "  -p | --pixman           pixman mode\n"
+            "  -a | --autotest         autotest mode (don't print hardware info)\n"
+            "  -d | --dmabuf           run dma-buf tests\n"
+            "  -v | --vgem             vgem dma-buf import test\n"
+            "  -c | --card   <nr>      pick card\n"
+            "  -o | --output <name>    pick output\n"
+            "  -s | --sleep  <secs>    set sleep time (default: 60)\n"
+            "  -u | --update <count>   try <count> display updates, with <secs> delay\n"
+            "  -i | --image  <file>    load and display image <file>\n"
+            "  -f | --format <fmt>     pick framebuffer format\n"
+            "  -m | --mode   <mode>    pick video mode format\n"
+            "  -L | --lease  <output>  get a drm lease for output\n"
             "\n");
 }
+
+struct option long_opts[] = {
+    {
+        /* --- no argument --- */
+        .name    = "help",
+        .has_arg = false,
+        .val     = 'h',
+    },{
+        .name    = "pixman",
+        .has_arg = false,
+        .val     = 'p',
+    },{
+        .name    = "autotest",
+        .has_arg = false,
+        .val     = 'a',
+    },{
+        .name    = "dmabuf",
+        .has_arg = false,
+        .val     = 'd',
+    },{
+        .name    = "vgem",
+        .has_arg = false,
+        .val     = 'v',
+    },{
+
+        /* --- with argument --- */
+        .name    = "card",
+        .has_arg = true,
+        .val     = 'c',
+    },{
+        .name    = "output",
+        .has_arg = true,
+        .val     = 'o',
+    },{
+        .name    = "sleep",
+        .has_arg = true,
+        .val     = 's',
+    },{
+        .name    = "update",
+        .has_arg = true,
+        .val     = 'u',
+    },{
+        .name    = "image",
+        .has_arg = true,
+        .val     = 'i',
+    },{
+        .name    = "format",
+        .has_arg = true,
+        .val     = 'f',
+    },{
+        .name    = "mode",
+        .has_arg = true,
+        .val     = 'm',
+    },{
+        .name    = "lease",
+        .has_arg = true,
+        .val     = 'L',
+    },{
+        /* end of list */
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -374,7 +435,7 @@ int main(int argc, char **argv)
     int c,i,pid,rc;
 
     for (;;) {
-        c = getopt(argc, argv, "hpdavu:L:c:s:o:i:f:m:");
+        c = getopt_long(argc, argv, "hpdavu:L:c:s:o:i:f:m:", long_opts, NULL);
         if (c == -1)
             break;
         switch (c) {
