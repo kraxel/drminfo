@@ -444,15 +444,15 @@ static void usage(FILE *fp)
             "  -c | --card  <nr>       pick card\n"
             "       --lease <output>   get a drm lease for output\n"
             "\n"
-            "  -a                      print all card info\n"
+            "  -a | --all              print all card info\n"
             "  -A                      print all card info, with plane modifiers\n"
-            "  -m                      print misc card info\n"
-            "  -s                      print capabilities\n"
-            "  -o                      print supported outputs (crtcs)\n"
-            "  -p                      print supported planes\n"
+            "  -m | --misc             print misc card info\n"
+            "  -s | --caps             print capabilities\n"
+            "  -o | --outputs          print supported outputs (crtcs)\n"
+            "  -p | --planes           print supported planes\n"
             "  -P                      print supported planes, with modifiers\n"
-            "  -f                      print supported formats\n"
-            "  -F                      print testable (drmtest) formats\n"
+            "  -f | --formats          print supported formats\n"
+            "  -F | --test-formats     print testable (drmtest) formats\n"
             "  -r                      list properties\n"
             "  -l | --list-formats     list all known formats\n"
             "\n");
@@ -468,6 +468,34 @@ struct option long_opts[] = {
         .name    = "help",
         .has_arg = false,
         .val     = 'h',
+    },{
+        .name    = "all",
+        .has_arg = false,
+        .val     = 'a',
+    },{
+        .name    = "misc",
+        .has_arg = false,
+        .val     = 'm',
+    },{
+        .name    = "caps",
+        .has_arg = false,
+        .val     = 's',
+    },{
+        .name    = "outputs",
+        .has_arg = false,
+        .val     = 'o',
+    },{
+        .name    = "planes",
+        .has_arg = false,
+        .val     = 'p',
+    },{
+        .name    = "formats",
+        .has_arg = false,
+        .val     = 'f',
+    },{
+        .name    = "test-formats",
+        .has_arg = false,
+        .val     = 'F',
     },{
         .name    = "list-formats",
         .has_arg = false,
