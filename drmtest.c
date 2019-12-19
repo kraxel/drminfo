@@ -344,8 +344,8 @@ static void usage(FILE *fp)
             "  -h | --help             print this\n"
             "  -p | --pixman           pixman mode\n"
             "  -a | --autotest         autotest mode (don't print hardware info)\n"
-            "  -d | --dmabuf           run dma-buf tests\n"
-            "  -v | --vgem             vgem dma-buf import test\n"
+            "       --dmabuf           run dma-buf tests\n"
+            "       --vgem             vgem dma-buf import test\n"
             "  -c | --card   <nr>      pick card\n"
             "  -o | --output <name>    pick output\n"
             "  -s | --sleep  <secs>    set sleep time (default: 60)\n"
@@ -353,9 +353,15 @@ static void usage(FILE *fp)
             "  -i | --image  <file>    load and display image <file>\n"
             "  -f | --format <fmt>     pick framebuffer format\n"
             "  -m | --mode   <mode>    pick video mode format\n"
-            "  -L | --lease  <output>  get a drm lease for output\n"
+            "       --lease  <output>  get a drm lease for output\n"
             "\n");
 }
+
+enum {
+    OPT_LONG_DMABUF = 0x100,
+    OPT_LONG_VGEM,
+    OPT_LONG_LEASE,
+};
 
 struct option long_opts[] = {
     {
@@ -374,11 +380,11 @@ struct option long_opts[] = {
     },{
         .name    = "dmabuf",
         .has_arg = false,
-        .val     = 'd',
+        .val     = OPT_LONG_DMABUF,
     },{
         .name    = "vgem",
         .has_arg = false,
-        .val     = 'v',
+        .val     = OPT_LONG_VGEM,
     },{
 
         /* --- with argument --- */
@@ -412,7 +418,7 @@ struct option long_opts[] = {
     },{
         .name    = "lease",
         .has_arg = true,
-        .val     = 'L',
+        .val     = OPT_LONG_LEASE,
     },{
         /* end of list */
     }
@@ -435,11 +441,11 @@ int main(int argc, char **argv)
     int c,i,pid,rc;
 
     for (;;) {
-        c = getopt_long(argc, argv, "hpdavu:L:c:s:o:i:f:m:", long_opts, NULL);
+        c = getopt_long(argc, argv, "hpau:c:s:o:i:f:m:", long_opts, NULL);
         if (c == -1)
             break;
         switch (c) {
-        case 'd':
+        case OPT_LONG_DMABUF:
             dmabuf = true;
             pixman = true;
             break;
@@ -449,7 +455,7 @@ int main(int argc, char **argv)
         case 'a':
             autotest = true;
             break;
-        case 'v':
+        case OPT_LONG_VGEM:
             vgem = true;
             break;
         case 'u':
@@ -473,7 +479,7 @@ int main(int argc, char **argv)
         case 'm':
             modename = optarg;
             break;
-        case 'L':
+        case OPT_LONG_LEASE:
             lease_fd = drm_lease(optarg);
             break;
         case 'h':
