@@ -453,7 +453,7 @@ static void usage(FILE *fp)
             "  -P                      print supported planes, with modifiers\n"
             "  -f | --formats          print supported formats\n"
             "  -F | --test-formats     print testable (drmtest) formats\n"
-            "  -r                      list properties\n"
+            "  -r | --properties       list object properties\n"
             "  -l | --list-formats     list all known formats\n"
             "\n");
 }
@@ -496,6 +496,10 @@ struct option long_opts[] = {
         .name    = "test-formats",
         .has_arg = false,
         .val     = 'F',
+    },{
+        .name    = "properties",
+        .has_arg = false,
+        .val     = 'p',
     },{
         .name    = "list-formats",
         .has_arg = false,
