@@ -440,22 +440,52 @@ static void usage(FILE *fp)
             "usage: drminfo [ options ]\n"
             "\n"
             "options:\n"
-            "  -h           print this text\n"
-            "  -c <nr>      pick card\n"
-            "  -a           print all card info\n"
-            "  -A           print all card info, with plane modifiers\n"
-            "  -m           print misc card info\n"
-            "  -s           print capabilities\n"
-            "  -o           print supported outputs (crtcs)\n"
-            "  -p           print supported planes\n"
-            "  -P           print supported planes, with modifiers\n"
-            "  -f           print supported formats\n"
-            "  -F           print testable (drmtest) formats\n"
-            "  -r           list properties\n"
-            "  -l           list all known formats\n"
-            "  -L <output>  get a drm lease for output\n"
+            "  -h | --help             print this text\n"
+            "  -c | --card  <nr>       pick card\n"
+            "       --lease <output>   get a drm lease for output\n"
+            "\n"
+            "  -a                      print all card info\n"
+            "  -A                      print all card info, with plane modifiers\n"
+            "  -m                      print misc card info\n"
+            "  -s                      print capabilities\n"
+            "  -o                      print supported outputs (crtcs)\n"
+            "  -p                      print supported planes\n"
+            "  -P                      print supported planes, with modifiers\n"
+            "  -f                      print supported formats\n"
+            "  -F                      print testable (drmtest) formats\n"
+            "  -r                      list properties\n"
+            "  -l | --list-formats     list all known formats\n"
             "\n");
 }
+
+enum {
+    OPT_LONG_LEASE = 0x100,
+};
+
+struct option long_opts[] = {
+    {
+        /* --- no argument --- */
+        .name    = "help",
+        .has_arg = false,
+        .val     = 'h',
+    },{
+        .name    = "list-formats",
+        .has_arg = false,
+        .val     = 'l',
+    },{
+
+        /* --- with argument --- */
+        .name    = "card",
+        .has_arg = true,
+        .val     = 'c',
+    },{
+        .name    = "lease",
+        .has_arg = true,
+        .val     = OPT_LONG_LEASE,
+    },{
+        /* end of list */
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -473,7 +503,7 @@ int main(int argc, char **argv)
     char *columns;
 
     for (;;) {
-        c = getopt(argc, argv, "hlaAmsopPfFrL:c:");
+        c = getopt(argc, argv, "hlaAmsopPfFrc:");
         if (c == -1)
             break;
         switch (c) {
