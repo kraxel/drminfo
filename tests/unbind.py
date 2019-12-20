@@ -46,6 +46,10 @@ class unbind(TestDRM):
         vga = "cirrus-vga"
         self.run_unbind_test(vga)
 
+    def test_qxl_vga(self):
+        vga = "qxl-vga"
+        self.run_unbind_test(vga)
+
     def test_virtio_vga(self):
         vga = "virtio-vga"
         self.run_unbind_test(vga)
