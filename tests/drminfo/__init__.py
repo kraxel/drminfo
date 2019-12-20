@@ -200,6 +200,9 @@ class TestDRM(avocado.Test):
             if 'WARNING: ' in msg:
                 self.console_trace("warn")
                 self.fail("kernel warn")
+            if 'BUG ' in msg:
+                #self.console_trace("bug")
+                self.fail("kernel bug")
             if re.search('drm:.*ERROR', msg):
                 self.fail("kernel drm error")
             if len(msg) == 0:
