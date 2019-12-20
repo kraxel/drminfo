@@ -1,5 +1,5 @@
 #
-# edid tests
+# driver unload tests
 #
 
 # stdlib
