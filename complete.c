@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
 #include <getopt.h>
 
 #include "complete.h"
@@ -10,9 +11,23 @@
     "        COMPREPLY=( $(compgen -f -- \"$cur\") )\n"              \
     "        ;;\n"
 
+#define CASE_CARD                                                    \
+    "    --card)\n"                                                  \
+    "        words=$(drminfo --complete-card)\n"                     \
+    "        COMPREPLY=( $(compgen -W \"$words\" -- \"$cur\") )\n"   \
+    "        ;;\n"
+
+#define CASE_FBDEV                                                   \
+    "    --fbdev)\n"                                                 \
+    "        words=$(fbinfo --complete-fbdev)\n"                     \
+    "        COMPREPLY=( $(compgen -W \"$words\" -- \"$cur\") )\n"   \
+    "        ;;\n"
+
 void complete_bash(const char *command, struct option *opts)
 {
     bool have_image = false;
+    bool have_card = false;
+    bool have_fbdev = false;
     char opt_all[1024];
     char opt_arg[1024];
     int pos_all = 0;
@@ -23,6 +38,10 @@ void complete_bash(const char *command, struct option *opts)
         /* options with argument completion */
         if (strcmp(opts[i].name, "image") == 0) {
             have_image = true;
+        } else if (strcmp(opts[i].name, "card") == 0) {
+            have_card = true;
+        } else if (strcmp(opts[i].name, "fbdev") == 0) {
+            have_fbdev = true;
 
         } else if (opts[i].has_arg) {
             /* options without argument completion */
@@ -43,11 +62,11 @@ void complete_bash(const char *command, struct option *opts)
 
     printf("_%s_complete()\n"
            "{\n"
-           "    local cur prev\n"
+           "    local cur prev words\n"
            "    cur=\"${COMP_WORDS[COMP_CWORD]}\"\n"
            "    prev=\"${COMP_WORDS[COMP_CWORD-1]}\"\n"
            "    case \"$prev\" in\n"
-           "%s"
+           "%s%s%s"
            "    %s)\n"
            "        COMPREPLY=()\n"
            "        ;;\n"
@@ -61,5 +80,20 @@ void complete_bash(const char *command, struct option *opts)
            "\n",
            command,
            have_image ? CASE_IMAGE : "",
+           have_card  ? CASE_CARD  : "",
+           have_fbdev ? CASE_FBDEV : "",
            opt_arg, opt_all, command, command);
+}
+
+void complete_device_nr(const char *prefix)
+{
+    char filename[128];
+    int nr;
+
+    for (nr = 0;; nr++) {
+        snprintf(filename, sizeof(filename), "%s%d", prefix, nr);
+        if (access(filename, F_OK) < 0)
+            return;
+        printf("%d\n", nr);
+    }
 }

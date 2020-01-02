@@ -29,6 +29,7 @@
 #include "drm-lease.h"
 #include "render.h"
 #include "image.h"
+#include "complete.h"
 
 /* ------------------------------------------------------------------ */
 

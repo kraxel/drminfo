@@ -32,6 +32,7 @@ static void usage(FILE *fp)
 
 enum {
     OPT_LONG_COMP_BASH = 0x100,
+    OPT_LONG_COMP_FBDEV,
 };
 
 static struct option long_opts[] = {
@@ -44,6 +45,10 @@ static struct option long_opts[] = {
         .name    = "complete-bash",
         .has_arg = false,
         .val     = OPT_LONG_COMP_BASH,
+    },{
+        .name    = "complete-fbdev",
+        .has_arg = false,
+        .val     = OPT_LONG_COMP_FBDEV,
     },{
 
         /* --- with argument --- */
@@ -70,6 +75,9 @@ int main(int argc, char **argv)
             break;
         case OPT_LONG_COMP_BASH:
             complete_bash("fbinfo", long_opts);
+            exit(0);
+        case OPT_LONG_COMP_FBDEV:
+            complete_device_nr("/dev/fb");
             exit(0);
         case 'h':
             usage(stdout);
