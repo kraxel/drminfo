@@ -73,9 +73,10 @@ int main(int argc, char *argv[])
     GtkWidget *window;
     GtkWidget *darea;
     char *ifile = NULL;
+    bool gtk_ok;
     int c;
 
-    gtk_init(&argc, &argv);
+    gtk_ok = gtk_init_check(&argc, &argv);
 
     for (;;) {
         c = getopt_long(argc, argv, "hi:", long_opts, NULL);
@@ -95,6 +96,11 @@ int main(int argc, char *argv[])
             usage(stderr);
             exit(1);
         }
+    }
+
+    if (!gtk_ok) {
+        fprintf(stderr, "gtk init failed\n");
+        exit(1);
     }
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
