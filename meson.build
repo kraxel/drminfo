@@ -34,8 +34,8 @@ drminfo_srcs  = [ 'drminfo.c', 'drmtools.c', 'drm-lease.c', 'drm-lease-x11.c',
                   'logind.c', 'complete.c' ]
 drmtest_srcs  = [ 'drmtest.c', 'drmtools.c', 'drm-lease.c', 'drm-lease-x11.c',
                   'logind.c', 'complete.c', 'ttytools.c', 'render.c', 'image.c' ]
-fbinfo_srcs   = [ 'fbinfo.c', 'fbtools.c', 'logind.c'  ]
-fbtest_srcs   = [ 'fbtest.c', 'fbtools.c', 'logind.c',
+fbinfo_srcs   = [ 'fbinfo.c', 'fbtools.c', 'logind.c', 'complete.c'  ]
+fbtest_srcs   = [ 'fbtest.c', 'fbtools.c', 'logind.c', 'complete.c',
                   'ttytools.c', 'render.c', 'image.c' ]
 prime_srcs    = [ 'prime.c', 'logind.c' ]
 viotest_srcs  = [ 'virtiotest.c', 'drmtools.c', 'logind.c', 'ttytools.c', 'render.c' ]
