@@ -464,7 +464,7 @@ enum {
     OPT_LONG_COMP_BASH,
 };
 
-struct option long_opts[] = {
+static struct option long_opts[] = {
     {
         /* --- no argument --- */
         .name    = "help",

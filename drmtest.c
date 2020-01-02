@@ -395,7 +395,7 @@ enum {
     OPT_LONG_COMP_BASH,
 };
 
-struct option long_opts[] = {
+static struct option long_opts[] = {
     {
         /* --- no argument --- */
         .name    = "help",
@@ -527,7 +527,7 @@ int main(int argc, char **argv)
             lease_fd = drm_lease(optarg);
             break;
         case OPT_LONG_COMP_BASH:
-            complete_bash("drminfo", long_opts);
+            complete_bash("drmtest", long_opts);
             exit(0);
         case 'h':
             usage(stdout);

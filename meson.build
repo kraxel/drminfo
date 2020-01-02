@@ -41,7 +41,7 @@ prime_srcs    = [ 'prime.c', 'logind.c' ]
 viotest_srcs  = [ 'virtiotest.c', 'drmtools.c', 'logind.c', 'ttytools.c', 'render.c' ]
 egltest_srcs  = [ 'egltest.c', 'drmtools.c', 'drmtools-egl.c',
                   'drm-lease.c', 'drm-lease-x11.c',
-                  'logind.c', 'ttytools.c' ]
+                  'logind.c', 'complete.c', 'ttytools.c' ]
 gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c' ]
 
 drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep, systemd_dep,

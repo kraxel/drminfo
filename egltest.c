@@ -22,6 +22,7 @@
 #include "drm-lease.h"
 #include "logind.h"
 #include "ttytools.h"
+#include "complete.h"
 
 /* ------------------------------------------------------------------ */
 
@@ -86,9 +87,10 @@ static void usage(FILE *fp)
 
 enum {
     OPT_LONG_LEASE,
+    OPT_LONG_COMP_BASH,
 };
 
-struct option long_opts[] = {
+static struct option long_opts[] = {
     {
         /* --- no argument --- */
         .name    = "help",
@@ -106,6 +108,10 @@ struct option long_opts[] = {
         .name    = "exts",
         .has_arg = false,
         .val     = 'x',
+    },{
+        .name    = "complete-bash",
+        .has_arg = false,
+        .val     = OPT_LONG_COMP_BASH,
     },{
 
         /* --- with argument --- */
@@ -157,9 +163,12 @@ int main(int argc, char **argv)
         case 'a':
             autotest = true;
             break;
-        case 'L':
+        case OPT_LONG_LEASE:
             lease_fd = drm_lease(optarg);
             break;
+        case OPT_LONG_COMP_BASH:
+            complete_bash("egltest", long_opts);
+            exit(0);
         case 'h':
             usage(stdout);
             exit(0);
