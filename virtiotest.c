@@ -314,7 +314,7 @@ int main(int argc, char **argv)
             listformat = true;
             break;
         case OPT_LONG_COMP_BASH:
-            complete_bash("prime", long_opts);
+            complete_bash("virtiotest", long_opts);
             exit(0);
         case 'h':
             usage(stdout);
