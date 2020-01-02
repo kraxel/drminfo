@@ -41,7 +41,15 @@ ninja-build -C build-rpm install
 mkdir -p %{buildroot}%{_datadir}/%{name}
 cp -a tests %{buildroot}%{_datadir}/%{name}
 
+mkdir -p %{buildroot}/etc/bash_completion.d
+for tool in drminfo drmtest egltest fbinfo fbtest gtktest prime virtiotest
+do
+	build-rpm/$tool --complete-bash \
+		>> %{buildroot}/etc/bash_completion.d/drminfo
+done
+
 %files
+/etc/bash_completion.d/drminfo
 %{_bindir}/drm*
 %{_bindir}/prime
 %{_bindir}/virtiotest
