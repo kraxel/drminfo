@@ -25,8 +25,7 @@
 
 #define CASE_OUTPUT                                                    \
     "    --output)\n"                                                  \
-    "        card=$(getopt -o c: --long card: -- \"@COMP_WORDS\")\n"   \
-    "        words=$(drminfo $card --complete-output)\n"               \
+    "        words=$(drminfo --complete-output)\n"                     \
     "        COMPREPLY=( $(compgen -W \"$words\" -- \"$cur\") )\n"     \
     "        ;;\n"
 
@@ -76,7 +75,7 @@ void complete_bash(const char *command, struct option *opts)
 
     printf("_%s_complete()\n"
            "{\n"
-           "    local cur prev words card\n"
+           "    local cur prev words\n"
            "    cur=\"${COMP_WORDS[COMP_CWORD]}\"\n"
            "    prev=\"${COMP_WORDS[COMP_CWORD-1]}\"\n"
            "    case \"$prev\" in\n"
