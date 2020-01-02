@@ -434,6 +434,29 @@ static void list_formats(FILE *fp)
 
 /* ------------------------------------------------------------------ */
 
+static void complete_output(int card)
+{
+    drmModeConnector *conn;
+    drmModeRes *res;
+    char name[64];
+    int fd, i;
+
+    logind_init();
+    fd = drm_open(card);
+
+    res = drmModeGetResources(fd);
+    if (res == NULL)
+        return;
+
+    for (i = 0; i < res->count_connectors; i++) {
+        conn = drmModeGetConnector(fd, res->connectors[i]);
+        if (!conn)
+            continue;
+        drm_conn_name(conn, name, sizeof(name));
+        printf("%s\n", name);
+    }
+}
+
 static void usage(FILE *fp)
 {
     fprintf(fp,
@@ -463,6 +486,7 @@ enum {
     OPT_LONG_LEASE = 0x100,
     OPT_LONG_COMP_BASH,
     OPT_LONG_COMP_CARD,
+    OPT_LONG_COMP_OUTPUT,
 };
 
 static struct option long_opts[] = {
@@ -515,6 +539,10 @@ static struct option long_opts[] = {
         .name    = "complete-card",
         .has_arg = false,
         .val     = OPT_LONG_COMP_CARD,
+    },{
+        .name    = "complete-output",
+        .has_arg = false,
+        .val     = OPT_LONG_COMP_OUTPUT,
     },{
 
         /* --- with argument --- */
@@ -598,6 +626,9 @@ int main(int argc, char **argv)
             exit(0);
         case OPT_LONG_COMP_CARD:
             complete_device_nr("/dev/dri/card");
+            exit(0);
+        case OPT_LONG_COMP_OUTPUT:
+            complete_output(card);
             exit(0);
         case 'h':
             usage(stdout);
