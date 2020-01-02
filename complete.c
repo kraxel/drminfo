@@ -35,6 +35,10 @@ void complete_bash(const char *command, struct option *opts)
     int i;
 
     for (i = 0; opts[i].name != NULL; i++) {
+        /* hide completion options */
+        if (strncmp(opts[i].name, "complete-", 9))
+            continue;
+
         /* options with argument completion */
         if (strcmp(opts[i].name, "image") == 0) {
             have_image = true;
