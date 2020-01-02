@@ -8,7 +8,7 @@
 
 #define CASE_IMAGE \
     "    --image)\n"                                                 \
-    "        COMPREPLY=( $(compgen -f -- \"$cur\") )\n"              \
+    "        COMPREPLY=( $(compgen -f -o plusdirs -X '!*.@(jpg|jpeg|png)' -- \"$cur\") )\n" \
     "        ;;\n"
 
 #define CASE_CARD                                                    \
