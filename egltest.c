@@ -74,15 +74,56 @@ static void usage(FILE *fp)
             "usage: egltest [ options ]\n"
             "\n"
             "options:\n"
-            "  -h           print this\n"
-            "  -a           autotest mode\n"
-            "  -c <nr>      pick card\n"
-            "  -s <secs>    set sleep time (default: 60)\n"
-            "  -i           print device info\n"
-            "  -x           print extensions\n"
-            "  -L <output>  get a drm lease for output\n"
+            "  -h | --help            print this\n"
+            "  -a | --autotest        autotest mode\n"
+            "  -i | --info            print device info\n"
+            "  -x | --exts            print extensions\n"
+            "  -c | --card  <nr>      pick card\n"
+            "  -s | --sleep <secs>    set sleep time (default: 60)\n"
+            "       --lease <output>  get a drm lease for output\n"
             "\n");
 }
+
+enum {
+    OPT_LONG_LEASE,
+};
+
+struct option long_opts[] = {
+    {
+        /* --- no argument --- */
+        .name    = "help",
+        .has_arg = false,
+        .val     = 'h',
+    },{
+        .name    = "autotest",
+        .has_arg = false,
+        .val     = 'a',
+    },{
+        .name    = "info",
+        .has_arg = false,
+        .val     = 'i',
+    },{
+        .name    = "exts",
+        .has_arg = false,
+        .val     = 'x',
+    },{
+
+        /* --- with argument --- */
+        .name    = "card",
+        .has_arg = true,
+        .val     = 'c',
+    },{
+        .name    = "sleep",
+        .has_arg = true,
+        .val     = 's',
+    },{
+        .name    = "lease",
+        .has_arg = true,
+        .val     = OPT_LONG_LEASE,
+    },{
+        /* end of list */
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -97,7 +138,7 @@ int main(int argc, char **argv)
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "haixc:s:L:");
+        c = getopt_long(argc, argv, "haixc:s:", long_opts, NULL);
         if (c == -1)
             break;
         switch (c) {
