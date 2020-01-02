@@ -392,6 +392,7 @@ enum {
     OPT_LONG_VGEM,
     OPT_LONG_UNBIND,
     OPT_LONG_LEASE,
+    OPT_LONG_COMP_BASH,
 };
 
 struct option long_opts[] = {
@@ -420,6 +421,10 @@ struct option long_opts[] = {
         .name    = "unbind",
         .has_arg = false,
         .val     = OPT_LONG_UNBIND,
+    },{
+        .name    = "complete-bash",
+        .has_arg = false,
+        .val     = OPT_LONG_COMP_BASH,
     },{
 
         /* --- with argument --- */
@@ -521,6 +526,9 @@ int main(int argc, char **argv)
         case OPT_LONG_LEASE:
             lease_fd = drm_lease(optarg);
             break;
+        case OPT_LONG_COMP_BASH:
+            complete_bash("drminfo", long_opts);
+            exit(0);
         case 'h':
             usage(stdout);
             exit(0);

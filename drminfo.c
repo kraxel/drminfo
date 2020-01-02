@@ -21,6 +21,7 @@
 #include "drmtools.h"
 #include "drm-lease.h"
 #include "logind.h"
+#include "complete.h"
 
 static int ttycols = 80;
 
@@ -460,6 +461,7 @@ static void usage(FILE *fp)
 
 enum {
     OPT_LONG_LEASE = 0x100,
+    OPT_LONG_COMP_BASH,
 };
 
 struct option long_opts[] = {
@@ -505,6 +507,10 @@ struct option long_opts[] = {
         .has_arg = false,
         .val     = 'l',
     },{
+        .name    = "complete-bash",
+        .has_arg = false,
+        .val     = OPT_LONG_COMP_BASH,
+    },{
 
         /* --- with argument --- */
         .name    = "card",
@@ -535,7 +541,7 @@ int main(int argc, char **argv)
     char *columns;
 
     for (;;) {
-        c = getopt(argc, argv, "hlaAmsopPfFrc:");
+        c = getopt_long(argc, argv, "hlaAmsopPfFrc:", long_opts, NULL);
         if (c == -1)
             break;
         switch (c) {
@@ -579,9 +585,12 @@ int main(int argc, char **argv)
         case 'f':
             format = true;
             break;
-        case 'L':
+        case OPT_LONG_LEASE:
             lease_fd = drm_lease(optarg);
             break;
+        case OPT_LONG_COMP_BASH:
+            complete_bash("drminfo", long_opts);
+            exit(0);
         case 'h':
             usage(stdout);
             exit(0);

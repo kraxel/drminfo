@@ -31,9 +31,9 @@ configure_file(output : 'config.h', configuration : config)
 jpeg_dep      = declare_dependency(link_args : '-ljpeg')
 
 drminfo_srcs  = [ 'drminfo.c', 'drmtools.c', 'drm-lease.c', 'drm-lease-x11.c',
-                  'logind.c' ]
+                  'logind.c', 'complete.c' ]
 drmtest_srcs  = [ 'drmtest.c', 'drmtools.c', 'drm-lease.c', 'drm-lease-x11.c',
-                  'logind.c', 'ttytools.c', 'render.c', 'image.c' ]
+                  'logind.c', 'complete.c', 'ttytools.c', 'render.c', 'image.c' ]
 fbinfo_srcs   = [ 'fbinfo.c', 'fbtools.c', 'logind.c'  ]
 fbtest_srcs   = [ 'fbtest.c', 'fbtools.c', 'logind.c',
                   'ttytools.c', 'render.c', 'image.c' ]
