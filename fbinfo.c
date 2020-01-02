@@ -21,13 +21,30 @@ static void usage(FILE *fp)
 {
     fprintf(fp,
             "\n"
-            "usage: fbtest [ options ]\n"
+            "usage: fbinfo [ options ]\n"
             "\n"
             "options:\n"
-            "  -h         print this\n"
-            "  -f <nr>    pick framebuffer\n"
+            "  -h | --help         print this\n"
+            "  -f | --fbdev <nr>   pick framebuffer\n"
             "\n");
 }
+
+struct option long_opts[] = {
+    {
+        /* --- no argument --- */
+        .name    = "help",
+        .has_arg = false,
+        .val     = 'h',
+    },{
+
+        /* --- with argument --- */
+        .name    = "fbdev",
+        .has_arg = true,
+        .val     = 'f',
+    },{
+        /* end of list */
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -35,7 +52,7 @@ int main(int argc, char **argv)
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "hf:");
+        c = getopt_long(argc, argv, "hf:", long_opts, NULL);
         if (c == -1)
             break;
         switch (c) {
