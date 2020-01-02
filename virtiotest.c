@@ -234,7 +234,7 @@ static void usage(FILE *fp)
             "  -h | --help          print this\n"
             "  -a | --autotest      autotest mode\n"
             "  -i | --info          print virtio device info\n"
-            "  -l | --list          list formats\n"
+            "  -l | --list-formats  list formats\n"
             "  -c | --card  <nr>    pick card\n"
             "  -s | --sleep <secs>  set sleep time (default: 60)\n"
             "\n");
@@ -255,7 +255,7 @@ struct option long_opts[] = {
         .has_arg = false,
         .val     = 'i',
     },{
-        .name    = "list",
+        .name    = "list-formats",
         .has_arg = false,
         .val     = 'l',
     },{

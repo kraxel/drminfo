@@ -241,7 +241,7 @@ static void usage(FILE *fp)
             "\n"
             "options:\n"
             "  -h | --help        print this\n"
-            "  -l | --list        list cards\n"
+            "  -l | --list-cards  list cards\n"
             "\n");
 }
 
@@ -252,7 +252,7 @@ struct option long_opts[] = {
         .has_arg = false,
         .val     = 'h',
     },{
-        .name    = "list",
+        .name    = "list-cards",
         .has_arg = false,
         .val     = 'l',
     },{
