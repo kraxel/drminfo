@@ -231,14 +231,47 @@ static void usage(FILE *fp)
             "usage: virtiotest [ options ]\n"
             "\n"
             "options:\n"
-            "  -h         print this\n"
-            "  -a         autotest mode\n"
-            "  -c <nr>    pick card\n"
-            "  -s <secs>  set sleep time (default: 60)\n"
-            "  -i         print device info\n"
-            "  -l         list formats\n"
+            "  -h | --help          print this\n"
+            "  -a | --autotest      autotest mode\n"
+            "  -i | --info          print virtio device info\n"
+            "  -l | --list          list formats\n"
+            "  -c | --card  <nr>    pick card\n"
+            "  -s | --sleep <secs>  set sleep time (default: 60)\n"
             "\n");
 }
+
+struct option long_opts[] = {
+    {
+        /* --- no argument --- */
+        .name    = "help",
+        .has_arg = false,
+        .val     = 'h',
+    },{
+        .name    = "autotest",
+        .has_arg = false,
+        .val     = 'a',
+    },{
+        .name    = "info",
+        .has_arg = false,
+        .val     = 'i',
+    },{
+        .name    = "list",
+        .has_arg = false,
+        .val     = 'l',
+    },{
+
+        /* --- with argument --- */
+        .name    = "card",
+        .has_arg = true,
+        .val     = 'c',
+    },{
+        .name    = "sleep",
+        .has_arg = true,
+        .val     = 's',
+    },{
+        /* end of list */
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -252,7 +285,7 @@ int main(int argc, char **argv)
     int c, i;
 
     for (;;) {
-        c = getopt(argc, argv, "hailc:s:");
+        c = getopt_long(argc, argv, "hailc:s:", long_opts, NULL);
         if (c == -1)
             break;
         switch (c) {
