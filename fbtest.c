@@ -64,13 +64,42 @@ static void usage(FILE *fp)
             "usage: fbtest [ options ]\n"
             "\n"
             "options:\n"
-            "  -h         print this\n"
-            "  -a         autotest mode (don't print hardware info)\n"
-            "  -f <nr>    pick framebuffer\n"
-            "  -s <secs>  set sleep time (default: 60)\n"
-            "  -i <file>  load and display image <file>\n"
+            "  -h | --help          print this\n"
+            "  -a | --autotest      autotest mode (don't print hardware info)\n"
+            "  -f | --fbdev <nr>    pick framebuffer\n"
+            "  -s | --sleep <secs>  set sleep time (default: 60)\n"
+            "  -i | --image <file>  load and display image <file>\n"
             "\n");
 }
+
+struct option long_opts[] = {
+    {
+        /* --- no argument --- */
+        .name    = "help",
+        .has_arg = false,
+        .val     = 'h',
+    },{
+        .name    = "autotest",
+        .has_arg = false,
+        .val     = 'a',
+    },{
+
+        /* --- with argument --- */
+        .name    = "fbdev",
+        .has_arg = true,
+        .val     = 'f',
+    },{
+        .name    = "sleep",
+        .has_arg = true,
+        .val     = 's',
+    },{
+        .name    = "image",
+        .has_arg = true,
+        .val     = 'i',
+    },{
+        /* end of list */
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -80,7 +109,7 @@ int main(int argc, char **argv)
     int c;
 
     for (;;) {
-        c = getopt(argc, argv, "has:i:f:");
+        c = getopt_long(argc, argv, "has:i:f:", long_opts, NULL);
         if (c == -1)
             break;
         switch (c) {
