@@ -7,8 +7,8 @@
 #include "complete.h"
 
 #define CASE_IMAGE \
-    "    --image)\n"                                                 \
-    "        COMPREPLY=( $(compgen -f -o plusdirs -X '!*.@(jpg|jpeg|png)' -- \"$cur\") )\n" \
+    "    --image)\n"                                                    \
+    "        COMPREPLY=( $(compgen -f -X '!*.@(jpg|jpeg|png)' -- \"$cur\") )\n" \
     "        ;;\n"
 
 #define CASE_CARD                                                    \
