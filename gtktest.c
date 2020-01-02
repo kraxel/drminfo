@@ -1,4 +1,8 @@
 #include <stdio.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <getopt.h>
+
 #include <cairo.h>
 #include <gtk/gtk.h>
 
@@ -26,12 +30,60 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr,
     return FALSE;
 }
 
+static void usage(FILE *fp)
+{
+    fprintf(fp,
+            "\n"
+            "usage: gtktest [ options ]\n"
+            "\n"
+            "options:\n"
+            "  -h | --help          print this\n"
+            "  -i | --image <file>  load and display image <file>\n"
+            "\n");
+}
+
+struct option long_opts[] = {
+    {
+        /* --- no argument --- */
+        .name    = "help",
+        .has_arg = false,
+        .val     = 'h',
+    },{
+
+        /* --- with argument --- */
+        .name    = "image",
+        .has_arg = true,
+        .val     = 'i',
+    },{
+        /* end of list */
+    }
+};
+
 int main(int argc, char *argv[])
 {
     GtkWidget *window;
     GtkWidget *darea;
+    char *ifile = NULL;
+    int c;
 
     gtk_init(&argc, &argv);
+
+    for (;;) {
+        c = getopt_long(argc, argv, "hi:", long_opts, NULL);
+        if (c == -1)
+            break;
+        switch (c) {
+        case 'i':
+            ifile = optarg;
+            break;
+        case 'h':
+            usage(stdout);
+            exit(0);
+        default:
+            usage(stderr);
+            exit(1);
+        }
+    }
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
@@ -47,9 +99,9 @@ int main(int argc, char *argv[])
     gtk_window_set_default_size(GTK_WINDOW(window), 640, 480);
     gtk_window_set_title(GTK_WINDOW(window), "gtktest");
 
-    if (argv[1]) {
+    if (ifile) {
         fprintf(stderr, "loading %s ...\n", argv[1]);
-        image = load_image(argv[1]);
+        image = load_image(ifile);
     }
 
     gtk_widget_show_all(window);
