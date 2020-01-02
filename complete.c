@@ -36,7 +36,7 @@ void complete_bash(const char *command, struct option *opts)
 
     for (i = 0; opts[i].name != NULL; i++) {
         /* hide completion options */
-        if (strncmp(opts[i].name, "complete-", 9))
+        if (strncmp(opts[i].name, "complete-", 9) == 0)
             continue;
 
         /* options with argument completion */
