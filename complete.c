@@ -5,10 +5,6 @@
 
 #include "complete.h"
 
-/*
- * generate simple bash completion for getopt long,
- * using "complete -W".
- */
 #define CASE_IMAGE \
     "    --image)\n"                                                 \
     "        COMPREPLY=( $(compgen -f -- \"$cur\") )\n"              \
