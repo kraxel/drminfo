@@ -240,10 +240,25 @@ static void usage(FILE *fp)
             "usage: prime [ options ]\n"
             "\n"
             "options:\n"
-            "  -h         print this\n"
-            "  -l         list cards\n"
+            "  -h | --help        print this\n"
+            "  -l | --list        list cards\n"
             "\n");
 }
+
+struct option long_opts[] = {
+    {
+        /* --- no argument --- */
+        .name    = "help",
+        .has_arg = false,
+        .val     = 'h',
+    },{
+        .name    = "list",
+        .has_arg = false,
+        .val     = 'l',
+    },{
+        /* end of list */
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -252,7 +267,7 @@ int main(int argc, char **argv)
     bool list = false;
 
     for (;;) {
-        c = getopt(argc, argv, "hl");
+        c = getopt_long(argc, argv, "hl", long_opts, NULL);
         if (c == -1)
             break;
         switch (c) {
@@ -297,8 +312,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "\n");
     }
 
-    fprintf(stderr, "dma-buf transfer tests\n");
     if (!list) {
+        fprintf(stderr, "dma-buf transfer tests\n");
         for (e = 0; e < DEV_COUNT; e++) {
             if (!devs[e] ||
                 !devs[e]->gbm ||
