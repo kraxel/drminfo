@@ -47,7 +47,7 @@ mkdir -p %{buildroot}%{_datadir}/%{name}
 cp -a tests %{buildroot}%{_datadir}/%{name}
 
 mkdir -p %{buildroot}/etc/bash_completion.d
-for tool in drminfo drmtest egltest fbinfo fbtest gtktest prime virtiotest
+for tool in drminfo drmtest egltest fbinfo fbtest prime virtiotest
 do
 	build-rpm/$tool --complete-bash \
 		>> %{buildroot}/etc/bash_completion.d/drminfo
