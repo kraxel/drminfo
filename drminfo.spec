@@ -25,7 +25,12 @@ BuildRequires: pkgconfig(libinput)
 
 %description
 drminfo - print drm device props
-drmtest - simple drm test app
+drmtest - some drm test app
+egltest - opengl info and test app
+fbinfo - print some fbdev device info
+fbtest - simple fbdev device test
+prime - some dma-buf sharing tests
+virtiotest - some virtio-gpu tests
 
 %prep
 %setup -q
