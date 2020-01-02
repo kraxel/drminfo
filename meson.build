@@ -37,12 +37,13 @@ drmtest_srcs  = [ 'drmtest.c', 'drmtools.c', 'drm-lease.c', 'drm-lease-x11.c',
 fbinfo_srcs   = [ 'fbinfo.c', 'fbtools.c', 'logind.c', 'complete.c'  ]
 fbtest_srcs   = [ 'fbtest.c', 'fbtools.c', 'logind.c', 'complete.c',
                   'ttytools.c', 'render.c', 'image.c' ]
-prime_srcs    = [ 'prime.c', 'logind.c' ]
-viotest_srcs  = [ 'virtiotest.c', 'drmtools.c', 'logind.c', 'ttytools.c', 'render.c' ]
+prime_srcs    = [ 'prime.c', 'logind.c', 'complete.c' ]
+viotest_srcs  = [ 'virtiotest.c', 'drmtools.c', 'logind.c', 'complete.c',
+                  'ttytools.c', 'render.c' ]
 egltest_srcs  = [ 'egltest.c', 'drmtools.c', 'drmtools-egl.c',
                   'drm-lease.c', 'drm-lease-x11.c',
                   'logind.c', 'complete.c', 'ttytools.c' ]
-gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c' ]
+gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c', 'complete.c' ]
 
 drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep, systemd_dep,
                   xcb_dep, randr_dep ]

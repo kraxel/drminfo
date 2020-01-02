@@ -8,6 +8,7 @@
 
 #include "render.h"
 #include "image.h"
+#include "complete.h"
 
 cairo_surface_t *image;
 
@@ -42,12 +43,20 @@ static void usage(FILE *fp)
             "\n");
 }
 
-struct option long_opts[] = {
+enum {
+    OPT_LONG_COMP_BASH = 0x100,
+};
+
+static struct option long_opts[] = {
     {
         /* --- no argument --- */
         .name    = "help",
         .has_arg = false,
         .val     = 'h',
+    },{
+        .name    = "complete-bash",
+        .has_arg = false,
+        .val     = OPT_LONG_COMP_BASH,
     },{
 
         /* --- with argument --- */
@@ -76,6 +85,9 @@ int main(int argc, char *argv[])
         case 'i':
             ifile = optarg;
             break;
+        case OPT_LONG_COMP_BASH:
+            complete_bash("gtktest", long_opts);
+            exit(0);
         case 'h':
             usage(stdout);
             exit(0);

@@ -26,6 +26,7 @@
 #include "logind.h"
 #include "ttytools.h"
 #include "render.h"
+#include "complete.h"
 
 /* ------------------------------------------------------------------ */
 
@@ -240,7 +241,11 @@ static void usage(FILE *fp)
             "\n");
 }
 
-struct option long_opts[] = {
+enum {
+    OPT_LONG_COMP_BASH = 0x100,
+};
+
+static struct option long_opts[] = {
     {
         /* --- no argument --- */
         .name    = "help",
@@ -258,6 +263,10 @@ struct option long_opts[] = {
         .name    = "list-formats",
         .has_arg = false,
         .val     = 'l',
+    },{
+        .name    = "complete-bash",
+        .has_arg = false,
+        .val     = OPT_LONG_COMP_BASH,
     },{
 
         /* --- with argument --- */
@@ -304,6 +313,9 @@ int main(int argc, char **argv)
         case 'l':
             listformat = true;
             break;
+        case OPT_LONG_COMP_BASH:
+            complete_bash("prime", long_opts);
+            exit(0);
         case 'h':
             usage(stdout);
             exit(0);

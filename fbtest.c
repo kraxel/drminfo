@@ -135,7 +135,7 @@ int main(int argc, char **argv)
             image = load_image(optarg);
             break;
         case OPT_LONG_COMP_BASH:
-            complete_bash("fbinfo", long_opts);
+            complete_bash("fbtest", long_opts);
             exit(0);
         case 'h':
             usage(stdout);
