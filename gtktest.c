@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
     gtk_window_set_title(GTK_WINDOW(window), "gtktest");
 
     if (ifile) {
-        fprintf(stderr, "loading %s ...\n", ifile;
+        fprintf(stderr, "loading %s ...\n", ifile);
         image = load_image(ifile);
     }
 
