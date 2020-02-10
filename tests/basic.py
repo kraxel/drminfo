@@ -126,40 +126,64 @@ class BaseDRM(TestDRM):
             self.prepare_kernel_initrd()
 
     def test_stdvga(self):
+        """
+        :avocado: tags=bochs
+        """
         vga = 'VGA'
         self.common_tests(vga)
 
     def test_bochs_dpy(self):
+        """
+        :avocado: tags=bochs
+        """
         vga = 'bochs-display'
         self.common_tests(vga)
 
     def test_cirrus(self):
+        """
+        :avocado: tags=cirrus
+        """
         vga = 'cirrus-vga'
         self.common_tests(vga)
 
     def test_qxl_vga(self):
+        """
+        :avocado: tags=qxl
+        """
         vga = 'qxl-vga'
         self.common_tests(vga)
         self.prime_tests(vga)
 
     def test_qxl(self):
+        """
+        :avocado: tags=qxl
+        """
         vga = 'qxl'
         self.common_tests(vga)
         self.prime_tests(vga)
 
     def test_virtio_vga(self):
+        """
+        :avocado: tags=virtio
+        """
         vga = 'virtio-vga'
         self.common_tests(vga)
         self.prime_tests(vga)
         self.virtio_tests(vga)
 
     def test_virtio_gpu(self):
+        """
+        :avocado: tags=virtio
+        """
         vga = 'virtio-gpu-pci'
         self.common_tests(vga)
         self.prime_tests(vga)
         self.virtio_tests(vga)
 
     def test_virgl(self):
+        """
+        :avocado: tags=virtio
+        """
         vga = 'virtio-vga'
         self.common_tests(vga, 'egl-headless')
         self.prime_tests(vga)
@@ -168,5 +192,8 @@ class BaseDRM(TestDRM):
 
     @avocado.skipUnless(os.path.exists(igd_vgpu_path), "no vgpu")
     def test_vgpu_igd(self):
+        """
+        :avocado: tags=igd
+        """
         vga = 'vfio-pci,display=on,sysfsdev=%s' % self.igd_vgpu_path
         self.common_tests(vga, 'egl-headless')

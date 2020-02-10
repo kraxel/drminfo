@@ -86,21 +86,36 @@ class Migration(TestDRM):
             self.prepare_kernel_initrd()
 
     def test_stdvga(self):
+        """
+        :avocado: tags=bochs
+        """
         vga = 'VGA'
         self.migration_test(vga)
 
     def test_bochs_dpy(self):
+        """
+        :avocado: tags=bochs
+        """
         vga = 'bochs-display'
         self.migration_test(vga)
 
     def test_cirrus(self):
+        """
+        :avocado: tags=cirrus
+        """
         vga = "cirrus-vga"
         self.migration_test(vga)
 
     def test_qxl(self):
+        """
+        :avocado: tags=qxl
+        """
         vga = "qxl-vga"
         self.migration_test(vga)
 
     def test_virtio_vga(self):
+        """
+        :avocado: tags=virtio
+        """
         vga = "virtio-vga"
         self.migration_test(vga)

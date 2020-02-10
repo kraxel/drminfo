@@ -39,21 +39,33 @@ class unload(TestDRM):
             self.prepare_kernel_initrd()
 
     def test_stdvga(self):
+        """
+        :avocado: tags=bochs
+        """
         vga = "VGA"
         mod = "bochs-drm"
         self.run_unload_test(vga, mod)
 
     def test_cirrus(self):
+        """
+        :avocado: tags=cirrus
+        """
         vga = "cirrus-vga"
         mod = "cirrus"
         self.run_unload_test(vga, mod)
 
     def test_qxl_vga(self):
+        """
+        :avocado: tags=qxl
+        """
         vga = "qxl-vga"
         mod = "qxl"
         self.run_unload_test(vga, mod)
 
     def test_virtio_vga(self):
+        """
+        :avocado: tags=virtio
+        """
         vga = "virtio-vga"
         mod = "virtio-gpu"
         self.run_unload_test(vga, mod)

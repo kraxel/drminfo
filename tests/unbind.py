@@ -39,17 +39,29 @@ class unbind(TestDRM):
             self.prepare_kernel_initrd()
 
     def test_stdvga(self):
+        """
+        :avocado: tags=bochs
+        """
         vga = "VGA"
         self.run_unbind_test(vga)
 
     def test_cirrus(self):
+        """
+        :avocado: tags=cirrus
+        """
         vga = "cirrus-vga"
         self.run_unbind_test(vga)
 
     def test_qxl_vga(self):
+        """
+        :avocado: tags=qxl
+        """
         vga = "qxl-vga"
         self.run_unbind_test(vga)
 
     def test_virtio_vga(self):
+        """
+        :avocado: tags=virtio
+        """
         vga = "virtio-vga"
         self.run_unbind_test(vga)

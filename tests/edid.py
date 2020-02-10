@@ -41,17 +41,29 @@ class EDID(TestDRM):
             self.prepare_kernel_initrd()
 
     def test_stdvga(self):
+        """
+        :avocado: tags=bochs
+        """
         vga = "VGA"
         self.run_edid_test(vga)
 
     def test_bochs_dpy(self):
+        """
+        :avocado: tags=bochs
+        """
         vga = 'bochs-display'
         self.run_edid_test(vga)
 
     def test_virtio_vga(self):
+        """
+        :avocado: tags=virtio
+        """
         vga = 'virtio-vga'
         self.run_edid_test(vga)
 
     def test_virtio_gpu(self):
+        """
+        :avocado: tags=virtio
+        """
         vga = 'virtio-gpu-pci'
         self.run_edid_test(vga)
