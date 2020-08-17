@@ -130,8 +130,9 @@ class TestDRM(avocado.Test):
         cmdline += " \"%s\" \"%s\"" % (self.initrd, kversion)
         run(cmdline)
 
-    def boot_gfx_vm(self, vga, display = None, vm = None, incoming = None):
-        append = "console=ttyS0 rd.shell"
+    def boot_gfx_vm(self, vga, display = None, vm = None, incoming = None, append = ""):
+        append += " console=ttyS0"
+        append += " rd.shell"
 
         self.log.info("### boot kernel with display device \"%s\"" % vga)
         if vm is None:
