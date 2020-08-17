@@ -130,14 +130,19 @@ class TestDRM(avocado.Test):
         cmdline += " \"%s\" \"%s\"" % (self.initrd, kversion)
         run(cmdline)
 
-    def boot_gfx_vm(self, vga, display = None, vm = None, incoming = None, append = ""):
+    def boot_gfx_vm(self, vga, display = None, vm = None, incoming = None, iommu = False, append = ""):
         append += " console=ttyS0"
         append += " rd.shell"
 
         self.log.info("### boot kernel with display device \"%s\"" % vga)
         if vm is None:
             vm = self.vm
-        vm.set_machine('pc')
+
+        if iommu:
+            vm.set_machine('q35,kernel-irqchip=split')
+        else:
+            vm.set_machine('pc')
+
         vm.set_console()
         vm.add_args('-enable-kvm')
         vm.add_args('-m', '1G')
@@ -145,10 +150,16 @@ class TestDRM(avocado.Test):
         vm.add_args('-initrd', self.initrd)
         vm.add_args('-append', append)
         vm.add_args('-device', vga)
+
+        if iommu:
+            vm.add_args('-device', 'intel-iommu,intremap=on,device-iotlb=on')
+            vm.add_args('-global', 'virtio-pci.iommu_platform=on')
+
         if not display is None:
             vm.add_args('-display', display)
         if not incoming is None:
             vm.add_args('-incoming', incoming)
+
         vm.launch()
 
         if self.rconsole is None:
