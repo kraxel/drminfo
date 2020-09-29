@@ -1,4 +1,4 @@
-[![Travis Status](https://travis-ci.com/kraxel/drminfo.svg?branch=master)](https://travis-ci.com/kraxel/drminfo)
+[![Travis Status](https://travis-ci.com/kraxel/drminfo.svg?branch=master)](https://travis-ci.com/gitlab/kraxel/drminfo)
 [![Copr Status](https://copr.fedorainfracloud.org/coprs/kraxel/mine.git/package/drminfo/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/kraxel/mine.git/package/drminfo/)
 
 # drminfo
