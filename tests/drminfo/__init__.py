@@ -180,6 +180,9 @@ class TestDRM(avocado.Test):
         self.console_send('PS1=---\\\\u---\\\\n')
         self.console_wait('---root---')
 
+        self.console_run('udevadm settle')
+        self.console_wait('---root---')
+
     def console_send(self, line = ""):
         self.wconsole.write(line)
         self.wconsole.write('\n')
