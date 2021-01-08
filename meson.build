@@ -7,11 +7,11 @@ add_global_arguments('-D_GNU_SOURCE=1', language : 'c')
 # pkg-config deps
 libdrm_dep    = dependency('libdrm')
 gbm_dep       = dependency('gbm')
-epoxy_dep     = dependency('epoxy')
 cairo_dep     = dependency('cairo')
 pixman_dep    = dependency('pixman-1')
 udev_dep      = dependency('libudev')
 input_dep     = dependency('libinput')
+epoxy_dep     = dependency('epoxy', required : false)
 gtk3_dep      = dependency('gtk+-3.0', required : false)
 xcb_dep       = dependency('xcb', required : false)
 randr_dep     = dependency('xcb-randr', required : false, version : '>=1.13')
@@ -89,14 +89,16 @@ executable('virtiotest',
            sources      : viotest_srcs,
            dependencies : viotest_deps,
            install      : true)
-executable('egltest',
-           sources      : egltest_srcs,
-           dependencies : egltest_deps,
-           install      : true)
 
 install_man('drminfo.1')
 install_man('drmtest.1')
 
+if epoxy_dep.found()
+    executable('egltest',
+               sources      : egltest_srcs,
+               dependencies : egltest_deps,
+               install      : true)
+endif
 if gtk3_dep.found()
     executable('gtktest',
                sources      : gtktest_srcs,
