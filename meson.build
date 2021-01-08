@@ -10,9 +10,9 @@ gbm_dep       = dependency('gbm')
 epoxy_dep     = dependency('epoxy')
 cairo_dep     = dependency('cairo')
 pixman_dep    = dependency('pixman-1')
-gtk3_dep      = dependency('gtk+-3.0')
 udev_dep      = dependency('libudev')
 input_dep     = dependency('libinput')
+gtk3_dep      = dependency('gtk+-3.0', required : false)
 xcb_dep       = dependency('xcb', required : false)
 randr_dep     = dependency('xcb-randr', required : false, version : '>=1.13')
 systemd_dep   = dependency('libsystemd', required : false, version : '>=221')
@@ -93,10 +93,13 @@ executable('egltest',
            sources      : egltest_srcs,
            dependencies : egltest_deps,
            install      : true)
-executable('gtktest',
-           sources      : gtktest_srcs,
-           dependencies : gtktest_deps,
-           install      : false)
 
 install_man('drminfo.1')
 install_man('drmtest.1')
+
+if gtk3_dep.found()
+    executable('gtktest',
+               sources      : gtktest_srcs,
+               dependencies : gtktest_deps,
+               install      : false)
+endif
