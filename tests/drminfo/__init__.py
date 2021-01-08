@@ -177,11 +177,14 @@ class TestDRM(avocado.Test):
         self.console_run('PS1=---\\\\u---\\\\n')
         self.console_wait('---root---')
 
-    def console_run(self, command):
-        self.lcommand.debug(command)
-        self.wconsole.write(command)
+    def console_send(self, line = ""):
+        self.wconsole.write(line)
         self.wconsole.write('\n')
         self.wconsole.flush()
+
+    def console_run(self, command):
+        self.lcommand.debug(command)
+        self.console_send(command)
         self.rconsole.readline() # newline
         self.rconsole.readline() # command line echo
 
