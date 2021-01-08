@@ -47,7 +47,7 @@ gtktest_srcs  = [ 'gtktest.c', 'render.c', 'image.c', 'complete.c' ]
 
 drminfo_deps  = [ libdrm_dep, cairo_dep, pixman_dep, systemd_dep,
                   xcb_dep, randr_dep ]
-drmtest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
+drmtest_deps  = [ libdrm_dep, gbm_dep,
                   xcb_dep, randr_dep,
                   cairo_dep, pixman_dep, jpeg_dep,
 		  udev_dep, input_dep,  systemd_dep ]

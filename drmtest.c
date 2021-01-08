@@ -16,9 +16,9 @@
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
-#include <gbm.h>
-#include <epoxy/gl.h>
-#include <epoxy/egl.h>
+//#include <gbm.h>
+//#include <epoxy/gl.h>
+//#include <epoxy/egl.h>
 
 #include <cairo.h>
 #include <pixman.h>
