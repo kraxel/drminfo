@@ -55,7 +55,7 @@ fbinfo_deps   = [ cairo_dep, systemd_dep ]
 fbtest_deps   = [ cairo_dep, pixman_dep, jpeg_dep,
 		  udev_dep, input_dep, systemd_dep ]
 prime_deps    = [ libdrm_dep, gbm_dep, systemd_dep ]
-viotest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
+viotest_deps  = [ libdrm_dep, gbm_dep,
                   cairo_dep, pixman_dep, jpeg_dep,
 		  udev_dep, input_dep, systemd_dep ]
 egltest_deps  = [ libdrm_dep, gbm_dep, epoxy_dep,
