@@ -174,7 +174,10 @@ class TestDRM(avocado.Test):
         self.lcommand = logging.getLogger('command')
 
         self.console_wait('Entering emergency mode')
-        self.console_run('PS1=---\\\\u---\\\\n')
+        self.console_wait_char('continue): ')
+        self.console_send()
+        self.console_wait_char('# ')
+        self.console_send('PS1=---\\\\u---\\\\n')
         self.console_wait('---root---')
 
     def console_send(self, line = ""):
@@ -194,6 +197,23 @@ class TestDRM(avocado.Test):
             self.lconsole.debug("%s: %s" % (name, msg.rstrip()))
             if '--[ end trace' in msg:
                 break
+
+    def console_wait_char(self, good):
+        msg = ""
+        counter = 1
+        while True:
+            char = self.rconsole.read(1)
+            if char == '\n':
+                if len(msg) != 0:
+                    self.lconsole.debug("%3d: %s [line]" % (counter, msg))
+                counter += 1
+                msg = ""
+            else:
+                msg += char
+            if good in msg:
+                break
+        if len(msg) != 0:
+            self.lconsole.debug("%3d: %s [match]" % (counter, msg))
 
     def console_wait(self, good, bad = None, errmsg = None):
         output = ""
