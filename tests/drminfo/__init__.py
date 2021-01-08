@@ -120,6 +120,7 @@ class TestDRM(avocado.Test):
 
         self.log.info("### create initrd for %s" % kversion)
         cmdline = "dracut"
+        cmdline += " --no-hostonly"
         cmdline += " --force"
         if not kmoddir is None:
             cmdline += " --kmoddir \"%s\"" % kmoddir
@@ -133,6 +134,7 @@ class TestDRM(avocado.Test):
     def boot_gfx_vm(self, vga, display = None, vm = None, incoming = None, iommu = False, append = ""):
         append += " console=ttyS0"
         append += " rd.shell"
+        append += " rd.break"
 
         self.log.info("### boot kernel with display device \"%s\"" % vga)
         if vm is None:
