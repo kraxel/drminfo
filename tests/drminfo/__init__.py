@@ -98,6 +98,7 @@ class TestDRM(avocado.Test):
             "/etc/fonts/conf.d/59-liberation-mono.conf",
             "/usr/share/fontconfig/conf.avail/59-liberation-mono.conf",
             "/usr/share/fonts/liberation/LiberationMono-Regular.ttf",
+            "/usr/share/fonts/liberation-mono/LiberationMono-Regular.ttf",
         ]
         rpms = [
             "mesa-libGL",
