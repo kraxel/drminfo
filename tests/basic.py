@@ -21,9 +21,6 @@ class BaseDRM(TestDRM):
 
     timeout = 60
 
-    igd_vgpu_uuid = "656527d9-c2c9-4745-b16a-00419a5bc32e"
-    igd_vgpu_path = "/sys/class/mdev_bus/0000:00:02.0/%s" % igd_vgpu_uuid
-
     checksums = {
         'AR24' : 'ea39d6f3a207d810c89312316c955c9f',
         'XR24' : '78b3200ce3d3c7f56b1c4b3ed2651592',
@@ -189,11 +186,3 @@ class BaseDRM(TestDRM):
         self.prime_tests(vga)
         self.virtio_tests(vga)
 #        self.virgl_tests(vga)
-
-    @avocado.skipUnless(os.path.exists(igd_vgpu_path), "no vgpu")
-    def test_vgpu_igd(self):
-        """
-        :avocado: tags=igd
-        """
-        vga = 'vfio-pci,display=on,sysfsdev=%s' % self.igd_vgpu_path
-        self.common_tests(vga, 'egl-headless')
