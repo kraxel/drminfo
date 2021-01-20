@@ -25,11 +25,11 @@ class BaseDRM(TestDRM):
     igd_vgpu_path = "/sys/class/mdev_bus/0000:00:02.0/%s" % igd_vgpu_uuid
 
     checksums = {
-        'AR24' : 'adf315fe78e8f7e2947d65158545b4d3',
-        'XR24' : '661a70b8dca5436443ce09014e6c326c',
-        'BX24' : '0ab929a5c0ccd0123c6a64fe6fdcc24f',
-        'RG24' : 'a250b72b15cbb53306ed9e101aac3600',
-        'RG16' : '0dcbe8573e0bf44bb7363cd22639f3b9',
+        'AR24' : 'ea39d6f3a207d810c89312316c955c9f',
+        'XR24' : '78b3200ce3d3c7f56b1c4b3ed2651592',
+        'BX24' : 'b14c03c1d8c1ff483bd7b6c229772d26',
+        'RG24' : 'f35b32ed2515a3b9138e3ed958f8640f',
+        'RG16' : 'a47cf725172c81d2edf38f2b2544c5aa',
     }
     modes = [
         "800x600",
