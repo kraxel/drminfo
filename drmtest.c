@@ -40,6 +40,11 @@ static uint8_t *fbmem;
 static int dmabuf_fd;
 static uint8_t *dmabuf_mem;
 
+/* cursor */
+static struct drm_mode_create_dumb cursor;
+static uint64_t cwidth, cheight;
+static uint32_t *cmem;
+
 /* cairo + pixman */
 static cairo_surface_t *cs;
 static pixman_image_t *pxcs;
@@ -219,6 +224,92 @@ static void drm_zap_mappings(void)
 
 /* ------------------------------------------------------------------ */
 
+static void drm_init_cursor_obj(int fd)
+{
+    struct drm_mode_map_dumb mreq;
+    uint32_t x, y, o, a;
+    int rc;
+
+    rc = drmGetCap(fd, DRM_CAP_CURSOR_WIDTH, &cwidth);
+    if (rc < 0) {
+        fprintf(stderr, "get DRM_CAP_CURSOR_WIDTH: %s\n", strerror(errno));
+        exit(1);
+    }
+    rc = drmGetCap(fd, DRM_CAP_CURSOR_HEIGHT, &cheight);
+    if (rc < 0) {
+        fprintf(stderr, "get DRM_CAP_CURSOR_HEIGHT: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    /* create gem object */
+    memset(&cursor, 0, sizeof(cursor));
+    cursor.width = cwidth;
+    cursor.height = cheight;
+    cursor.bpp = 32;
+    rc = drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &cursor);
+    if (rc < 0) {
+        fprintf(stderr, "DRM_IOCTL_MODE_CREATE_DUMB: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    /* map gem object */
+    memset(&mreq, 0, sizeof(mreq));
+    mreq.handle = cursor.handle;
+    rc = drmIoctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &mreq);
+    if (rc < 0) {
+        fprintf(stderr, "DRM_IOCTL_MODE_MAP_DUMB: %s\n", strerror(errno));
+        exit(1);
+    }
+    cmem = mmap(0, cursor.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, mreq.offset);
+    if (cmem == MAP_FAILED) {
+        fprintf(stderr, "framebuffer mmap: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    for (x = 0; x < cwidth; x++) {
+        for (y = 0; y < cheight; y++) {
+            o = x + cwidth * y;
+            if (x == 0 ||
+                y == 0 ||
+                x == cwidth - 1 ||
+                y == cheight - 1) {
+                cmem[o] = 0xffffffff;
+            } else if (x == y ||
+                       x+1 == y || x+2 == y ||
+                       x == y+1 || x == y+2) {
+                a = x * 256 / cheight;
+                cmem[o] = 0xffffff | (a << 24);
+            } else {
+                cmem[0] = 0x00000000;
+            }
+        }
+    }
+}
+
+static void drm_set_cursor(int fd)
+{
+    struct drm_mode_cursor2 cursor2 = {
+        .flags   = DRM_MODE_CURSOR_BO | DRM_MODE_CURSOR_MOVE,
+        .crtc_id = drm_enc->crtc_id,
+        .x       = drm_mode->hdisplay / 2,
+        .y       = drm_mode->vdisplay / 2,
+        .width   = cwidth,
+        .height  = cheight,
+        .handle  = cursor.handle,
+        .hot_x   = cwidth / 2,
+        .hot_y   = cheight / 2,
+    };
+    int rc;
+
+    rc = drmIoctl(fd, DRM_IOCTL_MODE_CURSOR2, &cursor2);
+    if (rc < 0) {
+        fprintf(stderr, "DRM_IOCTL_MODE_CURSOR2: %s\n", strerror(errno));
+        exit(1);
+    }
+}
+
+/* ------------------------------------------------------------------ */
+
 static void drm_init_dumb_obj(int fd, bool use_pixman, bool create_dmabuf)
 {
     struct drm_mode_map_dumb mreq;
@@ -373,6 +464,7 @@ static void usage(FILE *fp)
             "       --dmabuf           run dma-buf tests\n"
             "       --vgem             vgem dma-buf import test\n"
             "       --unbind           driver unbind test\n"
+            "       --cursor           try set cursor\n"
             "  -c | --card   <nr>      pick card\n"
             "  -o | --output <name>    pick output\n"
             "  -s | --sleep  <secs>    set sleep time (default: 60)\n"
@@ -388,6 +480,7 @@ enum {
     OPT_LONG_DMABUF = 0x100,
     OPT_LONG_VGEM,
     OPT_LONG_UNBIND,
+    OPT_LONG_CURSOR,
     OPT_LONG_LEASE,
     OPT_LONG_COMP_BASH,
 };
@@ -418,6 +511,10 @@ static struct option long_opts[] = {
         .name    = "unbind",
         .has_arg = false,
         .val     = OPT_LONG_UNBIND,
+    },{
+        .name    = "cursor",
+        .has_arg = false,
+        .val     = OPT_LONG_CURSOR,
     },{
         .name    = "complete-bash",
         .has_arg = false,
@@ -475,6 +572,7 @@ int main(int argc, char **argv)
     bool pixman = false;
     bool vgem = false;
     bool unbind = false;
+    bool cursor = false;
     int updatetest = 0;
     int c,i,pid,rc;
 
@@ -498,6 +596,9 @@ int main(int argc, char **argv)
             break;
         case OPT_LONG_UNBIND:
             unbind = true;
+            break;
+        case OPT_LONG_CURSOR:
+            cursor = true;
             break;
         case 'u':
             updatetest = atoi(optarg);
@@ -660,6 +761,11 @@ int main(int argc, char **argv)
 
     if (unbind) {
         try_unbind(card);
+    }
+
+    if (cursor) {
+        drm_init_cursor_obj(drm_fd);
+        drm_set_cursor(drm_fd);
     }
 
     if (autotest)
