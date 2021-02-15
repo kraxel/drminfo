@@ -390,7 +390,9 @@ static void drm_info_caps(int fd)
         [ DRM_CAP_PAGE_FLIP_TARGET     ] = "PAGE_FLIP_TARGET",
         [ DRM_CAP_CRTC_IN_VBLANK_EVENT ] = "CRTC_IN_VBLANK_EVENT",
         [ DRM_CAP_SYNCOBJ              ] = "SYNCOBJ",
+#ifdef DRM_CAP_SYNCOBJ_TIMELINE
         [ DRM_CAP_SYNCOBJ_TIMELINE     ] = "SYNCOBJ_TIMELINE",
+#endif
     };
     uint64_t value;
     int i, rc;
