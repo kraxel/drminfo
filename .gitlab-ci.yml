@@ -9,7 +9,7 @@ include:
 boot-aarch64:
   stage: rpms
   rules:
-    - if: $BUILD_AARCH64 == "yes"'
+    - if: '$BUILD_AARCH64 == "yes"'
   trigger:
     project: kraxel/ec2-init-scripts
     branch: boot-aarch64
