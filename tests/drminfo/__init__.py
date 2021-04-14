@@ -296,7 +296,7 @@ class TestDRM(avocado.Test):
 
     def setUp(self):
         self.jobdir = os.path.dirname(self.logdir)
-        self.log.info("###  jobdir: %s", self.jobdir)
+        self.log.info("### jobdir: %s", self.jobdir)
         self.kernel = os.path.join(self.jobdir, "drminfo.kernel");
         self.initrd = os.path.join(self.jobdir, "drminfo.initrd");
         self.qemu_binary = self.find_qemu_binary()
